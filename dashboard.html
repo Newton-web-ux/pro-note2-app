@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+
+<title>Pro Document — Dashboard</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#2b579a">
+
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+</head>
+<style>
+:root {
+  --bg: #f3f3f3;
+  --white: #ffffff;
+  --sidebar-bg: #2b579a;
+  --sidebar-text: #ffffff;
+  --sidebar-hover: #1e3f73;
+  --sidebar-active: #16305a;
+  --accent: #2b579a;
+  --accent-light: #dce6f7;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #d0d0d0;
+  --danger: #c0392b;
+  --toolbar-bg: #f8f8f8;
+  --card-hover: #eaf0fb;
+  --shadow: 0 1px 4px rgba(0,0,0,0.12);
+  --shadow-hover: 0 4px 16px rgba(0,0,0,0.16);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── LOADING SCREEN ── */
+#loadingScreen {
+  position: fixed; inset: 0;
+  background: #0a1628;
+  z-index: 9999;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  overflow: hidden;
+}
+#loadingScreen::before {
+  content: ''; position: absolute; inset: -50%;
+  background-image:
+    linear-gradient(rgba(43,87,154,0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(43,87,154,0.15) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: gridPan 12s linear infinite;
+}
+@keyframes gridPan { 0%{transform:translate(0,0)} 100%{transform:translate(60px,60px)} }
+#loadingScreen::after {
+  content: ''; position: absolute;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(43,87,154,0.25) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: bgPulse 3s ease-in-out infinite;
+}
+@keyframes bgPulse { 0%,100%{transform:scale(1);opacity:0.7} 50%{transform:scale(1.15);opacity:1} }
+.loader-content { position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; }
+.loader-ring { position:relative; width:130px; height:130px; margin-bottom:36px; }
+.loader-ring-outer {
+  position:absolute; inset:0; border-radius:50%;
+  border:2px solid rgba(43,87,154,0.3);
+  border-top-color:#4a90d9; border-right-color:rgba(74,144,217,0.6);
+  animation:spinA 1.4s linear infinite;
+}
+.loader-ring-inner {
+  position:absolute; inset:14px; border-radius:50%;
+  border:2px solid rgba(43,87,154,0.2);
+  border-bottom-color:#2b579a; border-left-color:rgba(43,87,154,0.5);
+  animation:spinA 0.9s linear infinite reverse;
+}
+.loader-ring-dot {
+  position:absolute; inset:28px; border-radius:50%;
+  background:radial-gradient(circle at 40% 40%, #4a90d9, #2b579a);
+  box-shadow:0 0 30px rgba(74,144,217,0.6),0 0 60px rgba(43,87,154,0.3);
+  display:flex; align-items:center; justify-content:center; font-size:26px;
+  animation:logoPop 0.6s ease-out 0.3s both;
+}
+@keyframes logoPop { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+@keyframes spinA { to{transform:rotate(360deg)} }
+.loader-brand {
+  font-family:'Outfit',sans-serif; font-size:32px; font-weight:800;
+  color:#fff; letter-spacing:-0.5px;
+  animation:fadeUp 0.7s ease-out 0.5s both;
+}
+.loader-brand span { color:#4a90d9; }
+.loader-tagline {
+  font-family:'Space Grotesk',sans-serif; font-size:12px; font-weight:500;
+  color:rgba(255,255,255,0.45); letter-spacing:3px; text-transform:uppercase; margin-top:6px;
+  animation:fadeUp 0.7s ease-out 0.7s both;
+}
+.loader-progress-wrap { margin-top:48px; width:280px; animation:fadeUp 0.7s ease-out 0.9s both; }
+.loader-progress-label {
+  display:flex; justify-content:space-between;
+  font-family:'Space Grotesk',sans-serif; font-size:11px;
+  color:rgba(255,255,255,0.4); margin-bottom:8px;
+}
+.loader-progress-bar { height:3px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden; }
+.loader-progress-fill {
+  height:100%; background:linear-gradient(90deg,#2b579a,#4a90d9,#7bb8f0);
+  border-radius:2px; width:0%; transition:width 0.4s ease;
+  box-shadow:0 0 12px rgba(74,144,217,0.8);
+}
+.loader-status { font-family:'Space Grotesk',sans-serif; font-size:11px; color:rgba(255,255,255,0.35); text-align:center; margin-top:10px; min-height:16px; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.loader-particles { position:absolute; inset:0; pointer-events:none; }
+.particle {
+  position:absolute; width:2px; height:2px;
+  background:rgba(74,144,217,0.6); border-radius:50%;
+  animation:floatUp var(--dur) linear infinite;
+  animation-delay:var(--delay); left:var(--x); bottom:-10px;
+}
+@keyframes floatUp { 0%{transform:translateY(0) scale(1);opacity:0.8} 100%{transform:translateY(-100vh) scale(0);opacity:0} }
+#loadingScreen.fade-out { animation:screenFadeOut 0.8s ease forwards; }
+@keyframes screenFadeOut { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(1.04);pointer-events:none} }
+
+/* ── AUTH MODAL ── */
+#authModal {
+  display:none; position:fixed; inset:0;
+  background:rgba(10,22,40,0.92); backdrop-filter:blur(8px);
+  z-index:8888; align-items:center; justify-content:center;
+}
+#authModal.open { display:flex; }
+.auth-card {
+  background:#fff; border-radius:12px; width:420px; overflow:hidden;
+  box-shadow:0 24px 80px rgba(0,0,0,0.5);
+  animation:authPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes authPop { from{opacity:0;transform:scale(0.85) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.auth-header {
+  background:linear-gradient(135deg,#1a3a6b 0%,#2b579a 60%,#3b6fbf 100%);
+  padding:32px 32px 28px; text-align:center; position:relative; overflow:hidden;
+}
+.auth-header::before {
+  content:''; position:absolute; width:200px; height:200px;
+  background:rgba(255,255,255,0.05); border-radius:50%; top:-60px; right:-40px;
+}
+.auth-logo-circle {
+  width:64px; height:64px; background:rgba(255,255,255,0.15); border-radius:50%;
+  display:flex; align-items:center; justify-content:center; font-size:28px;
+  margin:0 auto 16px; border:2px solid rgba(255,255,255,0.3);
+}
+.auth-title { font-family:'Outfit',sans-serif; font-size:22px; font-weight:700; color:#fff; margin-bottom:4px; }
+.auth-sub { font-family:'Space Grotesk',sans-serif; font-size:12px; color:rgba(255,255,255,0.6); letter-spacing:0.5px; }
+.auth-tabs { display:flex; background:#f5f7fa; border-bottom:1px solid #e8ecf0; }
+.auth-tab {
+  flex:1; padding:12px; border:none; background:transparent;
+  font-family:'Space Grotesk',sans-serif; font-size:13px; font-weight:600;
+  color:#999; cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s;
+}
+.auth-tab.active { color:var(--accent); border-bottom-color:var(--accent); background:#fff; }
+.auth-body { padding:24px 32px 28px; }
+.auth-field { margin-bottom:16px; }
+.auth-field label {
+  display:block; font-family:'Space Grotesk',sans-serif; font-size:11px; font-weight:600;
+  color:#888; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:6px;
+}
+.auth-field input {
+  width:100%; padding:10px 12px; border:1.5px solid #e0e6ef; border-radius:7px;
+  font-family:'Space Grotesk',sans-serif; font-size:13px; color:#1a1a1a; outline:none;
+  transition:border-color 0.2s,box-shadow 0.2s; background:#fafbfc;
+}
+.auth-field input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(43,87,154,0.12); background:#fff; }
+.auth-submit {
+  width:100%; padding:12px; background:linear-gradient(135deg,#2b579a,#3b6fbf);
+  color:white; border:none; border-radius:8px; font-family:'Outfit',sans-serif;
+  font-size:15px; font-weight:600; cursor:pointer; margin-top:8px;
+  transition:all 0.2s; letter-spacing:0.3px;
+}
+.auth-submit:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(43,87,154,0.4); }
+.auth-submit:disabled { opacity:0.7; cursor:not-allowed; transform:none; }
+.auth-msg { margin-top:12px; padding:10px 14px; border-radius:7px; font-family:'Space Grotesk',sans-serif; font-size:12px; text-align:center; display:none; }
+.auth-msg.error  { background:#fef0f0; color:#c0392b; border:1px solid #f5c6c6; display:block; }
+.auth-msg.success{ background:#edfaf1; color:#27ae60; border:1px solid #a9e5c3; display:block; }
+.auth-msg.info   { background:#eef4fd; color:#2b579a; border:1px solid #b8d0f5; display:block; }
+.auth-spinner {
+  display:inline-block; width:14px; height:14px;
+  border:2px solid rgba(255,255,255,0.4); border-top-color:white;
+  border-radius:50%; animation:spinA 0.7s linear infinite;
+  vertical-align:middle; margin-right:6px;
+}
+
+/* ── USER BADGE ── */
+.user-badge {
+  display:flex; align-items:center; gap:8px; cursor:pointer;
+  padding:3px 8px 3px 4px; border-radius:20px; transition:background 0.15s; position:relative;
+}
+.user-badge:hover { background:rgba(255,255,255,0.15); }
+.user-avatar {
+  width:26px; height:26px; background:rgba(255,255,255,0.25); border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; font-family:'Outfit',sans-serif; color:white;
+  border:1.5px solid rgba(255,255,255,0.4); flex-shrink:0;
+}
+.user-name-display {
+  font-family:'Space Grotesk',sans-serif; font-size:12px; font-weight:500;
+  color:rgba(255,255,255,0.9); max-width:120px; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis;
+}
+.user-dropdown {
+  position:absolute; top:calc(100% + 8px); right:0; background:white;
+  border-radius:8px; box-shadow:0 8px 32px rgba(0,0,0,0.2);
+  border:1px solid #e0e6ef; min-width:210px; z-index:1000;
+  display:none; overflow:hidden; animation:dropIn 0.2s ease;
+}
+@keyframes dropIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+.user-dropdown.open { display:block; }
+.user-dropdown-header { padding:14px 16px; background:#f8fafd; border-bottom:1px solid #e8ecf0; }
+.user-dropdown-name { font-family:'Outfit',sans-serif; font-size:14px; font-weight:600; color:#1a1a1a; }
+.user-dropdown-email { font-family:'Space Grotesk',sans-serif; font-size:11px; color:#999; margin-top:2px; }
+.user-dropdown-item {
+  display:flex; align-items:center; gap:10px; padding:10px 16px;
+  font-family:'Space Grotesk',sans-serif; font-size:12px; color:#444;
+  cursor:pointer; transition:background 0.15s; border:none; background:none; width:100%; text-align:left;
+}
+.user-dropdown-item:hover { background:#f0f4fa; }
+.user-dropdown-item.danger { color:#c0392b; }
+.user-dropdown-item.upgrade { color:#9a7a00; }
+.user-dropdown-item .item-icon { font-size:14px; width:18px; }
+.user-dropdown-divider { height:1px; background:#f0f0f0; margin:4px 0; }
+
+/* ── PLAN TAG (title bar) ── */
+.plan-tag {
+  font-size:9px; font-weight:700; padding:2px 7px; border-radius:8px;
+  background:rgba(255,255,255,0.2); letter-spacing:0.5px; margin-left:2px;
+  font-family:'Space Grotesk',sans-serif;
+}
+.plan-tag.pro { background:#f5c518; color:#3a2c00; }
+
+/* ── BODY / SHELL ── */
+body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); color:var(--text); font-size:13px; margin:0; padding:0; }
+#appShell {
+  display:none; flex-direction:column; height:100vh; overflow:hidden;
+  opacity:0; transition:opacity 0.5s ease;
+}
+#appShell.visible { display:flex; opacity:1; }
+
+/* ── TITLE BAR ── */
+.title-bar {
+  background:var(--sidebar-bg); color:white; padding:8px 16px;
+  display:flex; align-items:center; gap:12px; font-size:12px;
+  user-select:none; flex-shrink:0;
+}
+.title-bar .app-name { font-family:'Outfit',sans-serif; font-weight:700; font-size:14px; letter-spacing:0.3px; }
+.title-bar .doc-name { opacity:0.6; font-size:12px; }
+.title-bar-spacer { flex:1; }
+
+/* ── RIBBON ── */
+.ribbon {
+  background:var(--toolbar-bg); border-bottom:1px solid var(--border);
+  padding:0 16px; display:flex; align-items:center; justify-content:space-between;
+  gap:8px; min-height:44px; flex-shrink:0;
+}
+.ribbon-left { display:flex; align-items:center; gap:8px; }
+.ribbon-logo {
+  display:flex; align-items:center; gap:8px;
+  font-family:'Outfit',sans-serif; font-weight:700; font-size:15px;
+  color:var(--accent); padding-right:12px; border-right:1px solid var(--border);
+}
+.ribbon-logo .logo-icon {
+  background:var(--accent); color:white; width:28px; height:28px;
+  border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:16px;
+}
+.ribbon-btn {
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  padding:6px 10px; border:none; background:transparent; border-radius:4px;
+  cursor:pointer; color:var(--text); font-size:11px; font-family:'Space Grotesk',sans-serif;
+  transition:background 0.15s; min-width:52px;
+}
+.ribbon-btn:hover { background:var(--accent-light); color:var(--accent); }
+.ribbon-btn .icon { font-size:18px; line-height:1; }
+.ribbon-btn.primary { background:var(--accent); color:white; }
+.ribbon-btn.primary:hover { background:#1e3f73; }
+.ribbon-btn.gold { background:#f5c518; color:#3a2c00; }
+.ribbon-btn.gold:hover { background:#e0b400; }
+.ribbon-sep { width:1px; height:36px; background:var(--border); margin:0 4px; }
+.search-bar {
+  display:flex; align-items:center; gap:6px; background:white;
+  border:1px solid var(--border); border-radius:4px; padding:5px 10px; width:260px;
+}
+.search-bar input { border:none; outline:none; font-size:13px; width:100%; font-family:'Space Grotesk',sans-serif; color:var(--text); }
+.search-bar .search-icon { color:var(--muted); font-size:14px; }
+
+/* ── LAYOUT ── */
+.layout { display:flex; flex:1; overflow:hidden; }
+.sidebar {
+  width:220px; background:var(--sidebar-bg); color:var(--sidebar-text);
+  display:flex; flex-direction:column; overflow:hidden; flex-shrink:0;
+}
+.sidebar-section { padding:8px; }
+.sidebar-label {
+  font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.8px;
+  opacity:0.6; padding:8px 8px 4px; font-family:'Space Grotesk',sans-serif;
+}
+.nav-item {
+  display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:4px;
+  cursor:pointer; transition:background 0.15s; font-size:13px; user-select:none;
+}
+.nav-item:hover { background:var(--sidebar-hover); }
+.nav-item.active { background:var(--sidebar-active); font-weight:600; }
+.nav-item .nav-icon { font-size:15px; width:18px; text-align:center; }
+.nav-item .nav-badge {
+  margin-left:auto; background:rgba(255,255,255,0.2); color:white;
+  font-size:10px; padding:1px 6px; border-radius:10px; min-width:20px; text-align:center;
+}
+.sidebar-divider { height:1px; background:rgba(255,255,255,0.15); margin:4px 12px; }
+.folder-section { flex:1; overflow-y:auto; padding:0 8px 8px; }
+.folder-section::-webkit-scrollbar { width:4px; }
+.folder-section::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.2); border-radius:2px; }
+.folder-item {
+  display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:4px;
+  cursor:pointer; font-size:12px; color:rgba(255,255,255,0.85); transition:background 0.15s; user-select:none;
+}
+.folder-item:hover { background:var(--sidebar-hover); }
+.folder-item.active { background:var(--sidebar-active); }
+.folder-children { padding-left:16px; }
+
+/* ── PLAN PANEL (sidebar, bottom) ── */
+.plan-panel { margin:8px; padding:12px; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); flex-shrink:0; }
+.plan-panel-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.plan-pill { font-size:9px; padding:2px 7px; border-radius:10px; font-weight:700; letter-spacing:0.4px; }
+.plan-pill.free { background:rgba(255,255,255,0.18); color:#fff; }
+.plan-pill.pro { background:#f5c518; color:#3a2c00; }
+.usage-row { font-size:11px; opacity:0.85; margin-bottom:4px; display:flex; justify-content:space-between; }
+.usage-bar { height:4px; background:rgba(255,255,255,0.15); border-radius:2px; overflow:hidden; margin-bottom:8px; }
+.usage-fill { height:100%; background:#4a90d9; border-radius:2px; transition:width .3s; }
+.usage-fill.full { background:#f5c518; }
+.plan-upgrade-btn {
+  width:100%; padding:7px; border:none; border-radius:6px;
+  background:linear-gradient(135deg,#4a90d9,#7bb8f0); color:#0a1628;
+  font-weight:700; font-size:11px; cursor:pointer; font-family:'Space Grotesk',sans-serif;
+}
+.plan-upgrade-btn:hover { filter:brightness(1.05); }
+.plan-expiry { font-size:10px; opacity:0.7; margin-top:6px; }
+
+/* ── MAIN ── */
+.main { flex:1; overflow:auto; padding:20px 28px; }
+.main::-webkit-scrollbar { width:8px; }
+.main::-webkit-scrollbar-thumb { background:#ccc; border-radius:4px; }
+.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.section-title { font-family:'Outfit',sans-serif; font-size:20px; font-weight:600; color:var(--text); }
+.view-toggle { display:flex; gap:4px; }
+.view-btn {
+  padding:5px 8px; border:1px solid var(--border); background:white;
+  border-radius:3px; cursor:pointer; font-size:14px; color:var(--muted); transition:all 0.15s;
+}
+.view-btn.active,.view-btn:hover { background:var(--accent); color:white; border-color:var(--accent); }
+
+/* ── DOC CARDS ── */
+.doc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
+.doc-list { display:flex; flex-direction:column; gap:4px; }
+.doc-card {
+  background:white; border:1px solid var(--border); border-radius:4px;
+  cursor:pointer; transition:box-shadow 0.2s,border-color 0.2s; overflow:hidden; position:relative;
+}
+.doc-card:hover { box-shadow:var(--shadow-hover); border-color:var(--accent); }
+.doc-card-preview {
+  height:120px; background:linear-gradient(135deg,#f0f4ff 0%,#e8ecf7 100%);
+  display:flex; align-items:center; justify-content:center;
+  border-bottom:1px solid var(--border); position:relative;
+}
+.doc-card-preview .doc-lines {
+  position:absolute; bottom:12px; left:12px; right:12px;
+  display:flex; flex-direction:column; gap:4px;
+}
+.doc-line { height:4px; background:rgba(43,87,154,0.2); border-radius:2px; }
+.doc-line:nth-child(2) { width:75%; }
+.doc-line:nth-child(3) { width:55%; }
+.doc-card-body { padding:10px 12px; }
+.doc-card-title { font-weight:600; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px; }
+.doc-card-meta { font-size:11px; color:var(--muted); }
+.doc-card-actions { padding:6px 8px; display:flex; gap:4px; border-top:1px solid var(--border); background:#fafafa; }
+.doc-action-btn {
+  padding:3px 8px; border:1px solid var(--border); background:white; border-radius:3px;
+  cursor:pointer; font-size:11px; font-family:'Space Grotesk',sans-serif; color:var(--text); transition:all 0.15s;
+}
+.doc-action-btn:hover { background:var(--accent-light); border-color:var(--accent); color:var(--accent); }
+.doc-action-btn.danger:hover { background:#fce8e6; border-color:var(--danger); color:var(--danger); }
+.star-btn {
+  background:none; border:none; cursor:pointer; font-size:14px; color:#ccc;
+  position:absolute; top:8px; right:8px; transition:color 0.15s; z-index:2;
+}
+.star-btn.on { color:#f5c518; }
+.star-btn:hover { color:#f5c518; }
+.doc-list-item {
+  background:white; border:1px solid var(--border); border-radius:3px;
+  display:flex; align-items:center; padding:8px 12px; gap:12px; cursor:pointer; transition:background 0.15s;
+}
+.doc-list-item:hover { background:var(--card-hover); }
+.doc-list-icon { font-size:22px; width:28px; text-align:center; }
+.doc-list-info { flex:1; min-width:0; }
+.doc-list-title { font-weight:500; font-size:13px; }
+.doc-list-meta { font-size:11px; color:var(--muted); }
+.doc-list-actions { display:flex; gap:4px; }
+.trash-header {
+  background:#fff3cd; border:1px solid #ffc107; border-radius:4px;
+  padding:8px 14px; margin-bottom:16px; display:flex; align-items:center;
+  justify-content:space-between; font-size:12px;
+}
+.trash-header button {
+  background:var(--danger); color:white; border:none; border-radius:3px;
+  padding:4px 12px; cursor:pointer; font-size:12px; font-family:'Space Grotesk',sans-serif;
+}
+.empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
+.empty-state .empty-icon { font-size:56px; margin-bottom:16px; opacity:0.4; }
+.empty-state .empty-title { font-size:16px; font-weight:600; margin-bottom:6px; }
+.empty-state .empty-sub { font-size:13px; }
+
+/* ── STATUS BAR ── */
+.status-bar {
+  background:var(--accent); color:rgba(255,255,255,0.8); font-size:11px;
+  padding:3px 16px; display:flex; align-items:center; gap:20px;
+  flex-shrink:0; font-family:'Space Grotesk',sans-serif;
+}
+
+/* ── MODALS ── */
+.modal-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.4); z-index:999;
+  align-items:center; justify-content:center;
+}
+.modal-overlay.open { display:flex; }
+.modal { background:white; border-radius:4px; box-shadow:0 8px 32px rgba(0,0,0,0.3); width:400px; overflow:hidden; max-height:90vh; overflow-y:auto; }
+.modal-header {
+  background:var(--accent); color:white; padding:12px 16px; font-weight:600;
+  font-size:14px; display:flex; align-items:center; justify-content:space-between; font-family:'Outfit',sans-serif;
+  position:sticky; top:0; z-index:2;
+}
+.modal-header button { background:none; border:none; color:white; cursor:pointer; font-size:18px; }
+.modal-body { padding:20px; }
+.modal-body label {
+  font-size:12px; font-weight:600; display:block; margin-bottom:6px; color:var(--muted);
+  text-transform:uppercase; letter-spacing:0.5px; font-family:'Space Grotesk',sans-serif;
+}
+.modal-body input {
+  width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:3px;
+  font-size:13px; font-family:'Space Grotesk',sans-serif; outline:none;
+}
+.modal-body input:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(43,87,154,0.15); }
+.modal-footer { padding:12px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+.btn { padding:7px 16px; border-radius:3px; border:1px solid var(--border); cursor:pointer; font-size:12px; font-family:'Space Grotesk',sans-serif; font-weight:500; }
+.btn-primary { background:var(--accent); color:white; border-color:var(--accent); }
+.btn-primary:hover { background:#1e3f73; }
+.btn-secondary { background:white; }
+.btn-secondary:hover { background:var(--bg); }
+
+.online-dot { width:7px; height:7px; background:#27ae60; border-radius:50%; display:inline-block; box-shadow:0 0 0 2px rgba(39,174,96,0.3); animation:onlinePulse 2s ease infinite; }
+@keyframes onlinePulse { 0%,100%{box-shadow:0 0 0 2px rgba(39,174,96,0.3)} 50%{box-shadow:0 0 0 4px rgba(39,174,96,0.15)} }
+
+/* ── UPGRADE / PAYMENT MODAL ── */
+.up-reason {
+  background:#fff7e0; border:1px solid #f5c518; color:#7a5d00;
+  font-size:12px; padding:9px 12px; border-radius:6px; margin-bottom:14px; text-align:center;
+}
+.up-toggle { display:flex; border-radius:8px; overflow:hidden; border:1px solid var(--accent); margin:2px 0 14px; }
+.up-toggle button {
+  flex:1; padding:9px; border:none; cursor:pointer; font-size:12px;
+  background:#fff; color:var(--accent); font-family:'Space Grotesk',sans-serif; font-weight:600;
+}
+.up-toggle button.active { background:var(--accent); color:#fff; }
+.up-amount { font-size:24px; font-weight:700; color:var(--accent); text-align:center; margin:0 0 14px; font-family:'Outfit',sans-serif; }
+.up-features { list-style:none; padding:0; margin:0 0 16px; font-size:12px; color:#444; }
+.up-features li { padding:5px 0 5px 22px; position:relative; }
+.up-features li::before { content:'✓'; position:absolute; left:0; color:#27ae60; font-weight:700; }
+.up-qr-wrap { text-align:center; margin:10px 0 14px; }
+.up-qr-wrap img { width:180px; height:180px; border-radius:8px; border:1px solid var(--border); }
+.up-pay-btn {
+  width:100%; padding:11px; border:none; border-radius:7px; background:var(--accent);
+  color:#fff; font-size:14px; font-weight:600; cursor:pointer; font-family:'Outfit',sans-serif;
+}
+.up-pay-btn:hover { background:#1e3f73; }
+.up-pay-btn:disabled { opacity:0.6; cursor:not-allowed; }
+.up-check-btn {
+  width:100%; padding:9px; border:1px solid var(--accent); border-radius:7px; background:#fff;
+  color:var(--accent); font-size:12px; font-weight:600; cursor:pointer;
+  font-family:'Space Grotesk',sans-serif; margin-top:8px;
+}
+.up-check-btn:hover { background:var(--accent-light); }
+.up-status { margin-top:10px; padding:9px 12px; border-radius:6px; font-size:12px; text-align:center; display:none; }
+.up-status.show { display:block; }
+.up-status.success { background:#edfaf1; color:#27ae60; border:1px solid #a9e5c3; }
+.up-status.error { background:#fef0f0; color:#c0392b; border:1px solid #f5c6c6; }
+.up-status.info { background:#eef4fd; color:#2b579a; border:1px solid #b8d0f5; }
+.up-note { font-size:11px; color:#888; text-align:center; margin-top:10px; }
+</style>
+</head>
+<body>
+
+
+<!-- LOADING SCREEN -->
+<div id="loadingScreen">
+  <div class="loader-particles" id="particles"></div>
+  <div class="loader-content">
+    <div class="loader-ring">
+      <div class="loader-ring-outer"></div>
+      <div class="loader-ring-inner"></div>
+      <div class="loader-ring-dot">📋</div>
+    </div>
+    <div class="loader-brand">Pro <span>Document</span></div>
+    <div class="loader-tagline">Your intelligent workspace</div>
+    <div class="loader-progress-wrap">
+      <div class="loader-progress-label">
+        <span id="loaderStatusText">Initializing…</span>
+        <span id="loaderPct">0%</span>
+      </div>
+      <div class="loader-progress-bar">
+        <div class="loader-progress-fill" id="loaderFill"></div>
+      </div>
+      <div class="loader-status" id="loaderSub"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- AUTH MODAL -->
+<div id="authModal">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo-circle">📋</div>
+      <div class="auth-title">Pro Document</div>
+      <div class="auth-sub">Your intelligent workspace</div>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="auth-tab" id="tabSignup" onclick="switchAuthTab('signup')">Create Account</button>
+    </div>
+    <div id="panelLogin" class="auth-body">
+      <div class="auth-field">
+        <label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"
+               onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="auth-submit" id="loginBtn" onclick="doLogin()">Sign In</button>
+      <div class="auth-msg" id="loginMsg"></div>
+    </div>
+    <div id="panelSignup" class="auth-body" style="display:none;">
+      <div class="auth-field">
+        <label>Full Name</label>
+        <input type="text" id="signupName" placeholder="Jane Doe" autocomplete="name">
+      </div>
+      <div class="auth-field">
+        <label>Email Address</label>
+        <input type="email" id="signupEmail" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="signupPassword" placeholder="Min. 6 characters" autocomplete="new-password"
+               onkeydown="if(event.key==='Enter')doSignup()">
+      </div>
+      <button class="auth-submit" id="signupBtn" onclick="doSignup()">Create Account</button>
+      <div class="auth-msg" id="signupMsg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="appShell">
+
+<div class="title-bar">
+  <span style="background:rgba(255,255,255,0.2);padding:2px 6px;border-radius:3px;font-size:13px;">📋</span>
+  <span class="app-name">Pro Document</span>
+  <span class="plan-tag" id="planTag">FREE</span>
+  <span class="doc-name">— Dashboard</span>
+  <div class="title-bar-spacer"></div>
+  <div class="user-badge" id="userBadge" onclick="toggleUserDropdown()">
+    <div class="user-avatar" id="userAvatarLetter">?</div>
+    <span class="user-name-display" id="userNameDisplay">Guest</span>
+    <span style="font-size:10px;opacity:0.6;">▾</span>
+    <div class="user-dropdown" id="userDropdown">
+      <div class="user-dropdown-header">
+        <div class="user-dropdown-name" id="ddName">—</div>
+        <div class="user-dropdown-email" id="ddEmail">—</div>
+      </div>
+      <button class="user-dropdown-item" onclick="openProfileModal()">
+        <span class="item-icon">👤</span> My Profile
+      </button>
+      <button class="user-dropdown-item" onclick="openActivityModal()">
+        <span class="item-icon">📊</span> Session History
+      </button>
+      <button class="user-dropdown-item upgrade" id="ddUpgradeItem" onclick="openUpgradeModal()">
+        <span class="item-icon">💎</span> Upgrade to Pro
+      </button>
+      <div class="user-dropdown-divider"></div>
+      <button class="user-dropdown-item danger" onclick="doLogout()">
+        <span class="item-icon">🚪</span> Sign Out
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="ribbon">
+  <div class="ribbon-left">
+    <div class="ribbon-logo">
+      <div class="logo-icon">📋</div>
+      Pro Document
+    </div>
+<button class="ribbon-btn" id="installBtn" style="display:none;">
+  <span class="icon">⬇️</span>
+  Install App
+</button>
+    <button class="ribbon-btn primary" onclick="openCreateDocModal()">
+      <span class="icon">📄</span> New Document
+    </button>
+    <button class="ribbon-btn" onclick="openCreateFolderModal()">
+      <span class="icon">📁</span> New Folder
+    </button>
+    <div class="ribbon-sep"></div>
+    <button class="ribbon-btn" onclick="setFilter('all')">
+      <span class="icon">🗂️</span> All Docs
+    </button>
+    <button class="ribbon-btn" onclick="setFilter('starred')">
+      <span class="icon">⭐</span> Starred
+    </button>
+    <button class="ribbon-btn" onclick="setFilter('recent')">
+      <span class="icon">🕐</span> Recent
+    </button>
+    <div class="ribbon-sep"></div>
+    <button class="ribbon-btn gold" onclick="openUpgradeModal()">
+      <span class="icon">💎</span> Upgrade
+    </button>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#888;">
+      <span class="online-dot"></span>
+      <span id="sessionLabel">Connected</span>
+    </div>
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search documents…" oninput="render()">
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Navigation</div>
+      <div class="nav-item active" id="nav-all" onclick="setFilter('all')">
+        <span class="nav-icon">📋</span> All Documents
+        <span class="nav-badge" id="badge-all">0</span>
+      </div>
+      <div class="nav-item" id="nav-starred" onclick="setFilter('starred')">
+        <span class="nav-icon">⭐</span> Starred
+        <span class="nav-badge" id="badge-starred">0</span>
+      </div>
+      <div class="nav-item" id="nav-recent" onclick="setFilter('recent')">
+        <span class="nav-icon">🕐</span> Recent
+      </div>
+      <div class="nav-item" id="nav-trash" onclick="setFilter('trash')">
+        <span class="nav-icon">🗑️</span> Trash
+        <span class="nav-badge" id="badge-trash">0</span>
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Folders</div>
+    </div>
+    <div class="folder-section" id="folderTree"></div>
+    <div class="plan-panel" id="planPanel"></div>
+  </aside>
+  <main class="main">
+    <div class="section-header">
+      <div class="section-title" id="sectionTitle">All Documents</div>
+      <div class="view-toggle">
+        <button class="view-btn active" id="view-grid" onclick="setView('grid')" title="Grid view">⊞</button>
+        <button class="view-btn" id="view-list" onclick="setView('list')" title="List view">☰</button>
+      </div>
+    </div>
+    <div id="trashHeader" class="trash-header" style="display:none;">
+      <span>⚠️ Items in Trash will be permanently deleted after 30 days.</span>
+      <button onclick="emptyTrash()">🗑️ Empty Trash</button>
+    </div>
+    <div id="docContainer"></div>
+  </main>
+</div>
+
+<div class="status-bar">
+  <span id="statusText">Ready</span>
+  <span id="docCount"></span>
+  <span style="margin-left:auto;opacity:0.6;" id="lastSyncLabel"></span>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="createDocModal">
+  <div class="modal">
+    <div class="modal-header">📄 New Document <button onclick="closeModal('createDocModal')">×</button></div>
+    <div class="modal-body">
+      <label>Document Name</label>
+      <input type="text" id="docNameInput" placeholder="Untitled Document" onkeydown="if(event.key==='Enter')confirmCreateDoc()">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('createDocModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmCreateDoc()">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="createFolderModal">
+  <div class="modal">
+    <div class="modal-header">📁 New Folder <button onclick="closeModal('createFolderModal')">×</button></div>
+    <div class="modal-body">
+      <label>Folder Name</label>
+      <input type="text" id="folderNameInput" placeholder="My Folder" onkeydown="if(event.key==='Enter')confirmCreateFolder()">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('createFolderModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmCreateFolder()">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="renameModal">
+  <div class="modal">
+    <div class="modal-header">✏️ Rename Document <button onclick="closeModal('renameModal')">×</button></div>
+    <div class="modal-body">
+      <label>New Name</label>
+      <input type="text" id="renameInput" placeholder="Document name" onkeydown="if(event.key==='Enter')confirmRename()">
+      <input type="hidden" id="renameDocId">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('renameModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmRename()">Rename</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="activityModal">
+  <div class="modal" style="width:520px;">
+    <div class="modal-header">📊 Session History <button onclick="closeModal('activityModal')">×</button></div>
+    <div class="modal-body" style="padding:0;">
+      <div id="activityContent" style="padding:20px;max-height:360px;overflow-y:auto;font-family:'Space Grotesk',sans-serif;font-size:12px;">Loading…</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('activityModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPGRADE / PAYMENT MODAL -->
+<div class="modal-overlay" id="upgradeModal">
+  <div class="modal" style="width:380px;">
+    <div class="modal-header">💎 Upgrade to Pro <button onclick="closeModal('upgradeModal')">×</button></div>
+    <div class="modal-body">
+      <div class="up-reason" id="upgradeReason" style="display:none;"></div>
+
+      <div class="up-toggle">
+        <button type="button" id="upMonthlyBtn" class="active" onclick="selectUpgradePlan('monthly')">Monthly</button>
+        <button type="button" id="upYearlyBtn" onclick="selectUpgradePlan('yearly')">Yearly</button>
+      </div>
+      <div class="up-amount" id="upPrice">₹199 / month</div>
+
+      <ul class="up-features">
+        <li>Unlimited folders</li>
+        <li>Unlimited documents</li>
+        <li>Advanced PDF & Word export</li>
+        <li>20-step version history</li>
+        <li>Priority cloud sync</li>
+      </ul>
+
+      <div class="up-qr-wrap">
+        <a id="upUpiLink" target="_blank"><img id="upQrImg" alt="Scan to pay with UPI"></a>
+      </div>
+
+      <button class="up-pay-btn" id="upPayBtn" onclick="submitUpgradePayment()">I've paid via GPay / UPI</button>
+      <button class="up-check-btn" onclick="checkApprovalStatus()">✓ I've already paid — check status</button>
+
+      <div class="up-status" id="upgradeStatus"></div>
+      <div class="up-note">Access unlocks after manual verification (usually within a few hours).</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /#appShell -->
+
+<script>
+/* ─────────────────────────────────────────────
+   CONFIG
+───────────────────────────────────────────── */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwfU0I5InZxiGln-4a5w25jmX2ROk86_fSbGeR3OtGHyjtajd0uuX8pntb_1aMGRxFqEQ/exec';
+
+/* Freemium limits — enforced client-side, backed by server-verified Pro status */
+const FREE_MAX_FOLDERS = 1;
+const FREE_MAX_DOCS = 3;
+
+/* UPI payment config — update VPA / payee name to your own before going live */
+const UPI_VPA = 'banerjeearnab.live@oksbi';
+const UPI_PAYEE_NAME = 'Pro Document';
+const PRO_PLANS = {
+  monthly: { price: 199,  label: '₹199 / month' },
+  yearly:  { price: 1999, label: '₹1999 / year (2 months free)' }
+};
+let selectedUpgradeBilling = 'monthly';
+
+/* ─────────────────────────────────────────────
+   LOADING SCREEN
+───────────────────────────────────────────── */
+(function initLoader() {
+  const pContainer = document.getElementById('particles');
+  for (let i = 0; i < 28; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.setProperty('--x', Math.random() * 100 + 'vw');
+    p.style.setProperty('--dur', (6 + Math.random() * 10) + 's');
+    p.style.setProperty('--delay', (Math.random() * 8) + 's');
+    pContainer.appendChild(p);
+  }
+  const steps = [
+    { pct: 15,  label: 'Loading resources…',      sub: 'Preparing workspace environment' },
+    { pct: 35,  label: 'Connecting to backend…',  sub: 'Establishing secure connection' },
+    { pct: 55,  label: 'Authenticating session…', sub: 'Verifying credentials' },
+    { pct: 75,  label: 'Loading your workspace…', sub: 'Fetching documents & folders' },
+    { pct: 92,  label: 'Almost ready…',           sub: 'Applying your preferences' },
+    { pct: 100, label: 'Welcome back!',            sub: 'Launching dashboard…' }
+  ];
+  const fill = document.getElementById('loaderFill');
+  const pct  = document.getElementById('loaderPct');
+  const lbl  = document.getElementById('loaderStatusText');
+  const sub  = document.getElementById('loaderSub');
+  let idx = 0;
+  function nextStep() {
+    if (idx >= steps.length) return;
+    const s = steps[idx++];
+    fill.style.width = s.pct + '%'; pct.textContent = s.pct + '%';
+    lbl.textContent  = s.label;     sub.textContent  = s.sub;
+    if (idx < steps.length) setTimeout(nextStep, 380 + Math.random() * 320);
+    else setTimeout(finishLoading, 600);
+  }
+  setTimeout(nextStep, 300);
+})();
+
+function finishLoading() {
+  const ls = document.getElementById('loadingScreen');
+  ls.classList.add('fade-out');
+  setTimeout(() => { ls.style.display = 'none'; checkAuthAndLaunch(); }, 800);
+}
+
+/* ─────────────────────────────────────────────
+   AUTH STATE
+───────────────────────────────────────────── */
+let currentUser = null;
+
+/* ─────────────────────────────────────────────
+   PER-ACCOUNT STORAGE KEYS
+   Every localStorage key is namespaced with the
+   user's email, so accounts never share data.
+   e.g. pd.alice_example_com.index
+        pd.alice_example_com.doc.item_123_ab
+        pd.bob_example_com.index  ← completely separate
+───────────────────────────────────────────── */
+function userKey(base) {
+  const uid = currentUser ? currentUser.email.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'guest';
+  return 'pd.' + uid + '.' + base;
+}
+function userDocDataKey(docId) { return userKey('doc.' + docId); }
+
+/* ─────────────────────────────────────────────
+   LAUNCH
+───────────────────────────────────────────── */
+function checkAuthAndLaunch() {
+  const saved = localStorage.getItem('pd_session');
+  if (saved) {
+    try {
+      currentUser = JSON.parse(saved);
+      launchDashboard();
+      refreshProStatus(); // re-verify with server in case admin approved while away
+      return;
+    } catch(e) {}
+  }
+  document.getElementById('authModal').classList.add('open');
+}
+
+function launchDashboard() {
+  updateUserUI();
+  const shell = document.getElementById('appShell');
+  shell.style.display = 'flex';
+  requestAnimationFrame(() => shell.classList.add('visible'));
+  // Reset nav state for fresh login
+  currentFilter = 'all'; currentFolder = null; currentView = 'grid';
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navAll = document.getElementById('nav-all');
+  if (navAll) navAll.classList.add('active');
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  const vg = document.getElementById('view-grid');
+  if (vg) vg.classList.add('active');
+  document.getElementById('searchInput').value = '';
+  renderFolders();
+  render();
+  logActivity('page_load');
+  setInterval(() => logActivity('heartbeat'), 5 * 60 * 1000);
+  document.getElementById('lastSyncLabel').textContent = 'Synced ' + formatDate(new Date().toISOString());
+}
+
+function updateUserUI() {
+  if (!currentUser) return;
+  const initial = (currentUser.name || currentUser.email || '?')[0].toUpperCase();
+  document.getElementById('userAvatarLetter').textContent = initial;
+  document.getElementById('userNameDisplay').textContent  = currentUser.name || currentUser.email;
+  document.getElementById('ddName').textContent  = currentUser.name || '—';
+  document.getElementById('ddEmail').textContent = currentUser.email || '—';
+  document.getElementById('sessionLabel').textContent = 'Signed in as ' + (currentUser.name || currentUser.email).split(' ')[0];
+}
+
+/* ─────────────────────────────────────────────
+   AUTH TABS
+───────────────────────────────────────────── */
+function switchAuthTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('tabLogin').classList.toggle('active', isLogin);
+  document.getElementById('tabSignup').classList.toggle('active', !isLogin);
+  document.getElementById('panelLogin').style.display  = isLogin ? '' : 'none';
+  document.getElementById('panelSignup').style.display = isLogin ? 'none' : '';
+  document.getElementById('loginMsg').className  = 'auth-msg';
+  document.getElementById('signupMsg').className = 'auth-msg';
+}
+
+/* ─────────────────────────────────────────────
+   GAS BACKEND
+───────────────────────────────────────────── */
+async function gasCall(payload) {
+  try {
+    const res = await fetch(GAS_URL + '?' + new URLSearchParams(payload), { method: 'GET', mode: 'cors' });
+    return await res.json();
+  } catch(e) {
+    console.warn('GAS offline:', e.message);
+    return { status: 'offline' };
+  }
+}
+
+/* ─────────────────────────────────────────────
+   SIGN UP
+───────────────────────────────────────────── */
+async function doSignup() {
+  const name  = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim().toLowerCase();
+  const pass  = document.getElementById('signupPassword').value;
+  const btn   = document.getElementById('signupBtn');
+
+  if (!name)  return showAuthMsg('signupMsg','error','Please enter your full name.');
+  if (!email || !email.includes('@')) return showAuthMsg('signupMsg','error','Please enter a valid email.');
+  if (pass.length < 6) return showAuthMsg('signupMsg','error','Password must be at least 6 characters.');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="auth-spinner"></span>Creating account…';
+  showAuthMsg('signupMsg','info','Creating your account…');
+
+  const passHash = await sha256(pass);
+
+  // Check local users store first (works offline)
+  const localUsers = JSON.parse(localStorage.getItem('pd_local_users') || '{}');
+  if (localUsers[email]) {
+    btn.disabled = false; btn.textContent = 'Create Account';
+    return showAuthMsg('signupMsg','error','An account with this email already exists. Please sign in.');
+  }
+
+  // Try GAS (optional, graceful fallback)
+  const result = await gasCall({ action: 'signup', name, email, passHash });
+  btn.disabled = false; btn.textContent = 'Create Account';
+
+  if (result.status === 'exists') {
+    return showAuthMsg('signupMsg','error','An account with this email already exists.');
+  }
+
+  // Store locally (always — ensures offline works)
+  localUsers[email] = { name, passHash, createdAt: new Date().toISOString() };
+  localStorage.setItem('pd_local_users', JSON.stringify(localUsers));
+
+  showAuthMsg('signupMsg','success','Account created! Signing you in…');
+  setTimeout(() => completeLogin({ name, email }), 800);
+}
+
+/* ─────────────────────────────────────────────
+   LOGIN
+───────────────────────────────────────────── */
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass  = document.getElementById('loginPassword').value;
+  const btn   = document.getElementById('loginBtn');
+
+  if (!email || !email.includes('@')) return showAuthMsg('loginMsg','error','Please enter a valid email.');
+  if (!pass) return showAuthMsg('loginMsg','error','Please enter your password.');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="auth-spinner"></span>Signing in…';
+  showAuthMsg('loginMsg','info','Verifying credentials…');
+
+  const passHash = await sha256(pass);
+
+  // Check local store first (fast + offline-capable)
+  const localUsers = JSON.parse(localStorage.getItem('pd_local_users') || '{}');
+  const localUser  = localUsers[email];
+
+  if (localUser && localUser.passHash === passHash) {
+    btn.disabled = false; btn.textContent = 'Sign In';
+    showAuthMsg('loginMsg','success','Welcome back, ' + localUser.name + '!');
+    setTimeout(() => completeLogin({ name: localUser.name, email }), 600);
+    return;
+  }
+
+  // Fallback to GAS if not found locally
+  const result = await gasCall({ action: 'login', email, passHash });
+  btn.disabled = false; btn.textContent = 'Sign In';
+
+  if (result.status === 'success') {
+    // Cache in local store for future offline logins
+    localUsers[email] = { ...(localUsers[email]||{}), name: result.name, passHash };
+    localStorage.setItem('pd_local_users', JSON.stringify(localUsers));
+    showAuthMsg('loginMsg','success','Welcome back, ' + result.name + '!');
+    setTimeout(() => completeLogin({ name: result.name, email }), 600);
+  } else if (result.status === 'wrong_pass') {
+    showAuthMsg('loginMsg','error','Incorrect password. Please try again.');
+  } else if (result.status === 'not_found' || result.status === 'offline') {
+    showAuthMsg('loginMsg','error', localUser ? 'Incorrect password.' : 'No account found. Please create one.');
+  } else {
+    showAuthMsg('loginMsg','error', result.message || 'Login failed. Please check your credentials.');
+  }
+}
+
+/* ─────────────────────────────────────────────
+   COMPLETE LOGIN / LOGOUT
+───────────────────────────────────────────── */
+function completeLogin(user) {
+  const sessionId = 'ses_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+  currentUser = { ...user, sessionId, loginTime: new Date().toISOString(), isPro: false, plan: 'free', planExpiresAt: null };
+  localStorage.setItem('pd_session', JSON.stringify(currentUser));
+  document.getElementById('authModal').classList.remove('open');
+  launchDashboard();
+  logActivity('login');
+  refreshProStatus();
+}
+
+function doLogout() {
+  closeUserDropdown();
+  logActivity('logout');
+  localStorage.removeItem('pd_session');
+  currentUser = null;
+  const shell = document.getElementById('appShell');
+  shell.classList.remove('visible');
+  shell.style.display = 'none';
+  document.getElementById('authModal').classList.add('open');
+  document.getElementById('loginEmail').value    = '';
+  document.getElementById('loginPassword').value = '';
+  switchAuthTab('login');
+}
+
+/* ─────────────────────────────────────────────
+   ACTIVITY LOGGING
+───────────────────────────────────────────── */
+function logActivity(action) {
+  if (!currentUser) return;
+  gasCall({
+    action: 'logActivity',
+    email: currentUser.email, name: currentUser.name,
+    sessionId: currentUser.sessionId, event: action,
+    ts: new Date().toISOString(),
+    ua: navigator.userAgent.slice(0, 120),
+    docCount: Object.values(readIndex().docs).filter(d => !d.deleted).length
+  }).catch(() => {});
+}
+
+async function openActivityModal() {
+  closeUserDropdown();
+  openModal('activityModal');
+  const el = document.getElementById('activityContent');
+  el.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Loading session history…</div>';
+  const result = await gasCall({ action: 'getSessions', email: currentUser?.email });
+  const icons  = { login:'🔐', logout:'🚪', heartbeat:'💓', page_load:'🖥️', create_doc:'📄', open_doc:'📂' };
+  if (result.status === 'success' && result.sessions?.length) {
+    el.innerHTML = result.sessions.map(s => `
+      <div style="padding:10px 0;border-bottom:1px solid #f0f0f0;display:flex;gap:12px;">
+        <span style="font-size:18px;">${icons[s.event]||'📌'}</span>
+        <div>
+          <div style="font-weight:600;color:#333;">${s.event.replace(/_/g,' ')}</div>
+          <div style="color:#999;font-size:11px;">${new Date(s.ts).toLocaleString()} · …${(s.sessionId||'').slice(-6)}</div>
+          ${s.docCount ? `<div style="color:#2b579a;font-size:11px;">${s.docCount} docs</div>` : ''}
+        </div>
+      </div>`).join('');
+  } else {
+    el.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">No session history found.<br><small>Connect a GAS backend to track sessions.</small></div>';
+  }
+}
+
+function openProfileModal() {
+  closeUserDropdown();
+  const lu = JSON.parse(localStorage.getItem('pd_local_users') || '{}')[currentUser?.email] || {};
+  const planLine = currentUser?.isPro
+    ? `Pro (expires ${currentUser?.planExpiresAt ? new Date(currentUser.planExpiresAt).toLocaleDateString() : '—'})`
+    : 'Free';
+  alert(`👤 My Profile\n\nName: ${currentUser?.name||'—'}\nEmail: ${currentUser?.email||'—'}\nPlan: ${planLine}\nAccount created: ${lu.createdAt ? new Date(lu.createdAt).toLocaleDateString() : '—'}\nSession: …${(currentUser?.sessionId||'').slice(-8)}\nLogged in: ${currentUser?.loginTime ? new Date(currentUser.loginTime).toLocaleString() : '—'}`);
+}
+
+/* ─────────────────────────────────────────────
+   USER DROPDOWN
+───────────────────────────────────────────── */
+function toggleUserDropdown() { document.getElementById('userDropdown').classList.toggle('open'); }
+function closeUserDropdown()  { document.getElementById('userDropdown').classList.remove('open'); }
+document.addEventListener('click', e => {
+  if (!document.getElementById('userBadge').contains(e.target)) closeUserDropdown();
+});
+
+function showAuthMsg(id, type, text) {
+  const el = document.getElementById(id);
+  el.textContent = text; el.className = 'auth-msg ' + type;
+}
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+/* ─────────────────────────────────────────────
+   DASHBOARD DATA — ALL KEYS ARE USER-SCOPED
+   readIndex / writeIndex / userDocDataKey all
+   go through userKey() which prefixes with the
+   current user's email, giving each account a
+   completely private namespace in localStorage.
+───────────────────────────────────────────── */
+let currentFilter = 'all';
+let currentFolder = null;
+let currentView   = 'grid';
+
+function readIndex() {
+  return JSON.parse(localStorage.getItem(userKey('index')) || '{"docs":{},"folders":{}}');
+}
+function writeIndex(i) { localStorage.setItem(userKey('index'), JSON.stringify(i)); }
+function newId() { return 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2,6); }
+function now()   { return new Date().toISOString(); }
+
+/* ─────────────────────────────────────────────
+   FREEMIUM PLAN / LIMITS
+───────────────────────────────────────────── */
+function getActiveDocCount() {
+  return Object.values(readIndex().docs).filter(d => !d.deleted).length;
+}
+function getActiveFolderCount() {
+  return Object.values(readIndex().folders).filter(f => !f.deleted).length;
+}
+function isProUser() { return !!(currentUser && currentUser.isPro); }
+
+/* Ask the server (Google Sheet, via Apps Script) whether this email has
+   an admin-approved Pro subscription. Falls back to the cached value
+   already in currentUser if the server can't be reached. */
+async function refreshProStatus() {
+  if (!currentUser) return false;
+  const result = await gasCall({ action: 'checkProStatus', email: currentUser.email });
+  if (result && result.status === 'success') {
+    currentUser.isPro = !!result.isPro;
+    currentUser.plan = result.plan || (result.isPro ? 'pro' : 'free');
+    currentUser.planExpiresAt = result.expiresAt || null;
+    localStorage.setItem('pd_session', JSON.stringify(currentUser));
+  }
+  updatePlanPanel();
+  return isProUser();
+}
+
+function updatePlanPanel() {
+  const panel = document.getElementById('planPanel');
+  const tag   = document.getElementById('planTag');
+  const ddItem = document.getElementById('ddUpgradeItem');
+  if (!panel || !currentUser) return;
+
+  const docCount    = getActiveDocCount();
+  const folderCount = getActiveFolderCount();
+
+  if (isProUser()) {
+    tag.textContent = 'PRO'; tag.classList.add('pro');
+    if (ddItem) ddItem.style.display = 'none';
+    const exp = currentUser.planExpiresAt
+      ? new Date(currentUser.planExpiresAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+      : null;
+    panel.innerHTML = `
+      <div class="plan-panel-title">Plan <span class="plan-pill pro">PRO</span></div>
+      <div class="usage-row"><span>Unlimited documents & folders</span></div>
+      ${exp ? `<div class="plan-expiry">Active until ${exp}</div>` : ''}`;
+  } else {
+    tag.textContent = 'FREE'; tag.classList.remove('pro');
+    if (ddItem) ddItem.style.display = 'flex';
+    const docPct    = Math.min(100, (docCount / FREE_MAX_DOCS) * 100);
+    const folderPct = Math.min(100, (folderCount / FREE_MAX_FOLDERS) * 100);
+    panel.innerHTML = `
+      <div class="plan-panel-title">Plan <span class="plan-pill free">FREE</span></div>
+      <div class="usage-row"><span>Documents</span><span>${docCount}/${FREE_MAX_DOCS}</span></div>
+      <div class="usage-bar"><div class="usage-fill ${docCount>=FREE_MAX_DOCS?'full':''}" style="width:${docPct}%"></div></div>
+      <div class="usage-row"><span>Folders</span><span>${folderCount}/${FREE_MAX_FOLDERS}</span></div>
+      <div class="usage-bar"><div class="usage-fill ${folderCount>=FREE_MAX_FOLDERS?'full':''}" style="width:${folderPct}%"></div></div>
+      <button class="plan-upgrade-btn" onclick="openUpgradeModal()">✨ Upgrade to Pro</button>`;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   MODALS
+───────────────────────────────────────────── */
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  setTimeout(() => { const inp = document.querySelector('#'+id+' input[type="text"]'); if(inp){inp.value='';inp.focus();} }, 50);
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); });
+});
+
+function openCreateDocModal() {
+  if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents.`);
+    return;
+  }
+  openModal('createDocModal');
+}
+function openCreateFolderModal(parent = null) {
+  if (!isProUser() && getActiveFolderCount() >= FREE_MAX_FOLDERS) {
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_FOLDERS} folder.`);
+    return;
+  }
+  window._pendingFolderParent = parent;
+  openModal('createFolderModal');
+}
+
+function confirmCreateDoc() {
+  // Defense in depth: re-check the limit at confirm time too.
+  if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
+    closeModal('createDocModal');
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents.`);
+    return;
+  }
+  const title = document.getElementById('docNameInput').value.trim() || 'Untitled Document';
+  const idx = readIndex(), id = newId();
+  idx.docs[id] = { id, title, folder: currentFolder, starred: false, deleted: false, createdAt: now(), updatedAt: now() };
+  writeIndex(idx);
+  // Document content stored under user-scoped key
+  localStorage.setItem(userDocDataKey(id), JSON.stringify({ pages: [], versions: [], design: [] }));
+  closeModal('createDocModal');
+  render(); logActivity('create_doc');
+  setStatus('Document "' + title + '" created.');
+}
+
+function confirmCreateFolder() {
+  if (!isProUser() && getActiveFolderCount() >= FREE_MAX_FOLDERS) {
+    closeModal('createFolderModal');
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_FOLDERS} folder.`);
+    return;
+  }
+  const name = document.getElementById('folderNameInput').value.trim();
+  if (!name) return;
+  const idx = readIndex(), id = newId();
+  idx.folders[id] = { id, name, parent: window._pendingFolderParent || currentFolder, deleted: false };
+  writeIndex(idx);
+  closeModal('createFolderModal'); renderFolders(); updatePlanPanel();
+  setStatus('Folder "' + name + '" created.');
+}
+
+function openRenameModal(id) {
+  const idx = readIndex();
+  document.getElementById('renameDocId').value = id;
+  document.getElementById('renameInput').value  = idx.docs[id].title;
+  openModal('renameModal');
+  setTimeout(() => document.getElementById('renameInput').focus(), 60);
+}
+function confirmRename() {
+  const id = document.getElementById('renameDocId').value;
+  const newName = document.getElementById('renameInput').value.trim();
+  if (!newName) return;
+  const idx = readIndex();
+  idx.docs[id].title = newName;
+  writeIndex(idx); closeModal('renameModal'); render();
+  setStatus('Document renamed.');
+}
+
+function openDoc(id) {
+  const idx = readIndex();
+  if (!idx.docs[id]) return;
+  idx.docs[id].updatedAt = now();
+  writeIndex(idx); logActivity('open_doc');
+  // Tell the editor which user is active so it reads the right doc key
+  sessionStorage.setItem('pd_active_user', currentUser.email);
+  location.href = 'document-editor.html?id=' + encodeURIComponent(id);
+}
+
+/* ─────────────────────────────────────────────
+   FOLDERS / FILTER / VIEW
+───────────────────────────────────────────── */
+function renderFolders() {
+  const idx = readIndex(), container = document.getElementById('folderTree');
+  container.innerHTML = '';
+  function build(parent, el) {
+    Object.values(idx.folders).filter(f => f.parent === parent && !f.deleted).forEach(f => {
+      const div = document.createElement('div');
+      div.innerHTML = `<div class="folder-item ${currentFolder===f.id?'active':''}" onclick="openFolder('${f.id}')">📁 ${f.name}</div>`;
+      const ce = document.createElement('div'); ce.className='folder-children';
+      div.appendChild(ce); el.appendChild(div); build(f.id, ce);
+    });
+  }
+  build(null, container);
+}
+function openFolder(id) {
+  currentFolder=id; currentFilter='folder';
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  render(); renderFolders();
+}
+function setFilter(f) {
+  currentFilter=f; currentFolder=null;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const el=document.getElementById('nav-'+f); if(el) el.classList.add('active');
+  render();
+}
+function setView(v) {
+  currentView=v;
+  document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  render();
+}
+
+/* ─────────────────────────────────────────────
+   DOC ACTIONS
+───────────────────────────────────────────── */
+function toggleStar(id) {
+  const idx=readIndex(); idx.docs[id].starred=!idx.docs[id].starred; writeIndex(idx); render();
+}
+function trashDoc(id) {
+  const idx=readIndex(); idx.docs[id].deleted=true; writeIndex(idx); render();
+  setStatus('Document moved to Trash.');
+}
+function restoreDoc(id) {
+  if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents. Upgrade to restore this one.`);
+    return;
+  }
+  const idx=readIndex(); idx.docs[id].deleted=false; writeIndex(idx); render();
+  setStatus('Document restored.');
+}
+function deletePermanent(id) {
+  if (!confirm('Permanently delete this document? This cannot be undone.')) return;
+  const idx=readIndex(); delete idx.docs[id];
+  localStorage.removeItem(userDocDataKey(id));
+  writeIndex(idx); render(); setStatus('Document permanently deleted.');
+}
+function emptyTrash() {
+  if (!confirm('Empty entire Trash? All deleted documents will be permanently removed.')) return;
+  const idx=readIndex();
+  Object.keys(idx.docs).forEach(id => {
+    if (idx.docs[id].deleted) { delete idx.docs[id]; localStorage.removeItem(userDocDataKey(id)); }
+  });
+  writeIndex(idx); render(); setStatus('Trash emptied.');
+}
+function moveDoc(id) {
+  const idx=readIndex(), folders=Object.values(idx.folders).filter(f=>!f.deleted);
+  if (!folders.length) return alert('No folders exist. Create a folder first.');
+  const choice=prompt(`Move to folder:\n${folders.map((f,i)=>`${i+1}. ${f.name}`).join('\n')}\n\nEnter number, or 0 for root:`);
+  if (choice===null) return;
+  const num=parseInt(choice);
+  if (num===0) idx.docs[id].folder=null;
+  else if (num>=1 && num<=folders.length) idx.docs[id].folder=folders[num-1].id;
+  writeIndex(idx); render();
+}
+
+/* ─────────────────────────────────────────────
+   UPGRADE / PAYMENT FLOW
+───────────────────────────────────────────── */
+function openUpgradeModal(reason) {
+  closeUserDropdown();
+  const reasonEl = document.getElementById('upgradeReason');
+  if (reason) { reasonEl.textContent = '🔒 ' + reason; reasonEl.style.display = 'block'; }
+  else        { reasonEl.style.display = 'none'; }
+
+  document.getElementById('upgradeStatus').className = 'up-status';
+  document.getElementById('upgradeStatus').textContent = '';
+  const payBtn = document.getElementById('upPayBtn');
+  payBtn.disabled = false;
+  payBtn.textContent = "I've paid via GPay / UPI";
+
+  selectUpgradePlan('monthly');
+  openModal('upgradeModal');
+}
+
+function selectUpgradePlan(type) {
+  selectedUpgradeBilling = type;
+  document.getElementById('upMonthlyBtn').classList.toggle('active', type==='monthly');
+  document.getElementById('upYearlyBtn').classList.toggle('active', type==='yearly');
+  document.getElementById('upPrice').textContent = PRO_PLANS[type].label;
+
+  const upi = `upi://pay?pa=${encodeURIComponent(UPI_VPA)}&pn=${encodeURIComponent(UPI_PAYEE_NAME)}&am=${PRO_PLANS[type].price}&cu=INR`;
+  document.getElementById('upUpiLink').href = upi;
+  document.getElementById('upQrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upi)}`;
+}
+
+async function submitUpgradePayment() {
+  if (!currentUser) return;
+  const statusEl = document.getElementById('upgradeStatus');
+  const btn = document.getElementById('upPayBtn');
+
+  btn.disabled = true; btn.textContent = 'Submitting…';
+  statusEl.className = 'up-status show info';
+  statusEl.textContent = 'Submitting your payment for review…';
+
+  const result = await gasCall({
+    action: 'submitPayment',
+    email: currentUser.email,
+    name: currentUser.name || '',
+    plan: 'pro',
+    billing: selectedUpgradeBilling,
+    method: 'gpay'
+  });
+
+  if (result && result.status === 'success') {
+    btn.textContent = 'Payment submitted';
+    statusEl.className = 'up-status show success';
+    statusEl.textContent = "✔️ Submitted! You'll get Pro access once an admin approves your payment.";
+  } else {
+    btn.disabled = false; btn.textContent = "I've paid via GPay / UPI";
+    statusEl.className = 'up-status show error';
+    statusEl.textContent = 'Could not reach the server. Please check your connection and try again.';
+  }
+}
+
+async function checkApprovalStatus() {
+  const statusEl = document.getElementById('upgradeStatus');
+  statusEl.className = 'up-status show info';
+  statusEl.textContent = 'Checking approval status…';
+
+  const proNow = await refreshProStatus();
+  if (proNow) {
+    statusEl.className = 'up-status show success';
+    statusEl.textContent = "🎉 You're now on Pro! Closing…";
+    setTimeout(() => { closeModal('upgradeModal'); render(); }, 1200);
+  } else {
+    statusEl.className = 'up-status show info';
+    statusEl.textContent = 'Still pending admin approval. Please check back later.';
+  }
+}
+
+/* ─────────────────────────────────────────────
+   STATUS / DATE
+───────────────────────────────────────────── */
+function setStatus(msg) {
+  document.getElementById('statusText').textContent=msg;
+  setTimeout(()=>document.getElementById('statusText').textContent='Ready', 3000);
+}
+function formatDate(iso) {
+  const d=new Date(iso), n=new Date(), diff=n-d;
+  if (diff<60000)    return 'Just now';
+  if (diff<3600000)  return Math.floor(diff/60000)+'m ago';
+  if (diff<86400000) return Math.floor(diff/3600000)+'h ago';
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+
+/* ─────────────────────────────────────────────
+   RENDER
+───────────────────────────────────────────── */
+function render() {
+  const idx=readIndex(), container=document.getElementById('docContainer');
+  const searchQuery=document.getElementById('searchInput').value.toLowerCase();
+  let docs=Object.values(idx.docs);
+  if      (currentFilter==='all')     docs=docs.filter(d=>!d.deleted);
+  else if (currentFilter==='starred') docs=docs.filter(d=>d.starred&&!d.deleted);
+  else if (currentFilter==='recent')  docs=docs.filter(d=>!d.deleted).sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt)).slice(0,20);
+  else if (currentFilter==='trash')   docs=docs.filter(d=>d.deleted);
+  else if (currentFilter==='folder')  docs=docs.filter(d=>d.folder===currentFolder&&!d.deleted);
+  if (searchQuery) docs=docs.filter(d=>d.title.toLowerCase().includes(searchQuery));
+
+  document.getElementById('sectionTitle').textContent={all:'All Documents',starred:'Starred',recent:'Recent',trash:'Trash',folder:'📁 Folder'}[currentFilter]||'Documents';
+  document.getElementById('trashHeader').style.display=currentFilter==='trash'?'flex':'none';
+  const all=Object.values(idx.docs);
+  document.getElementById('badge-all').textContent     = all.filter(d=>!d.deleted).length;
+  document.getElementById('badge-starred').textContent = all.filter(d=>d.starred&&!d.deleted).length;
+  document.getElementById('badge-trash').textContent   = all.filter(d=>d.deleted).length;
+  document.getElementById('docCount').textContent      = docs.length+' item'+(docs.length!==1?'s':'');
+
+  if (!docs.length) {
+    container.innerHTML=`
+      <div class="empty-state">
+        <div class="empty-icon">📄</div>
+        <div class="empty-title">${searchQuery?'No results found':'Nothing here'}</div>
+        <div class="empty-sub">${searchQuery?'Try a different search term.':currentFilter==='trash'?'Trash is empty.':'Create a new document to get started.'}</div>
+      </div>`;
+    renderFolders(); updatePlanPanel(); return;
+  }
+
+  if (currentView==='grid') {
+    container.innerHTML=''; container.className='doc-grid';
+    docs.forEach(d=>{
+      const el=document.createElement('div'); el.className='doc-card';
+      el.innerHTML=`
+        <button class="star-btn ${d.starred?'on':''}" onclick="event.stopPropagation();toggleStar('${d.id}')" title="${d.starred?'Unstar':'Star'}">★</button>
+        <div class="doc-card-preview" onclick="openDoc('${d.id}')">
+          <div class="doc-lines"><div class="doc-line"></div><div class="doc-line"></div><div class="doc-line"></div></div>
+        </div>
+        <div class="doc-card-body" onclick="openDoc('${d.id}')">
+          <div class="doc-card-title" title="${d.title}">${d.title}</div>
+          <div class="doc-card-meta">Modified ${formatDate(d.updatedAt)}</div>
+        </div>
+        <div class="doc-card-actions">
+          <button class="doc-action-btn" onclick="openDoc('${d.id}')">Open</button>
+          <button class="doc-action-btn" onclick="openRenameModal('${d.id}')">Rename</button>
+          <button class="doc-action-btn" onclick="moveDoc('${d.id}')">Move</button>
+          ${currentFilter==='trash'
+            ?`<button class="doc-action-btn" onclick="restoreDoc('${d.id}')">Restore</button>
+              <button class="doc-action-btn danger" onclick="deletePermanent('${d.id}')">Delete</button>`
+            :`<button class="doc-action-btn danger" onclick="trashDoc('${d.id}')">Trash</button>`}
+        </div>`;
+      container.appendChild(el);
+    });
+  } else {
+    container.innerHTML=''; container.className='doc-list';
+    docs.forEach(d=>{
+      const el=document.createElement('div'); el.className='doc-list-item';
+      el.innerHTML=`
+        <div class="doc-list-icon">📄</div>
+        <div class="doc-list-info" onclick="openDoc('${d.id}')">
+          <div class="doc-list-title">${d.title}</div>
+          <div class="doc-list-meta">Modified ${formatDate(d.updatedAt)} · Created ${formatDate(d.createdAt)}</div>
+        </div>
+        <div class="doc-list-actions">
+          <button class="doc-action-btn" onclick="event.stopPropagation();toggleStar('${d.id}')">${d.starred?'⭐':'☆'}</button>
+          <button class="doc-action-btn" onclick="event.stopPropagation();openDoc('${d.id}')">Open</button>
+          <button class="doc-action-btn" onclick="event.stopPropagation();openRenameModal('${d.id}')">Rename</button>
+          <button class="doc-action-btn" onclick="event.stopPropagation();moveDoc('${d.id}')">Move</button>
+          ${currentFilter==='trash'
+            ?`<button class="doc-action-btn" onclick="event.stopPropagation();restoreDoc('${d.id}')">Restore</button>
+              <button class="doc-action-btn danger" onclick="event.stopPropagation();deletePermanent('${d.id}')">Delete</button>`
+            :`<button class="doc-action-btn danger" onclick="event.stopPropagation();trashDoc('${d.id}')">Trash</button>`}
+        </div>`;
+      container.appendChild(el);
+    });
+  }
+  renderFolders();
+  updatePlanPanel();
+}
+</script>
+<script>
+
+if ("serviceWorker" in navigator) {
+
+window.addEventListener("load",()=>{
+
+navigator.serviceWorker.register("sw.js")
+.then(()=>{
+console.log("PWA Ready");
+});
+
+});
+
+}
+
+
+let deferredPrompt;
+
+const installBtn = document.getElementById("installBtn");
+
+
+window.addEventListener("beforeinstallprompt",(e)=>{
+
+e.preventDefault();
+
+deferredPrompt=e;
+
+installBtn.style.display="flex";
+
+
+});
+
+
+installBtn.addEventListener("click",async()=>{
+
+if(!deferredPrompt) return;
+
+
+deferredPrompt.prompt();
+
+
+const result = await deferredPrompt.userChoice;
+
+
+console.log(result.outcome);
+
+
+deferredPrompt=null;
+
+
+installBtn.style.display="none";
+
+
+});
+
+
+</script>
+</body>
+</html>
