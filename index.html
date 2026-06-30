@@ -21,8 +21,9 @@ content="Pro Document is an intelligent workspace to create, manage and organize
 
 *{
 box-sizing:border-box;
-font-family:Arial, sans-serif;
+font-family:Arial,sans-serif;
 }
+
 
 body{
 
@@ -100,6 +101,7 @@ color:#64748b;
 
 
 
+
 .btn{
 
 padding:15px 28px;
@@ -112,6 +114,7 @@ font-weight:bold;
 }
 
 
+
 .primary{
 
 background:#2563eb;
@@ -120,12 +123,14 @@ color:white;
 }
 
 
+
 .secondary{
 
 border:2px solid #2563eb;
 color:#2563eb;
 
 }
+
 
 
 
@@ -152,11 +157,13 @@ border-radius:10px;
 
 
 
+
 section{
 
 padding:60px 8%;
 
 }
+
 
 
 
@@ -181,6 +188,7 @@ gap:25px;
 
 
 
+
 .card{
 
 background:white;
@@ -192,11 +200,14 @@ box-shadow:0 10px 30px #ddd;
 }
 
 
+
+
 .card h2{
 
 color:#2563eb;
 
 }
+
 
 
 
@@ -211,6 +222,8 @@ text-align:center;
 
 
 
+
+
 .pro-card{
 
 background:#1f2937;
@@ -222,6 +235,9 @@ border-radius:20px;
 }
 
 
+
+
+
 footer{
 
 background:#020617;
@@ -231,6 +247,33 @@ padding:30px;
 
 }
 
+
+
+
+@media(max-width:800px){
+
+.hero{
+
+flex-direction:column;
+
+}
+
+
+.dashboard-box{
+
+width:100%;
+
+}
+
+
+nav{
+
+flex-direction:column;
+gap:15px;
+
+}
+
+}
 
 
 </style>
@@ -246,32 +289,41 @@ padding:30px;
 
 <nav>
 
+
 <div class="logo">
+
 📄 Pro Document
+
 </div>
 
 
+
 <div>
+
 
 <a href="#features">
 Features
 </a>
 
 
-<a href="https://newton-web-ux.github.io/pro-note1-app/">
+
+<a href="dashboard.html">
 Dashboard
 </a>
 
 
-<a href="https://newton-web-ux.github.io/pro-note1-app/document-editor.html">
+
+<a href="document-editor.html">
 Document Editor
 </a>
+
 
 
 </div>
 
 
 </nav>
+
 
 
 
@@ -295,6 +347,7 @@ Document Workspace
 </h1>
 
 
+
 <p>
 
 Pro Document helps you create, organize and manage documents and folders through a powerful digital dashboard.
@@ -302,8 +355,10 @@ Pro Document helps you create, organize and manage documents and folders through
 </p>
 
 
+
+
 <a class="btn primary"
-href="https://newton-web-ux.github.io/pro-note1-app/">
+href="dashboard.html">
 
 Open Dashboard
 
@@ -311,15 +366,19 @@ Open Dashboard
 
 
 
+
 <a class="btn secondary"
-href="https://newton-web-ux.github.io/pro-note1-app/document-editor.html">
+href="document-editor.html">
 
 Open Editor
 
 </a>
 
 
+
 </div>
+
+
 
 
 
@@ -329,33 +388,56 @@ Open Editor
 
 
 <h2>
+
 Workspace Dashboard
+
 </h2>
 
 
+
+
 <div class="box">
+
 📄 All Documents
+
 </div>
 
 
+
+
 <div class="box">
+
 ⭐ Starred Documents
+
 </div>
 
 
+
+
 <div class="box">
+
 🕒 Recent Files
+
 </div>
 
 
+
+
 <div class="box">
+
 🗑 Trash Management
+
 </div>
+
+
 
 
 <div class="box">
+
 📊 Session History
+
 </div>
+
 
 
 </div>
@@ -375,6 +457,7 @@ Workspace Dashboard
 <section id="features">
 
 
+
 <h1 class="title">
 
 Core Workspace (Free)
@@ -383,14 +466,19 @@ Core Workspace (Free)
 
 
 
+
 <div class="cards">
+
 
 
 <div class="card">
 
 <h2>
+
 📁 Organization
+
 </h2>
+
 
 <p>
 
@@ -398,22 +486,29 @@ View All Documents, Starred files and Recent documents from one dashboard.
 
 </p>
 
+
 </div>
+
 
 
 
 
 <div class="card">
 
+
 <h2>
+
 📄 Document Management
+
 </h2>
+
 
 <p>
 
-Create new documents, create folders and rename existing files easily.
+Create documents, create folders and rename existing files easily.
 
 </p>
+
 
 </div>
 
@@ -421,17 +516,23 @@ Create new documents, create folders and rename existing files easily.
 
 
 
+
 <div class="card">
 
+
 <h2>
+
 🗑 Trash System
+
 </h2>
+
 
 <p>
 
-Deleted files stay safely in Trash for 30 days before permanent deletion.
+Deleted files stay safely in Trash before permanent deletion.
 
 </p>
+
 
 </div>
 
@@ -439,11 +540,16 @@ Deleted files stay safely in Trash for 30 days before permanent deletion.
 
 
 
+
 <div class="card">
 
+
 <h2>
+
 📈 Session History
+
 </h2>
+
 
 <p>
 
@@ -451,7 +557,9 @@ Monitor your activity and track workspace usage.
 
 </p>
 
+
 </div>
+
 
 
 
@@ -471,11 +579,14 @@ Monitor your activity and track workspace usage.
 <section class="pro">
 
 
+
 <h1>
 
 ✨ Upgrade to Pro
 
 </h1>
+
+
 
 
 <h2>
@@ -486,12 +597,17 @@ Monitor your activity and track workspace usage.
 
 
 
+
+
 <div class="pro-card">
 
 
 <h2>
+
 Unlimited Workspace
+
 </h2>
+
 
 
 <p>
@@ -511,13 +627,17 @@ Unlimited Workspace
 
 
 
+
+
 <div class="pro-card">
 
 
 <h2>
+
 Advanced Export
 
 </h2>
+
 
 
 <p>
@@ -531,7 +651,10 @@ Advanced Export
 </p>
 
 
+
 </div>
+
+
 
 
 
@@ -541,9 +664,11 @@ Advanced Export
 
 
 <h2>
+
 Version Control
 
 </h2>
+
 
 
 <p>
@@ -552,7 +677,7 @@ Version Control
 
 <br>
 
-✔ Restore previous document versions
+✔ Restore previous versions
 
 </p>
 
@@ -563,13 +688,16 @@ Version Control
 
 
 
+
 <div class="pro-card">
 
 
 <h2>
+
 Priority Sync
 
 </h2>
+
 
 
 <p>
@@ -579,18 +707,22 @@ Faster cloud updates and improved performance.
 </p>
 
 
+
 </div>
 
 
 
 <p>
 
-Pro activation requires manual verification and is normally completed within a few hours after payment review.
+Pro activation requires manual verification after payment review.
 
 </p>
 
 
+
 </section>
+
+
 
 
 
@@ -608,16 +740,18 @@ Start Creating Today
 </h1>
 
 
+
 <center>
 
 
-<a class="btn primary"
 
-href="https://newton-web-ux.github.io/pro-note1-app/">
+<a class="btn primary"
+href="document-editor.html">
 
 Launch Pro Document
 
 </a>
+
 
 
 </center>
@@ -630,13 +764,19 @@ Launch Pro Document
 
 
 
+
+
 <footer>
+
 
 © 2026 Pro Document
 
+
 <br><br>
 
+
 Privacy Policy | Terms | Contact
+
 
 </footer>
 
