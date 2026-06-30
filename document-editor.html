@@ -1146,6 +1146,21 @@ let currentUser = null;
 })();
 function currentEmail() { return currentUser ? currentUser.email : 'guest'; }
 
+// Mirrors the dashboard's userKey() sanitization so we can read its
+// localStorage index (pd.<sanitized-email>.index) and pick up the title
+// the user typed in the "New Document" modal, even before this document
+// has ever been saved to Drive.
+function dashboardIndexKey() {
+  const uid = currentUser ? currentUser.email.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'guest';
+  return 'pd.' + uid + '.index';
+}
+function getDashboardTitle(id) {
+  try {
+    const idx = JSON.parse(localStorage.getItem(dashboardIndexKey()) || '{"docs":{}}');
+    return (idx.docs && idx.docs[id] && idx.docs[id].title) ? idx.docs[id].title : null;
+  } catch(e) { return null; }
+}
+
 // ── Status ──
 function setStatus(msg) {
   document.getElementById('statusText').textContent = msg;
@@ -1207,6 +1222,12 @@ function loadDocument() {
     document.getElementById('docTitleDisplay').textContent = '— New Document';
     return addPage();
   }
+  // Show the name the user actually gave it (from the dashboard's "New
+  // Document" modal) right away, instead of a generic placeholder, while
+  // we check whether a saved copy already exists in Drive.
+  const dashboardTitle = getDashboardTitle(docId);
+  document.getElementById('docTitleDisplay').textContent = '— ' + (dashboardTitle || 'New Document');
+
   fetch(GAS_URL, {
     method: "POST",
     body: JSON.stringify({ action: "load", id: docId, email: currentEmail() })
@@ -1241,12 +1262,13 @@ function loadDocument() {
       if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
       setStatus("Complete document loaded ☁️");
     } else {
-      document.getElementById('docTitleDisplay').textContent = '— New Document';
+      document.getElementById('docTitleDisplay').textContent = '— ' + (dashboardTitle || 'New Document');
       addPage();
     }
   })
   .catch(() => {
     setStatus("Could not reach Google Drive — starting blank.");
+    document.getElementById('docTitleDisplay').textContent = '— ' + (dashboardTitle || 'New Document');
     addPage();
   });
 }
