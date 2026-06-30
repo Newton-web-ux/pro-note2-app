@@ -8,6 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <style>
@@ -604,6 +605,7 @@ img.draggable.img-selected { outline: 1.5px dashed var(--accent); outline-offset
     <button class="hdr-btn" onclick="saveVersion()">💾 Save Version</button>
     <button class="hdr-btn" onclick="exportPDF()">📄 Export PDF</button>
     <button class="hdr-btn" onclick="exportPNG()">🖼 Export PNG</button>
+    <button class="hdr-btn" onclick="exportPPT()">📊 Export PPT</button>
     <button class="hdr-btn primary" onclick="saveDocument()">💾 Save</button>
     <button class="hdr-btn" onclick="goDashboard()">🏠 Dashboard</button>
   </div>
@@ -931,6 +933,12 @@ img.draggable.img-selected { outline: 1.5px dashed var(--accent); outline-offset
       <input class="tb-input" type="number" id="slideDuration" value="3" min="1" max="60" style="width:54px;">
     </div>
     <div class="ribbon-group-label">Timing</div>
+  </div>
+  <div class="ribbon-group">
+    <div class="ribbon-group-row">
+      <button class="tb-btn" onclick="exportPPT()"><span class="tb-icon">📊</span> Export PPT</button>
+    </div>
+    <div class="ribbon-group-label">Export</div>
   </div>
 </div>
 
@@ -1772,6 +1780,40 @@ async function exportPNG() {
   }
   setStatus('PNG exported.');
 }
+async function exportPPT() {
+  if (!pages.length) return setStatus('Nothing to export.');
+  if (typeof PptxGenJS === 'undefined') return setStatus('PPT export library failed to load. Check your connection.');
+  setStatus('Generating PPT...');
+  const pptx = new PptxGenJS();
+  // 13.33in x 7.5in widescreen, matched to each page's own aspect ratio
+  pptx.defineLayout({ name: 'PD_WIDE', width: 13.33, height: 7.5 });
+  pptx.layout = 'PD_WIDE';
+
+  for (let i = 0; i < pages.length; i++) {
+    const page = pages[i];
+    const prevDisplay = page.style.display;
+    page.style.display = 'block';
+    const canvas = await html2canvas(page, { scale: 2, useCORS: true });
+    page.style.display = prevDisplay;
+
+    const imgData = canvas.toDataURL('image/png');
+    const slide = pptx.addSlide();
+    // Fit the page snapshot to the slide while preserving its aspect ratio,
+    // centered, so portrait pages don't get stretched into widescreen.
+    const slideW = 13.33, slideH = 7.5;
+    const pageRatio = canvas.width / canvas.height;
+    const slideRatio = slideW / slideH;
+    let w, h;
+    if (pageRatio > slideRatio) { w = slideW; h = slideW / pageRatio; }
+    else { h = slideH; w = slideH * pageRatio; }
+    const x = (slideW - w) / 2, y = (slideH - h) / 2;
+    slide.addImage({ data: imgData, x, y, w, h });
+  }
+
+  const title = document.getElementById('docTitleDisplay').textContent.replace(/^—\s*/, '').trim() || 'document';
+  await pptx.writeFile({ fileName: `${title}.pptx` });
+  setStatus('PPT exported.');
+}
 
 // ── Dashboard ──
 function goDashboard() {
@@ -1785,33 +1827,59 @@ function goDashboard() {
 function startFromBeginning() { slideshowIndex = 0; launchSlideshow(); }
 function startFromCurrent() { slideshowIndex = currentPage; launchSlideshow(); }
 function launchSlideshow() {
+  if (!pages.length) return setStatus('No pages to present.');
   const overlay = document.getElementById('slideshowOverlay');
   overlay.classList.add('active');
   showSlide(slideshowIndex);
-  const dur = (parseInt(document.getElementById('slideDuration').value) || 3) * 1000;
-  if (slideshowInterval) clearInterval(slideshowInterval);
+  restartSlideshowTimer();
+}
+function restartSlideshowTimer() {
+  if (slideshowInterval) { clearInterval(slideshowInterval); slideshowInterval = null; }
+  const durInput = document.getElementById('slideDuration');
+  const dur = (parseInt(durInput && durInput.value) || 3) * 1000;
   slideshowInterval = setInterval(() => {
-    slideshowIndex++;
-    if (slideshowIndex >= pages.length) slideshowIndex = 0;
+    slideshowIndex = (slideshowIndex + 1) % pages.length;
     showSlide(slideshowIndex);
   }, dur);
 }
 function showSlide(i) {
-  document.getElementById('slideshowSlide').innerHTML = pages[i].innerHTML;
-  document.getElementById('slideshowCounter').textContent = `${i + 1} / ${pages.length}`;
+  if (!pages.length) return;
+  slideshowIndex = ((i % pages.length) + pages.length) % pages.length;
+  const page = pages[slideshowIndex];
+  const slideEl = document.getElementById('slideshowSlide');
+  slideEl.innerHTML = page.innerHTML;
+  // Carry over the page's own look (background/template/font/etc.) so the
+  // slideshow preview matches what's actually on the page, not plain white.
+  slideEl.style.background = page.style.background || '#ffffff';
+  slideEl.style.backgroundImage = page.style.backgroundImage || 'none';
+  slideEl.style.backgroundSize = page.style.backgroundSize || '';
+  slideEl.style.color = page.style.color || '#000';
+  slideEl.style.fontFamily = page.style.fontFamily || '';
+  slideEl.style.lineHeight = page.style.lineHeight || '';
+  document.getElementById('slideshowCounter').textContent = `${slideshowIndex + 1} / ${pages.length}`;
 }
-function prevSlide() { slideshowIndex = (slideshowIndex - 1 + pages.length) % pages.length; showSlide(slideshowIndex); }
-function nextSlide() { slideshowIndex = (slideshowIndex + 1) % pages.length; showSlide(slideshowIndex); }
+function prevSlide() {
+  if (!pages.length) return;
+  showSlide(slideshowIndex - 1);
+  // Manual navigation resets the autoplay countdown so it doesn't fire
+  // again right after the user just changed slides.
+  if (slideshowInterval) restartSlideshowTimer();
+}
+function nextSlide() {
+  if (!pages.length) return;
+  showSlide(slideshowIndex + 1);
+  if (slideshowInterval) restartSlideshowTimer();
+}
 function stopSlideshow() {
-  clearInterval(slideshowInterval);
-  slideshowInterval = null;
+  if (slideshowInterval) { clearInterval(slideshowInterval); slideshowInterval = null; }
   document.getElementById('slideshowOverlay').classList.remove('active');
+  document.getElementById('slideshowSlide').innerHTML = '';
 }
 document.addEventListener('keydown', e => {
   const overlay = document.getElementById('slideshowOverlay');
   if (!overlay.classList.contains('active')) return;
-  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
-  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); nextSlide(); }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); prevSlide(); }
   if (e.key === 'Escape') stopSlideshow();
 });
 
