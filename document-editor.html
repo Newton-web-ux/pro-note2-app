@@ -166,6 +166,7 @@ body {
 }
 .tb-btn:hover { background: var(--accent-light); border-color: #b8cef0; color: var(--accent); }
 .tb-btn:active { background: #c0d8f5; }
+.tb-btn.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
 .tb-btn .tb-icon { font-size: 17px; line-height: 1; }
 .tb-btn .tb-icon.text { font-size: 13px; font-weight: 700; font-family: 'Segoe UI', sans-serif; height: 17px; display: flex; align-items: center; }
 .tb-btn.small { flex-direction: row; gap: 4px; min-width: auto; font-size: 11px; padding: 4px 7px; }
@@ -338,6 +339,21 @@ body {
 .page td, .page th { border: 1px solid #999; padding: 5px 8px; }
 .page th { background: #f0f4ff; font-weight: 600; }
 img.draggable { position: absolute; cursor: move; max-width: 90%; }
+
+/* ── Image resize corner handles (Word-style) ── */
+.img-handle {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  background: var(--accent);
+  border: 1.5px solid white;
+  border-radius: 2px;
+  box-shadow: 0 0 2px rgba(0,0,0,0.4);
+  z-index: 500;
+}
+.img-handle[data-corner="nw"], .img-handle[data-corner="se"] { cursor: nwse-resize; }
+.img-handle[data-corner="ne"], .img-handle[data-corner="sw"] { cursor: nesw-resize; }
+img.draggable.img-selected { outline: 1.5px dashed var(--accent); outline-offset: 1px; }
 
 /* ── Status Bar ── */
 .status-bar {
@@ -597,6 +613,7 @@ img.draggable { position: absolute; cursor: move; max-width: 90%; }
 <div class="ribbon-tabs">
   <button class="tab-btn active" data-tab="home" onclick="switchTab('home')">Home</button>
   <button class="tab-btn" data-tab="insert" onclick="switchTab('insert')">Insert</button>
+  <button class="tab-btn" data-tab="draw" onclick="switchTab('draw')">Draw</button>
   <button class="tab-btn" data-tab="design" onclick="switchTab('design')">Design</button>
   <button class="tab-btn" data-tab="slideshow" onclick="switchTab('slideshow')">Slideshow</button>
   <button class="tab-btn" data-tab="version" onclick="switchTab('version')">History</button>
@@ -769,6 +786,40 @@ img.draggable { position: absolute; cursor: move; max-width: 90%; }
       <button class="tb-btn" onclick="openStudioPanel('charts')"><span class="tb-icon">📊</span> Chart</button>
     </div>
     <div class="ribbon-group-label">Visuals</div>
+  </div>
+</div>
+
+<!-- Draw Toolbar -->
+<div id="draw" class="ribbon-toolbar">
+  <div class="ribbon-group">
+    <div class="ribbon-group-row">
+      <button class="tb-btn small" id="drawToggleBtn" onclick="toggleDrawMode()">
+        <span class="tb-icon">✏️</span> Draw Mode: Off
+      </button>
+    </div>
+    <div class="ribbon-group-label">Mode</div>
+  </div>
+  <div class="ribbon-group">
+    <div class="ribbon-group-row">
+      <button class="tb-btn small" data-draw-tool="pen" onclick="setDrawTool('pen')" title="Pen"><span class="tb-icon">🖊</span> Pen</button>
+      <button class="tb-btn small" data-draw-tool="highlighter" onclick="setDrawTool('highlighter')" title="Highlighter"><span class="tb-icon">🖍</span> Highlighter</button>
+      <button class="tb-btn small" data-draw-tool="eraser" onclick="setDrawTool('eraser')" title="Eraser"><span class="tb-icon">🧽</span> Eraser</button>
+    </div>
+    <div class="ribbon-group-label">Tools</div>
+  </div>
+  <div class="ribbon-group">
+    <div class="ribbon-group-row">
+      <input class="tb-color" type="color" id="drawColorPicker" value="#e63946" onchange="setDrawColor(this.value)" title="Pen / highlighter color">
+      <input class="tb-input" type="number" id="drawSizePicker" value="3" min="1" max="60" style="width:50px;" onchange="setDrawSize(this.value)" title="Stroke size">
+    </div>
+    <div class="ribbon-group-label">Style</div>
+  </div>
+  <div class="ribbon-group">
+    <div class="ribbon-group-row">
+      <button class="tb-btn small" onclick="clearDrawingCanvas()" title="Clear current strokes"><span class="tb-icon">🗑</span> Clear</button>
+      <button class="tb-btn small" onclick="finishDrawing()" title="Stop drawing and insert as an image"><span class="tb-icon">✔</span> Done</button>
+    </div>
+    <div class="ribbon-group-label">Actions</div>
   </div>
 </div>
 
@@ -1109,6 +1160,8 @@ function switchTab(tab) {
   if (tb) tb.classList.add('active');
   const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
   if (btn) btn.classList.add('active');
+  // Leaving the Draw tab while actively drawing finalizes the stroke layer.
+  if (tab !== 'draw' && drawState.active) toggleDrawMode();
 }
 
 // ── Find / Replace ──
@@ -1407,7 +1460,7 @@ function insertImage() {
       pages[currentPage].appendChild(img);
       selectedImage = img;
       makeDraggableResizable(img);
-      setStatus('Image inserted. Drag to reposition.');
+      setStatus('Image inserted. Drag to reposition, or drag a corner handle to resize.');
     };
     reader.readAsDataURL(file);
   };
@@ -1417,17 +1470,21 @@ function deleteSelectedImage() {
   if (selectedImage && selectedImage.parentNode) {
     selectedImage.parentNode.removeChild(selectedImage);
     selectedImage = null;
+    clearImageHandles();
     setStatus('Image deleted.');
   }
 }
+
+/* ── Drag (interact.js) + Word-style corner-handle resize ── */
 function makeDraggableResizable(el) {
+  el.style.height = el.style.height || (el.offsetHeight ? el.offsetHeight + 'px' : 'auto');
   interact(el).draggable({
     modifiers: [interact.modifiers.restrictRect({ restriction: 'parent' })],
     listeners: { move: dragMoveListener }
-  }).resizable({
-    edges: { left: true, right: true, bottom: true, top: true },
-    listeners: { move: resizeMoveListener }
-  }).on('click', () => selectedImage = el);
+  }).on('click', e => {
+    e.stopPropagation();
+    selectImage(el);
+  });
 }
 function dragMoveListener(event) {
   const t = event.target;
@@ -1435,20 +1492,95 @@ function dragMoveListener(event) {
   const y = (parseFloat(t.getAttribute('data-y')) || 0) + event.dy;
   t.style.transform = `translate(${x}px,${y}px)`;
   t.setAttribute('data-x', x); t.setAttribute('data-y', y);
-}
-function resizeMoveListener(event) {
-  const t = event.target;
-  t.style.width = event.rect.width + 'px';
-  t.style.height = event.rect.height + 'px';
-  const x = (parseFloat(t.getAttribute('data-x')) || 0) + event.deltaRect.left;
-  const y = (parseFloat(t.getAttribute('data-y')) || 0) + event.deltaRect.top;
-  t.style.transform = `translate(${x}px,${y}px)`;
-  t.setAttribute('data-x', x); t.setAttribute('data-y', y);
+  if (selectedImage === t) positionAllHandles();
 }
 
-// Generic helper — drops any image (photo, shape, icon, chart, 3D snapshot) onto
-// the current page as a draggable/resizable element, reusing the same plumbing
-// that powers manual image inserts (and therefore the same save/load handling).
+let activeHandles = [];
+function selectImage(img) {
+  selectedImage = img;
+  document.querySelectorAll('img.draggable').forEach(i => i.classList.remove('img-selected'));
+  img.classList.add('img-selected');
+  showHandlesFor(img);
+}
+function clearImageHandles() {
+  activeHandles.forEach(h => h.remove());
+  activeHandles = [];
+  document.querySelectorAll('img.draggable').forEach(i => i.classList.remove('img-selected'));
+}
+function showHandlesFor(img) {
+  clearImageHandles();
+  img.classList.add('img-selected');
+  ['nw', 'ne', 'sw', 'se'].forEach(corner => {
+    const h = document.createElement('div');
+    h.className = 'img-handle';
+    h.dataset.corner = corner;
+    img.parentNode.appendChild(h);
+    h.addEventListener('mousedown', e => startCornerResize(e, img, corner));
+    activeHandles.push(h);
+  });
+  positionAllHandles();
+}
+function positionAllHandles() {
+  if (!selectedImage) return;
+  const img = selectedImage;
+  const pageRect = img.parentNode.getBoundingClientRect();
+  const rect = img.getBoundingClientRect();
+  activeHandles.forEach(h => {
+    let x, y;
+    const corner = h.dataset.corner;
+    if (corner === 'nw') { x = rect.left; y = rect.top; }
+    else if (corner === 'ne') { x = rect.right; y = rect.top; }
+    else if (corner === 'sw') { x = rect.left; y = rect.bottom; }
+    else { x = rect.right; y = rect.bottom; }
+    h.style.left = (x - pageRect.left - 5.5) + 'px';
+    h.style.top = (y - pageRect.top - 5.5) + 'px';
+  });
+}
+function startCornerResize(e, img, corner) {
+  e.preventDefault();
+  e.stopPropagation();
+  const startX = e.clientX, startY = e.clientY;
+  const startW = img.offsetWidth, startH = img.offsetHeight;
+  const ratio = startW / (startH || 1);
+  const dataX = parseFloat(img.getAttribute('data-x')) || 0;
+  const dataY = parseFloat(img.getAttribute('data-y')) || 0;
+
+  function onMove(ev) {
+    const dx = ev.clientX - startX, dy = ev.clientY - startY;
+    let newW = startW, newDataX = dataX, newDataY = dataY;
+    if (corner === 'se') { newW = startW + dx; }
+    else if (corner === 'sw') { newW = startW - dx; newDataX = dataX + dx; }
+    else if (corner === 'ne') { newW = startW + dx; }
+    else if (corner === 'nw') { newW = startW - dx; newDataX = dataX + dx; }
+    newW = Math.max(24, newW);
+    const newH = newW / ratio;
+    if (corner === 'ne' || corner === 'nw') { newDataY = dataY + (startH - newH); }
+    img.style.width = newW + 'px';
+    img.style.height = newH + 'px';
+    img.style.transform = `translate(${newDataX}px,${newDataY}px)`;
+    img.setAttribute('data-x', newDataX);
+    img.setAttribute('data-y', newDataY);
+    positionAllHandles();
+  }
+  function onUp() {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+// Clicking outside any image deselects it and hides the handles.
+document.addEventListener('mousedown', e => {
+  if (!e.target.closest('img.draggable') && !e.target.classList.contains('img-handle')) {
+    clearImageHandles();
+  }
+});
+window.addEventListener('scroll', () => { if (selectedImage) positionAllHandles(); }, true);
+
+// Generic helper — drops any image (photo, shape, icon, chart, 3D snapshot, ink
+// drawing) onto the current page as a draggable/resizable element, reusing the
+// same plumbing that powers manual image inserts (and therefore the same
+// save/load handling).
 function insertDraggableImage(dataUrl, width = 220) {
   const img = document.createElement('img');
   img.src = dataUrl;
@@ -1760,6 +1892,147 @@ function openGraphPanel() {
   plotFunctions();
 }
 function closeGraphPanel() { document.getElementById('floatingPanel').style.display = 'none'; }
+
+/* ═════════════════════════════════════════════
+   DRAW TAB — Pen / Highlighter / Eraser, with a
+   color picker and size control. Drawing happens
+   on a transparent canvas overlaid on the current
+   page; clicking "Done" (or switching tabs) bakes
+   the strokes into a draggable, corner-resizable
+   image — so ink behaves exactly like any other
+   inserted object and is saved/loaded with the doc.
+═════════════════════════════════════════════ */
+let drawState = { active: false, tool: 'pen', color: '#e63946', size: 3, canvas: null, ctx: null, drawing: false };
+
+function toggleDrawMode() {
+  if (drawState.active) {
+    finishDrawing();
+  } else {
+    drawState.active = true;
+    document.getElementById('drawToggleBtn').innerHTML = '<span class="tb-icon">✏️</span> Draw Mode: On';
+    enableDrawingOnPage();
+  }
+}
+function enableDrawingOnPage() {
+  const page = pages[currentPage];
+  clearImageHandles();
+  page.contentEditable = 'false';
+  const canvas = document.createElement('canvas');
+  canvas.id = 'drawCanvasOverlay';
+  canvas.width = page.offsetWidth;
+  canvas.height = page.offsetHeight;
+  canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;cursor:crosshair;z-index:450;';
+  page.appendChild(canvas);
+  drawState.canvas = canvas;
+  drawState.ctx = canvas.getContext('2d');
+  canvas.addEventListener('mousedown', startStroke);
+  canvas.addEventListener('mousemove', moveStroke);
+  canvas.addEventListener('touchstart', e => { startStroke(touchToMouse(e)); e.preventDefault(); }, { passive: false });
+  canvas.addEventListener('touchmove', e => { moveStroke(touchToMouse(e)); e.preventDefault(); }, { passive: false });
+  window.addEventListener('mouseup', endStroke);
+  window.addEventListener('touchend', endStroke);
+  setStatus('Draw mode on — pick Pen, Highlighter, or Eraser and start drawing.');
+}
+function touchToMouse(e) {
+  const t = e.touches[0] || e.changedTouches[0];
+  return { clientX: t.clientX, clientY: t.clientY };
+}
+function canvasPoint(e) {
+  const rect = drawState.canvas.getBoundingClientRect();
+  const scaleX = drawState.canvas.width / rect.width;
+  const scaleY = drawState.canvas.height / rect.height;
+  return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+}
+function startStroke(e) {
+  if (!drawState.canvas) return;
+  drawState.drawing = true;
+  const ctx = drawState.ctx;
+  const p = canvasPoint(e);
+  ctx.beginPath();
+  ctx.moveTo(p.x, p.y);
+  applyStrokeStyle();
+}
+function moveStroke(e) {
+  if (!drawState.drawing || !drawState.canvas) return;
+  const ctx = drawState.ctx;
+  const p = canvasPoint(e);
+  if (drawState.tool === 'eraser') {
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineWidth = drawState.size * 4;
+    ctx.lineCap = 'round';
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    ctx.restore();
+  } else {
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  }
+}
+function endStroke() {
+  drawState.drawing = false;
+  if (drawState.ctx) drawState.ctx.beginPath();
+}
+function applyStrokeStyle() {
+  const ctx = drawState.ctx;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  if (drawState.tool === 'highlighter') {
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.strokeStyle = drawState.color;
+    ctx.globalAlpha = 0.4;
+    ctx.lineWidth = drawState.size * 5;
+  } else if (drawState.tool === 'eraser') {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineWidth = drawState.size * 4;
+    ctx.globalAlpha = 1;
+  } else {
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = drawState.color;
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = drawState.size;
+  }
+}
+function setDrawTool(tool) {
+  drawState.tool = tool;
+  document.querySelectorAll('[data-draw-tool]').forEach(b => b.classList.toggle('active', b.dataset.drawTool === tool));
+}
+function setDrawColor(c) { drawState.color = c; }
+function setDrawSize(s) { drawState.size = parseInt(s) || 3; }
+function clearDrawingCanvas() {
+  if (drawState.ctx) drawState.ctx.clearRect(0, 0, drawState.canvas.width, drawState.canvas.height);
+}
+function isCanvasBlank(canvas) {
+  const ctx = canvas.getContext('2d');
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  for (let i = 3; i < data.length; i += 4) { if (data[i] !== 0) return false; }
+  return true;
+}
+function finishDrawing() {
+  const page = pages[currentPage];
+  page.contentEditable = 'true';
+  if (drawState.canvas) {
+    if (!isCanvasBlank(drawState.canvas)) {
+      const dataUrl = drawState.canvas.toDataURL('image/png');
+      const w = drawState.canvas.width, h = drawState.canvas.height;
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      img.className = 'draggable';
+      img.style.cssText = `top:0px;left:0px;width:${w}px;height:${h}px;`;
+      page.appendChild(img);
+      makeDraggableResizable(img);
+      setStatus('Drawing inserted as an image. Drag to reposition or resize.');
+    }
+    drawState.canvas.remove();
+    drawState.canvas = null;
+    drawState.ctx = null;
+  }
+  drawState.active = false;
+  const btn = document.getElementById('drawToggleBtn');
+  if (btn) btn.innerHTML = '<span class="tb-icon">✏️</span> Draw Mode: Off';
+}
+// Mark Pen as the default active tool
+setDrawTool('pen');
 
 /* ═════════════════════════════════════════════
    INSERT STUDIO — Shapes (2D + 3D), Icons, Charts
@@ -2130,6 +2403,5 @@ if (location.pathname.endsWith(".html")) {
 }
 </script>
 
-</body>
 </body>
 </html>
