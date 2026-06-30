@@ -1286,7 +1286,7 @@ function openDoc(id) {
   writeIndex(idx); logActivity('open_doc');
   // Tell the editor which user is active so it reads the right doc key
   sessionStorage.setItem('pd_active_user', currentUser.email);
-  location.href = 'editor.html?id=' + encodeURIComponent(id);
+  location.href = 'document-editor.html?id=' + encodeURIComponent(id);
 }
 
 /* ─────────────────────────────────────────────
