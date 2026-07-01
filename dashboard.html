@@ -1597,9 +1597,9 @@ installBtn.style.display="none";
 
 </script>
 <script>
-if (location.pathname.endsWith(".html")) {
-  const cleanURL = location.pathname.replace(".html", "");
-  history.replaceState(null, "", cleanURL);
+if (window.location.pathname.endsWith(".html")) {
+    const newURL = window.location.pathname.replace(".html", "");
+    window.history.replaceState(null, "", newURL);
 }
 </script>
 </body>
