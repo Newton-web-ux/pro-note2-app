@@ -4,24 +4,22 @@
 <head>
 
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-
 <title>
-Pro Document - Intelligent Workspace for Documents
+Pro Document - Intelligent Workspace
 </title>
 
 
 <meta name="description"
-content="Pro Document is an intelligent workspace to create, manage and organize documents and folders with advanced Pro features.">
+content="Pro Document is an intelligent workspace to create, organize and manage documents with powerful tools.">
 
 
 <style>
 
 *{
 box-sizing:border-box;
-font-family:Arial,sans-serif;
+font-family:Inter,Arial,sans-serif;
 }
 
 
@@ -34,68 +32,112 @@ color:#111827;
 }
 
 
+
 nav{
 
 display:flex;
 justify-content:space-between;
 align-items:center;
-padding:20px 8%;
+padding:18px 8%;
 background:white;
-box-shadow:0 3px 20px #ddd;
+box-shadow:0 5px 20px #ddd;
 
 }
+
+
+
+.brand{
+
+display:flex;
+align-items:center;
+gap:12px;
+
+}
+
+
+
+.brand img{
+
+width:55px;
+height:55px;
+border-radius:50%;
+object-fit:cover;
+
+}
+
 
 
 .logo{
 
-font-size:26px;
-font-weight:bold;
+font-size:28px;
+font-weight:800;
 color:#2563eb;
 
 }
+
 
 
 nav a{
 
 text-decoration:none;
-margin-left:20px;
+margin-left:22px;
 color:#374151;
-font-weight:bold;
+font-weight:600;
 
 }
+
 
 
 
 .hero{
 
-padding:80px 8%;
+
+background:linear-gradient(135deg,#0f3b82,#2563eb);
+
+color:white;
+
+padding:90px 8%;
+
 display:flex;
+
 justify-content:space-between;
+
 align-items:center;
-gap:40px;
+
+gap:50px;
 
 }
+
 
 
 .hero h1{
 
-font-size:52px;
+font-size:55px;
+
+margin:0;
+
 
 }
+
 
 
 .hero span{
 
-color:#2563eb;
+color:#60a5fa;
 
 }
+
 
 
 .hero p{
 
 font-size:20px;
+
 line-height:1.7;
-color:#64748b;
+
+max-width:600px;
+
+color:#dbeafe;
 
 }
 
@@ -104,11 +146,16 @@ color:#64748b;
 
 .btn{
 
-padding:15px 28px;
-border-radius:10px;
+padding:15px 30px;
+
+border-radius:12px;
+
 text-decoration:none;
+
 display:inline-block;
+
 margin:10px 5px;
+
 font-weight:bold;
 
 }
@@ -117,8 +164,9 @@ font-weight:bold;
 
 .primary{
 
-background:#2563eb;
-color:white;
+background:white;
+
+color:#2563eb;
 
 }
 
@@ -126,8 +174,9 @@ color:white;
 
 .secondary{
 
-border:2px solid #2563eb;
-color:#2563eb;
+border:2px solid white;
+
+color:white;
 
 }
 
@@ -136,11 +185,19 @@ color:#2563eb;
 
 .dashboard-box{
 
+
 background:white;
-width:420px;
+
+color:#111827;
+
 padding:30px;
-border-radius:20px;
-box-shadow:0 15px 40px #ddd;
+
+width:420px;
+
+border-radius:25px;
+
+box-shadow:0 20px 50px #0005;
+
 
 }
 
@@ -149,9 +206,15 @@ box-shadow:0 15px 40px #ddd;
 .box{
 
 background:#eef2ff;
-padding:15px;
-margin:10px;
-border-radius:10px;
+
+padding:18px;
+
+margin:12px;
+
+border-radius:12px;
+
+font-weight:bold;
+
 
 }
 
@@ -160,7 +223,7 @@ border-radius:10px;
 
 section{
 
-padding:60px 8%;
+padding:70px 8%;
 
 }
 
@@ -170,18 +233,21 @@ padding:60px 8%;
 .title{
 
 text-align:center;
-font-size:36px;
+
+font-size:40px;
 
 }
-
 
 
 
 .cards{
 
 display:flex;
+
 flex-wrap:wrap;
+
 justify-content:center;
+
 gap:25px;
 
 }
@@ -192,13 +258,16 @@ gap:25px;
 .card{
 
 background:white;
+
 width:280px;
+
 padding:30px;
-border-radius:18px;
+
+border-radius:20px;
+
 box-shadow:0 10px 30px #ddd;
 
 }
-
 
 
 
@@ -214,49 +283,109 @@ color:#2563eb;
 
 .pro{
 
-background:#111827;
+
+background:#020617;
+
 color:white;
+
 text-align:center;
 
+
 }
-
-
 
 
 
 .pro-card{
 
-background:#1f2937;
+
+background:#111827;
+
 padding:30px;
-margin:20px auto;
-max-width:700px;
+
+margin:20px;
+
 border-radius:20px;
+
+
+display:inline-block;
+
+width:280px;
+
 
 }
 
+
+
+.pro-card h2{
+
+color:#60a5fa;
+
+}
+
+
+
+
+
+.start{
+
+
+text-align:center;
+
+background:#eff6ff;
+
+}
 
 
 
 
 footer{
 
+
 background:#020617;
+
 color:white;
-text-align:center;
-padding:30px;
+
+padding:40px 8%;
+
+
+display:flex;
+
+justify-content:space-between;
+
+flex-wrap:wrap;
+
 
 }
 
 
 
+footer a{
 
-@media(max-width:800px){
+color:white;
+
+text-decoration:none;
+
+}
+
+
+
+.contact{
+
+line-height:2;
+
+}
+
+
+
+@media(max-width:900px){
+
 
 .hero{
 
 flex-direction:column;
 
 }
+
 
 
 .dashboard-box{
@@ -266,10 +395,22 @@ width:100%;
 }
 
 
+
 nav{
 
 flex-direction:column;
-gap:15px;
+
+gap:20px;
+
+}
+
+
+
+footer{
+
+flex-direction:column;
+
+gap:20px;
 
 }
 
@@ -287,14 +428,26 @@ gap:15px;
 
 
 
+
 <nav>
+
+
+
+<div class="brand">
+
+
+<img src="logo.png">
 
 
 <div class="logo">
 
-📄 Pro Document
+Pro Document
 
 </div>
+
+
+</div>
+
 
 
 
@@ -306,11 +459,9 @@ Features
 </a>
 
 
-
 <a href="dashboard.html">
 Dashboard
 </a>
-
 
 
 <a href="document-editor.html">
@@ -322,7 +473,10 @@ Document Editor
 </div>
 
 
+
 </nav>
+
+
 
 
 
@@ -333,7 +487,9 @@ Document Editor
 <section class="hero">
 
 
+
 <div>
+
 
 
 <h1>
@@ -341,24 +497,28 @@ Document Editor
 Your Intelligent
 
 <span>
+
 Document Workspace
+
 </span>
+
 
 </h1>
 
 
 
+
 <p>
 
-Pro Document helps you create, organize and manage documents and folders through a powerful digital dashboard.
+Create, organize and manage your documents and folders through a powerful digital workspace built for productivity.
 
 </p>
 
 
 
 
-<a class="btn primary"
-href="dashboard.html">
+
+<a class="btn primary" href="dashboard.html">
 
 Open Dashboard
 
@@ -367,8 +527,7 @@ Open Dashboard
 
 
 
-<a class="btn secondary"
-href="document-editor.html">
+<a class="btn secondary" href="document-editor.html">
 
 Open Editor
 
@@ -377,7 +536,6 @@ Open Editor
 
 
 </div>
-
 
 
 
@@ -394,15 +552,11 @@ Workspace Dashboard
 </h2>
 
 
-
-
 <div class="box">
 
 📄 All Documents
 
 </div>
-
-
 
 
 <div class="box">
@@ -412,8 +566,6 @@ Workspace Dashboard
 </div>
 
 
-
-
 <div class="box">
 
 🕒 Recent Files
@@ -421,15 +573,11 @@ Workspace Dashboard
 </div>
 
 
-
-
 <div class="box">
 
 🗑 Trash Management
 
 </div>
-
-
 
 
 <div class="box">
@@ -453,14 +601,12 @@ Workspace Dashboard
 
 
 
-
 <section id="features">
-
 
 
 <h1 class="title">
 
-Core Workspace (Free)
+Core Workspace
 
 </h1>
 
@@ -482,7 +628,7 @@ Core Workspace (Free)
 
 <p>
 
-View All Documents, Starred files and Recent documents from one dashboard.
+Manage documents, folders and files from one place.
 
 </p>
 
@@ -494,7 +640,6 @@ View All Documents, Starred files and Recent documents from one dashboard.
 
 
 <div class="card">
-
 
 <h2>
 
@@ -505,7 +650,7 @@ View All Documents, Starred files and Recent documents from one dashboard.
 
 <p>
 
-Create documents, create folders and rename existing files easily.
+Create and edit professional documents easily.
 
 </p>
 
@@ -516,9 +661,7 @@ Create documents, create folders and rename existing files easily.
 
 
 
-
 <div class="card">
-
 
 <h2>
 
@@ -529,13 +672,12 @@ Create documents, create folders and rename existing files easily.
 
 <p>
 
-Deleted files stay safely in Trash before permanent deletion.
+Recover deleted documents before permanent removal.
 
 </p>
 
 
 </div>
-
 
 
 
@@ -543,17 +685,16 @@ Deleted files stay safely in Trash before permanent deletion.
 
 <div class="card">
 
-
 <h2>
 
-📈 Session History
+📈 History Tracking
 
 </h2>
 
 
 <p>
 
-Monitor your activity and track workspace usage.
+Monitor workspace activity and usage.
 
 </p>
 
@@ -562,8 +703,8 @@ Monitor your activity and track workspace usage.
 
 
 
-
 </div>
+
 
 
 </section>
@@ -575,9 +716,7 @@ Monitor your activity and track workspace usage.
 
 
 
-
 <section class="pro">
-
 
 
 <h1>
@@ -585,7 +724,6 @@ Monitor your activity and track workspace usage.
 ✨ Upgrade to Pro
 
 </h1>
-
 
 
 
@@ -598,9 +736,7 @@ Monitor your activity and track workspace usage.
 
 
 
-
 <div class="pro-card">
-
 
 <h2>
 
@@ -609,20 +745,18 @@ Unlimited Workspace
 </h2>
 
 
-
 <p>
 
-✔ Unlimited documents
+✔ Unlimited Documents
 
 <br>
 
-✔ Unlimited folders
+✔ Unlimited Folders
 
 </p>
 
 
 </div>
-
 
 
 
@@ -639,17 +773,15 @@ Advanced Export
 </h2>
 
 
-
 <p>
 
-✔ Export documents as PDF
+✔ PDF Export
 
 <br>
 
-✔ Export Word files
+✔ Word Export
 
 </p>
-
 
 
 </div>
@@ -670,19 +802,19 @@ Version Control
 </h2>
 
 
-
 <p>
 
-✔ 20-step version history
+✔ 20 Step History
 
 <br>
 
-✔ Restore previous versions
+✔ Restore Versions
 
 </p>
 
 
 </div>
+
 
 
 
@@ -699,24 +831,15 @@ Priority Sync
 </h2>
 
 
-
 <p>
 
-Faster cloud updates and improved performance.
+Faster updates and performance.
 
 </p>
-
 
 
 </div>
 
-
-
-<p>
-
-Pro activation requires manual verification after payment review.
-
-</p>
 
 
 
@@ -728,33 +851,23 @@ Pro activation requires manual verification after payment review.
 
 
 
+<section class="start">
 
 
-<section>
-
-
-<h1 class="title">
+<h1>
 
 Start Creating Today
 
 </h1>
 
 
-
-<center>
-
-
-
 <a class="btn primary"
+style="background:#2563eb;color:white"
 href="document-editor.html">
 
 Launch Pro Document
 
 </a>
-
-
-
-</center>
 
 
 </section>
@@ -769,16 +882,105 @@ Launch Pro Document
 <footer>
 
 
-© 2026 Pro Document
+
+<div>
+
+<img src="logo.png"
+width="60">
 
 
-<br><br>
+<h2>
+
+Pro Document
+
+</h2>
 
 
-Privacy Policy | Terms | Contact
+<p>
+
+Your intelligent workspace
+
+</p>
+
+
+</div>
+
+
+
+
+
+<div>
+
+
+<h3>
+
+Quick Links
+
+</h3>
+
+
+<a href="dashboard.html">
+Dashboard
+</a>
+
+<br>
+
+<a href="document-editor.html">
+Document Editor
+</a>
+
+<br>
+
+<a href="privacy.html">
+Privacy Policy
+</a>
+
+</div>
+
+
+
+
+
+<div class="contact">
+
+
+<h3>
+
+Contact
+
+</h3>
+
+
+📧 documentpro2026@gmail.com
+
+
+<br>
+
+
+<a href="contact.html">
+
+Contact Page
+
+</a>
+
+
+<br>
+
+
+<a href="terms.html">
+
+Terms
+
+</a>
+
+
+</div>
+
+
 
 
 </footer>
+
 
 
 
