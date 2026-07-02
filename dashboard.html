@@ -380,7 +380,7 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
 .doc-card-body { padding:10px 12px; }
 .doc-card-title { font-weight:600; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px; }
 .doc-card-meta { font-size:11px; color:var(--muted); }
-.doc-card-actions { padding:6px 8px; display:flex; gap:4px; border-top:1px solid var(--border); background:#fafafa; flex-wrap:wrap; }
+.doc-card-actions { padding:6px 8px; display:flex; gap:4px; border-top:1px solid var(--border); background:#fafafa; }
 .doc-action-btn {
   padding:3px 8px; border:1px solid var(--border); background:white; border-radius:3px;
   cursor:pointer; font-size:11px; font-family:'Space Grotesk',sans-serif; color:var(--text); transition:all 0.15s;
@@ -402,7 +402,7 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
 .doc-list-info { flex:1; min-width:0; }
 .doc-list-title { font-weight:500; font-size:13px; }
 .doc-list-meta { font-size:11px; color:var(--muted); }
-.doc-list-actions { display:flex; gap:4px; flex-wrap:wrap; }
+.doc-list-actions { display:flex; gap:4px; }
 .trash-header {
   background:#fff3cd; border:1px solid #ffc107; border-radius:4px;
   padding:8px 14px; margin-bottom:16px; display:flex; align-items:center;
@@ -493,18 +493,6 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
 .up-status.error { background:#fef0f0; color:#c0392b; border:1px solid #f5c6c6; }
 .up-status.info { background:#eef4fd; color:#2b579a; border:1px solid #b8d0f5; }
 .up-note { font-size:11px; color:#888; text-align:center; margin-top:10px; }
-
-/* ── SHARE MODAL ── */
-.share-link-row { display:flex; gap:8px; }
-.share-link-row input { flex:1; background:#f8fafd; color:#333; }
-.share-copy-btn {
-  padding:8px 14px; border:none; border-radius:3px; background:var(--accent);
-  color:white; font-size:12px; font-weight:600; cursor:pointer; font-family:'Space Grotesk',sans-serif; white-space:nowrap;
-}
-.share-copy-btn:hover { background:#1e3f73; }
-.share-copy-btn.copied { background:#27ae60; }
-.share-note { font-size:11px; color:#888; margin-top:12px; line-height:1.5; }
-.share-loading { text-align:center; padding:20px; color:#999; font-size:12px; }
 </style>
 </head>
 <body>
@@ -774,7 +762,7 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
         <button type="button" id="upMonthlyBtn" class="active" onclick="selectUpgradePlan('monthly')">Monthly</button>
         <button type="button" id="upYearlyBtn" onclick="selectUpgradePlan('yearly')">Yearly</button>
       </div>
-      <div class="up-amount" id="upPrice">₹499 / month</div>
+      <div class="up-amount" id="upPrice">₹199 / month</div>
 
       <ul class="up-features">
         <li>Unlimited folders</li>
@@ -797,35 +785,13 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
   </div>
 </div>
 
-<!-- SHARE MODAL -->
-<div class="modal-overlay" id="shareModal">
-  <div class="modal" style="width:420px;">
-    <div class="modal-header">🔗 Share Document <button onclick="closeModal('shareModal')">×</button></div>
-    <div class="modal-body">
-      <div id="shareModalBusy" class="share-loading">Generating shareable link…</div>
-      <div id="shareModalReady" style="display:none;">
-        <label>Anyone with this link gets a copy</label>
-        <div class="share-link-row">
-          <input type="text" id="shareLinkInput" readonly onclick="this.select()">
-          <button class="share-copy-btn" id="shareCopyBtn" onclick="copyShareLink()">Copy</button>
-        </div>
-        <div class="share-note">Opening this link will add a full copy of "<span id="shareDocTitleLabel"></span>" — including all pages, drawings and content — to the recipient's own Pro Document account. The recipient will need to sign in or create a free account first.</div>
-      </div>
-      <div id="shareModalError" style="display:none;color:#c0392b;font-size:12px;text-align:center;padding:10px 0;"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('shareModal')">Close</button>
-    </div>
-  </div>
-</div>
-
 </div><!-- /#appShell -->
 
 <script>
 /* ─────────────────────────────────────────────
    CONFIG
 ───────────────────────────────────────────── */
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwk5RSFyuN_rKgMRfFUNXIhWJHE6jyI5JOfF8dnIiWeHNGOJ7e_tjQPkCsj87L8pMytzw/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwfU0I5InZxiGln-4a5w25jmX2ROk86_fSbGeR3OtGHyjtajd0uuX8pntb_1aMGRxFqEQ/exec';
 
 /* Freemium limits — enforced client-side, backed by server-verified Pro status */
 const FREE_MAX_FOLDERS = 1;
@@ -835,8 +801,8 @@ const FREE_MAX_DOCS = 3;
 const UPI_VPA = 'banerjeearnab.live@oksbi';
 const UPI_PAYEE_NAME = 'Pro Document';
 const PRO_PLANS = {
-  monthly: { price: 499,  label: '₹499 / month' },
-  yearly:  { price: 1999, label: '₹1999 / year (7 months free)' }
+  monthly: { price: 199,  label: '₹199 / month' },
+  yearly:  { price: 1999, label: '₹1999 / year (2 months free)' }
 };
 let selectedUpgradeBilling = 'monthly';
 
@@ -937,7 +903,6 @@ function launchDashboard() {
   logActivity('page_load');
   setInterval(() => logActivity('heartbeat'), 5 * 60 * 1000);
   document.getElementById('lastSyncLabel').textContent = 'Synced ' + formatDate(new Date().toISOString());
-  handleIncomingShareLink();
 }
 
 function updateUserUI() {
@@ -969,24 +934,6 @@ function switchAuthTab(tab) {
 async function gasCall(payload) {
   try {
     const res = await fetch(GAS_URL + '?' + new URLSearchParams(payload), { method: 'GET', mode: 'cors' });
-    return await res.json();
-  } catch(e) {
-    console.warn('GAS offline:', e.message);
-    return { status: 'offline' };
-  }
-}
-
-/* POST variant — used for share uploads, where the payload (full document
-   content: pages/versions/design) can be too large for a GET query string.
-   Sent as text/plain to avoid a CORS preflight against Apps Script. */
-async function gasPost(payload) {
-  try {
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      mode: 'cors',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    });
     return await res.json();
   } catch(e) {
     console.warn('GAS offline:', e.message);
@@ -1420,107 +1367,6 @@ function moveDoc(id) {
 }
 
 /* ─────────────────────────────────────────────
-   SHARE DOCUMENT
-   Uploads the doc's full content (pages/versions/
-   design) to the GAS backend, which stores it under
-   a random shareId (e.g. in a "SharedDocs" Sheet or
-   a Drive JSON file) and hands back a public link.
-   Anyone who opens that link — after signing in —
-   gets a full copy added to their own account.
-───────────────────────────────────────────── */
-async function shareDocument(id) {
-  const idx = readIndex();
-  const doc = idx.docs[id];
-  if (!doc) return;
-
-  openModal('shareModal');
-  document.getElementById('shareModalBusy').style.display = 'block';
-  document.getElementById('shareModalReady').style.display = 'none';
-  document.getElementById('shareModalError').style.display = 'none';
-
-  let content = {};
-  try {
-    content = JSON.parse(localStorage.getItem(userDocDataKey(id)) || '{"pages":[],"versions":[],"design":[]}');
-  } catch(e) {}
-
-  const result = await gasPost({
-    action: 'shareDoc',
-    ownerEmail: currentUser.email,
-    ownerName: currentUser.name || '',
-    title: doc.title,
-    content: JSON.stringify(content)
-  });
-
-  if (result && result.status === 'success' && result.shareId) {
-    const base = new URL('dashboard.html', window.location.href).href.split('?')[0].split('#')[0];
-    const shareUrl = base + '?shared=' + encodeURIComponent(result.shareId);
-    document.getElementById('shareModalBusy').style.display = 'none';
-    document.getElementById('shareModalReady').style.display = 'block';
-    document.getElementById('shareDocTitleLabel').textContent = doc.title;
-    const input = document.getElementById('shareLinkInput');
-    input.value = shareUrl;
-    const copyBtn = document.getElementById('shareCopyBtn');
-    copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied');
-    logActivity('share_doc');
-    setStatus('Share link ready for "' + doc.title + '".');
-  } else {
-    document.getElementById('shareModalBusy').style.display = 'none';
-    document.getElementById('shareModalError').style.display = 'block';
-    document.getElementById('shareModalError').textContent =
-      'Could not generate a share link. Please check your connection and try again.';
-  }
-}
-
-function copyShareLink() {
-  const input = document.getElementById('shareLinkInput');
-  const btn = document.getElementById('shareCopyBtn');
-  input.select(); input.setSelectionRange(0, 99999);
-  const finishCopy = () => { btn.textContent = 'Copied!'; btn.classList.add('copied'); setTimeout(()=>{ btn.textContent='Copy'; btn.classList.remove('copied'); }, 2000); };
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(input.value).then(finishCopy).catch(() => { try { document.execCommand('copy'); finishCopy(); } catch(e){} });
-  } else {
-    try { document.execCommand('copy'); finishCopy(); } catch(e) {}
-  }
-}
-
-/* ─────────────────────────────────────────────
-   RECEIVE A SHARED LINK
-   If the current URL has ?shared=SHARE_ID, fetch
-   that document's content from the backend and add
-   a full copy of it to the signed-in user's own
-   account, then clean the URL and open it.
-───────────────────────────────────────────── */
-async function handleIncomingShareLink() {
-  const params = new URLSearchParams(window.location.search);
-  const shareId = params.get('shared');
-  if (!shareId) return;
-
-  setStatus('Importing shared document…');
-  const result = await gasCall({ action: 'getSharedDoc', shareId });
-
-  // Strip the ?shared=... param either way so a refresh doesn't re-import
-  const cleanUrl = window.location.pathname;
-  window.history.replaceState(null, document.title, cleanUrl);
-
-  if (result && result.status === 'success' && result.title) {
-    let content = { pages: [], versions: [], design: [] };
-    try { content = JSON.parse(result.content); } catch(e) {}
-
-    const idx = readIndex(), id = newId();
-    idx.docs[id] = {
-      id, title: result.title + ' (Shared)', folder: null,
-      starred: false, deleted: false, createdAt: now(), updatedAt: now()
-    };
-    writeIndex(idx);
-    localStorage.setItem(userDocDataKey(id), JSON.stringify(content));
-    render();
-    setStatus('"' + result.title + '" imported from shared link.');
-  } else {
-    setStatus('That share link is invalid or has expired.');
-  }
-}
-
-/* ─────────────────────────────────────────────
    UPGRADE / PAYMENT FLOW
 ───────────────────────────────────────────── */
 function openUpgradeModal(reason) {
@@ -1662,8 +1508,7 @@ function render() {
           ${currentFilter==='trash'
             ?`<button class="doc-action-btn" onclick="restoreDoc('${d.id}')">Restore</button>
               <button class="doc-action-btn danger" onclick="deletePermanent('${d.id}')">Delete</button>`
-            :`<button class="doc-action-btn" onclick="shareDocument('${d.id}')">🔗 Share</button>
-              <button class="doc-action-btn danger" onclick="trashDoc('${d.id}')">Trash</button>`}
+            :`<button class="doc-action-btn danger" onclick="trashDoc('${d.id}')">Trash</button>`}
         </div>`;
       container.appendChild(el);
     });
@@ -1685,8 +1530,7 @@ function render() {
           ${currentFilter==='trash'
             ?`<button class="doc-action-btn" onclick="event.stopPropagation();restoreDoc('${d.id}')">Restore</button>
               <button class="doc-action-btn danger" onclick="event.stopPropagation();deletePermanent('${d.id}')">Delete</button>`
-            :`<button class="doc-action-btn" onclick="event.stopPropagation();shareDocument('${d.id}')">🔗 Share</button>
-              <button class="doc-action-btn danger" onclick="event.stopPropagation();trashDoc('${d.id}')">Trash</button>`}
+            :`<button class="doc-action-btn danger" onclick="event.stopPropagation();trashDoc('${d.id}')">Trash</button>`}
         </div>`;
       container.appendChild(el);
     });
