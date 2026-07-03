@@ -153,34 +153,8 @@
 }
 .auth-title { font-family:'Outfit',sans-serif; font-size:22px; font-weight:700; color:#fff; margin-bottom:4px; }
 .auth-sub { font-family:'Space Grotesk',sans-serif; font-size:12px; color:rgba(255,255,255,0.6); letter-spacing:0.5px; }
-.auth-tabs { display:flex; background:#f5f7fa; border-bottom:1px solid #e8ecf0; }
-.auth-tab {
-  flex:1; padding:12px; border:none; background:transparent;
-  font-family:'Space Grotesk',sans-serif; font-size:13px; font-weight:600;
-  color:#999; cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s;
-}
-.auth-tab.active { color:var(--accent); border-bottom-color:var(--accent); background:#fff; }
-.auth-body { padding:24px 32px 28px; }
-.auth-field { margin-bottom:16px; }
-.auth-field label {
-  display:block; font-family:'Space Grotesk',sans-serif; font-size:11px; font-weight:600;
-  color:#888; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:6px;
-}
-.auth-field input {
-  width:100%; padding:10px 12px; border:1.5px solid #e0e6ef; border-radius:7px;
-  font-family:'Space Grotesk',sans-serif; font-size:13px; color:#1a1a1a; outline:none;
-  transition:border-color 0.2s,box-shadow 0.2s; background:#fafbfc;
-}
-.auth-field input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(43,87,154,0.12); background:#fff; }
-.auth-submit {
-  width:100%; padding:12px; background:linear-gradient(135deg,#2b579a,#3b6fbf);
-  color:white; border:none; border-radius:8px; font-family:'Outfit',sans-serif;
-  font-size:15px; font-weight:600; cursor:pointer; margin-top:8px;
-  transition:all 0.2s; letter-spacing:0.3px;
-}
-.auth-submit:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(43,87,154,0.4); }
-.auth-submit:disabled { opacity:0.7; cursor:not-allowed; transform:none; }
-.auth-msg { margin-top:12px; padding:10px 14px; border-radius:7px; font-family:'Space Grotesk',sans-serif; font-size:12px; text-align:center; display:none; }
+.auth-body { padding:32px; }
+.auth-msg { margin-top:16px; padding:10px 14px; border-radius:7px; font-family:'Space Grotesk',sans-serif; font-size:12px; text-align:center; display:none; }
 .auth-msg.error  { background:#fef0f0; color:#c0392b; border:1px solid #f5c6c6; display:block; }
 .auth-msg.success{ background:#edfaf1; color:#27ae60; border:1px solid #a9e5c3; display:block; }
 .auth-msg.info   { background:#eef4fd; color:#2b579a; border:1px solid #b8d0f5; display:block; }
@@ -190,6 +164,12 @@
   border-radius:50%; animation:spinA 0.7s linear infinite;
   vertical-align:middle; margin-right:6px;
 }
+.gsi-wrap { display:flex; justify-content:center; margin-top:4px; min-height:44px; }
+.auth-trust-note {
+  margin-top:18px; text-align:center; font-family:'Space Grotesk',sans-serif;
+  font-size:11px; color:#999; line-height:1.5;
+}
+.auth-trust-note b { color:#555; }
 
 /* ── USER BADGE ── */
 .user-badge {
@@ -201,8 +181,9 @@
   width:26px; height:26px; background:rgba(255,255,255,0.25); border-radius:50%;
   display:flex; align-items:center; justify-content:center;
   font-size:12px; font-weight:700; font-family:'Outfit',sans-serif; color:white;
-  border:1.5px solid rgba(255,255,255,0.4); flex-shrink:0;
+  border:1.5px solid rgba(255,255,255,0.4); flex-shrink:0; overflow:hidden;
 }
+.user-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
 .user-name-display {
   font-family:'Space Grotesk',sans-serif; font-size:12px; font-weight:500;
   color:rgba(255,255,255,0.9); max-width:120px; white-space:nowrap;
@@ -531,39 +512,12 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
       <div class="auth-title">Pro Document</div>
       <div class="auth-sub">Your intelligent workspace</div>
     </div>
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</button>
-      <button class="auth-tab" id="tabSignup" onclick="switchAuthTab('signup')">Create Account</button>
-    </div>
-    <div id="panelLogin" class="auth-body">
-      <div class="auth-field">
-        <label>Email Address</label>
-        <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email">
+    <div class="auth-body">
+      <div class="gsi-wrap" id="gsiButtonContainer"></div>
+      <div class="auth-msg" id="authMsg"></div>
+      <div class="auth-trust-note">
+        We use <b>Google Sign-In</b> so every account is tied to a real,<br>verified email address. No passwords to remember.
       </div>
-      <div class="auth-field">
-        <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"
-               onkeydown="if(event.key==='Enter')doLogin()">
-      </div>
-      <button class="auth-submit" id="loginBtn" onclick="doLogin()">Sign In</button>
-      <div class="auth-msg" id="loginMsg"></div>
-    </div>
-    <div id="panelSignup" class="auth-body" style="display:none;">
-      <div class="auth-field">
-        <label>Full Name</label>
-        <input type="text" id="signupName" placeholder="Jane Doe" autocomplete="name">
-      </div>
-      <div class="auth-field">
-        <label>Email Address</label>
-        <input type="email" id="signupEmail" placeholder="you@example.com" autocomplete="email">
-      </div>
-      <div class="auth-field">
-        <label>Password</label>
-        <input type="password" id="signupPassword" placeholder="Min. 6 characters" autocomplete="new-password"
-               onkeydown="if(event.key==='Enter')doSignup()">
-      </div>
-      <button class="auth-submit" id="signupBtn" onclick="doSignup()">Create Account</button>
-      <div class="auth-msg" id="signupMsg"></div>
     </div>
   </div>
 </div>
@@ -787,11 +741,13 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
 
 </div><!-- /#appShell -->
 
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 /* ─────────────────────────────────────────────
    CONFIG
 ───────────────────────────────────────────── */
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwfU0I5InZxiGln-4a5w25jmX2ROk86_fSbGeR3OtGHyjtajd0uuX8pntb_1aMGRxFqEQ/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycby8iEkzaBh2hUj1q38YBonxpdzKHGvIzH9OECsWOmyhaMGqVhnA2PkKbr_PACbpu2wR-Q/exec';
+const GOOGLE_CLIENT_ID = '384904424093-j1a6kupjerhjufurpvur4hbik6k90bla.apps.googleusercontent.com';
 
 /* Freemium limits — enforced client-side, backed by server-verified Pro status */
 const FREE_MAX_FOLDERS = 1;
@@ -882,6 +838,7 @@ function checkAuthAndLaunch() {
     } catch(e) {}
   }
   document.getElementById('authModal').classList.add('open');
+  initGoogleSignIn();
 }
 
 function launchDashboard() {
@@ -908,7 +865,12 @@ function launchDashboard() {
 function updateUserUI() {
   if (!currentUser) return;
   const initial = (currentUser.name || currentUser.email || '?')[0].toUpperCase();
-  document.getElementById('userAvatarLetter').textContent = initial;
+  const avatarEl = document.getElementById('userAvatarLetter');
+  if (currentUser.picture) {
+    avatarEl.innerHTML = '<img src="' + currentUser.picture + '" alt="">';
+  } else {
+    avatarEl.textContent = initial;
+  }
   document.getElementById('userNameDisplay').textContent  = currentUser.name || currentUser.email;
   document.getElementById('ddName').textContent  = currentUser.name || '—';
   document.getElementById('ddEmail').textContent = currentUser.email || '—';
@@ -916,16 +878,62 @@ function updateUserUI() {
 }
 
 /* ─────────────────────────────────────────────
-   AUTH TABS
+   GOOGLE SIGN-IN (Google Identity Services)
+   This is now the ONLY way into the app. Every
+   email is verified by Google — and re-verified
+   by the GAS backend against the ID token's
+   signature and audience — before a session is
+   ever created. There is no more manual
+   email/password entry, so there is no way to
+   "sign up" with a fake or unverifiable address.
 ───────────────────────────────────────────── */
-function switchAuthTab(tab) {
-  const isLogin = tab === 'login';
-  document.getElementById('tabLogin').classList.toggle('active', isLogin);
-  document.getElementById('tabSignup').classList.toggle('active', !isLogin);
-  document.getElementById('panelLogin').style.display  = isLogin ? '' : 'none';
-  document.getElementById('panelSignup').style.display = isLogin ? 'none' : '';
-  document.getElementById('loginMsg').className  = 'auth-msg';
-  document.getElementById('signupMsg').className = 'auth-msg';
+let gsiInitialized = false;
+
+function initGoogleSignIn() {
+  if (gsiInitialized) return;
+  if (typeof google === 'undefined' || !google.accounts) {
+    // GIS script hasn't finished loading yet — retry shortly
+    setTimeout(initGoogleSignIn, 150);
+    return;
+  }
+  gsiInitialized = true;
+
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleCredential,
+    auto_select: false
+  });
+
+  google.accounts.id.renderButton(
+    document.getElementById('gsiButtonContainer'),
+    { theme: 'filled_blue', size: 'large', shape: 'pill', width: 300, text: 'signin_with' }
+  );
+
+  // Optional One Tap prompt for returning Google users
+  google.accounts.id.prompt();
+}
+
+async function handleGoogleCredential(response) {
+  showAuthMsg('authMsg', 'info', 'Verifying your Google account…');
+  try {
+    const result = await gasCall({ action: 'googleSignIn', idToken: response.credential });
+
+    if (result.status === 'success' && result.user && result.user.email) {
+      showAuthMsg('authMsg', 'success', 'Welcome, ' + (result.user.name || result.user.email) + '!');
+      setTimeout(() => completeLogin(result.user), 500);
+    } else if (result.status === 'offline') {
+      showAuthMsg('authMsg', 'error', 'Could not reach the server. Please check your connection and try again.');
+    } else {
+      showAuthMsg('authMsg', 'error', result.message || 'Google sign-in failed. Please try again.');
+    }
+  } catch (e) {
+    showAuthMsg('authMsg', 'error', 'Sign-in failed. Please try again.');
+  }
+}
+
+function showAuthMsg(id, type, text) {
+  const el = document.getElementById(id);
+  el.textContent = text; el.className = 'auth-msg ' + type;
 }
 
 /* ─────────────────────────────────────────────
@@ -942,100 +950,20 @@ async function gasCall(payload) {
 }
 
 /* ─────────────────────────────────────────────
-   SIGN UP
-───────────────────────────────────────────── */
-async function doSignup() {
-  const name  = document.getElementById('signupName').value.trim();
-  const email = document.getElementById('signupEmail').value.trim().toLowerCase();
-  const pass  = document.getElementById('signupPassword').value;
-  const btn   = document.getElementById('signupBtn');
-
-  if (!name)  return showAuthMsg('signupMsg','error','Please enter your full name.');
-  if (!email || !email.includes('@')) return showAuthMsg('signupMsg','error','Please enter a valid email.');
-  if (pass.length < 6) return showAuthMsg('signupMsg','error','Password must be at least 6 characters.');
-
-  btn.disabled = true;
-  btn.innerHTML = '<span class="auth-spinner"></span>Creating account…';
-  showAuthMsg('signupMsg','info','Creating your account…');
-
-  const passHash = await sha256(pass);
-
-  // Check local users store first (works offline)
-  const localUsers = JSON.parse(localStorage.getItem('pd_local_users') || '{}');
-  if (localUsers[email]) {
-    btn.disabled = false; btn.textContent = 'Create Account';
-    return showAuthMsg('signupMsg','error','An account with this email already exists. Please sign in.');
-  }
-
-  // Try GAS (optional, graceful fallback)
-  const result = await gasCall({ action: 'signup', name, email, passHash });
-  btn.disabled = false; btn.textContent = 'Create Account';
-
-  if (result.status === 'exists') {
-    return showAuthMsg('signupMsg','error','An account with this email already exists.');
-  }
-
-  // Store locally (always — ensures offline works)
-  localUsers[email] = { name, passHash, createdAt: new Date().toISOString() };
-  localStorage.setItem('pd_local_users', JSON.stringify(localUsers));
-
-  showAuthMsg('signupMsg','success','Account created! Signing you in…');
-  setTimeout(() => completeLogin({ name, email }), 800);
-}
-
-/* ─────────────────────────────────────────────
-   LOGIN
-───────────────────────────────────────────── */
-async function doLogin() {
-  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-  const pass  = document.getElementById('loginPassword').value;
-  const btn   = document.getElementById('loginBtn');
-
-  if (!email || !email.includes('@')) return showAuthMsg('loginMsg','error','Please enter a valid email.');
-  if (!pass) return showAuthMsg('loginMsg','error','Please enter your password.');
-
-  btn.disabled = true;
-  btn.innerHTML = '<span class="auth-spinner"></span>Signing in…';
-  showAuthMsg('loginMsg','info','Verifying credentials…');
-
-  const passHash = await sha256(pass);
-
-  // Check local store first (fast + offline-capable)
-  const localUsers = JSON.parse(localStorage.getItem('pd_local_users') || '{}');
-  const localUser  = localUsers[email];
-
-  if (localUser && localUser.passHash === passHash) {
-    btn.disabled = false; btn.textContent = 'Sign In';
-    showAuthMsg('loginMsg','success','Welcome back, ' + localUser.name + '!');
-    setTimeout(() => completeLogin({ name: localUser.name, email }), 600);
-    return;
-  }
-
-  // Fallback to GAS if not found locally
-  const result = await gasCall({ action: 'login', email, passHash });
-  btn.disabled = false; btn.textContent = 'Sign In';
-
-  if (result.status === 'success') {
-    // Cache in local store for future offline logins
-    localUsers[email] = { ...(localUsers[email]||{}), name: result.name, passHash };
-    localStorage.setItem('pd_local_users', JSON.stringify(localUsers));
-    showAuthMsg('loginMsg','success','Welcome back, ' + result.name + '!');
-    setTimeout(() => completeLogin({ name: result.name, email }), 600);
-  } else if (result.status === 'wrong_pass') {
-    showAuthMsg('loginMsg','error','Incorrect password. Please try again.');
-  } else if (result.status === 'not_found' || result.status === 'offline') {
-    showAuthMsg('loginMsg','error', localUser ? 'Incorrect password.' : 'No account found. Please create one.');
-  } else {
-    showAuthMsg('loginMsg','error', result.message || 'Login failed. Please check your credentials.');
-  }
-}
-
-/* ─────────────────────────────────────────────
    COMPLETE LOGIN / LOGOUT
+   `user` comes straight from the server-verified
+   Google payload: { email, name, picture }
 ───────────────────────────────────────────── */
 function completeLogin(user) {
   const sessionId = 'ses_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
-  currentUser = { ...user, sessionId, loginTime: new Date().toISOString(), isPro: false, plan: 'free', planExpiresAt: null };
+  currentUser = {
+    email: user.email,
+    name: user.name || user.email,
+    picture: user.picture || null,
+    sessionId,
+    loginTime: new Date().toISOString(),
+    isPro: false, plan: 'free', planExpiresAt: null
+  };
   localStorage.setItem('pd_session', JSON.stringify(currentUser));
   document.getElementById('authModal').classList.remove('open');
   launchDashboard();
@@ -1048,13 +976,17 @@ function doLogout() {
   logActivity('logout');
   localStorage.removeItem('pd_session');
   currentUser = null;
+  gsiInitialized = false;
+  if (typeof google !== 'undefined' && google.accounts) {
+    google.accounts.id.disableAutoSelect();
+  }
   const shell = document.getElementById('appShell');
   shell.classList.remove('visible');
   shell.style.display = 'none';
+  document.getElementById('authMsg').className = 'auth-msg';
+  document.getElementById('gsiButtonContainer').innerHTML = '';
   document.getElementById('authModal').classList.add('open');
-  document.getElementById('loginEmail').value    = '';
-  document.getElementById('loginPassword').value = '';
-  switchAuthTab('login');
+  initGoogleSignIn();
 }
 
 /* ─────────────────────────────────────────────
@@ -1096,11 +1028,10 @@ async function openActivityModal() {
 
 function openProfileModal() {
   closeUserDropdown();
-  const lu = JSON.parse(localStorage.getItem('pd_local_users') || '{}')[currentUser?.email] || {};
   const planLine = currentUser?.isPro
     ? `Pro (expires ${currentUser?.planExpiresAt ? new Date(currentUser.planExpiresAt).toLocaleDateString() : '—'})`
     : 'Free';
-  alert(`👤 My Profile\n\nName: ${currentUser?.name||'—'}\nEmail: ${currentUser?.email||'—'}\nPlan: ${planLine}\nAccount created: ${lu.createdAt ? new Date(lu.createdAt).toLocaleDateString() : '—'}\nSession: …${(currentUser?.sessionId||'').slice(-8)}\nLogged in: ${currentUser?.loginTime ? new Date(currentUser.loginTime).toLocaleString() : '—'}`);
+  alert(`👤 My Profile\n\nName: ${currentUser?.name||'—'}\nEmail: ${currentUser?.email||'—'}\nPlan: ${planLine}\nSession: …${(currentUser?.sessionId||'').slice(-8)}\nLogged in: ${currentUser?.loginTime ? new Date(currentUser.loginTime).toLocaleString() : '—'}`);
 }
 
 /* ─────────────────────────────────────────────
@@ -1111,16 +1042,6 @@ function closeUserDropdown()  { document.getElementById('userDropdown').classLis
 document.addEventListener('click', e => {
   if (!document.getElementById('userBadge').contains(e.target)) closeUserDropdown();
 });
-
-function showAuthMsg(id, type, text) {
-  const el = document.getElementById(id);
-  el.textContent = text; el.className = 'auth-msg ' + type;
-}
-
-async function sha256(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
 
 /* ─────────────────────────────────────────────
    DASHBOARD DATA — ALL KEYS ARE USER-SCOPED
