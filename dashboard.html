@@ -1044,10 +1044,10 @@ document.addEventListener('click', e => {
 
 /* ─────────────────────────────────────────────
    DASHBOARD DATA — ALL KEYS ARE USER-SCOPED
-   readIndex / writeIndex / userDocDataKey all
-   go through userKey() which prefixes with the
-   current user's email, giving each account a
-   completely private namespace in localStorage.
+   readIndex / cacheIndexLocally / userDocDataKey
+   all go through userKey() which prefixes with
+   the current user's email, giving each account
+   a completely private namespace in localStorage.
 ───────────────────────────────────────────── */
 let currentFilter = 'all';
 let currentFolder = null;
@@ -1240,12 +1240,24 @@ async function confirmRename() {
     setStatus('Rename failed — try again.');
   }
 }
+
+/* ─────────────────────────────────────────────
+   OPEN DOCUMENT
+   FIX: previously called an undefined
+   writeIndex(idx) function, which threw a
+   ReferenceError and silently aborted the
+   navigation before window.location.href ran.
+   Now it just mutates the shared cachedIndex
+   object (idx is a reference to it) and persists
+   the change with cacheIndexLocally(), the same
+   pattern used everywhere else in this file.
+───────────────────────────────────────────── */
 function openDoc(id) {
   const idx = readIndex();
   if (!idx.docs[id] || idx.docs[id].deleted) return;
 
   idx.docs[id].updatedAt = now();
-  writeIndex(idx);
+  cacheIndexLocally();
   logActivity('open_doc');
 
   sessionStorage.setItem('pd_active_user', currentUser.email);
