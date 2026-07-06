@@ -1242,12 +1242,14 @@ async function confirmRename() {
 }
 function openDoc(id) {
   const idx = readIndex();
-  if (!idx.docs[id]) return;
+  if (!idx.docs[id] || idx.docs[id].deleted) return;
+
   idx.docs[id].updatedAt = now();
-  writeIndex(idx); logActivity('open_doc');
-  // Tell the editor which user is active so it reads the right doc key
+  writeIndex(idx);
+  logActivity('open_doc');
+
   sessionStorage.setItem('pd_active_user', currentUser.email);
-  location.href = 'document-editor.html?id=' + encodeURIComponent(id);
+  window.location.href = 'document-editor.html?id=' + encodeURIComponent(id);
 }
 
 /* ─────────────────────────────────────────────
