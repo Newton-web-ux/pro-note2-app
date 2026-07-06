@@ -746,7 +746,7 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
 /* ─────────────────────────────────────────────
    CONFIG
 ───────────────────────────────────────────── */
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzVc3ByW6l2f1Sc7D6nuH3gRCaXk9h4DNGo-VFkgNlF_C_sFxGYu9Ugu9kbWncmyRQ/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxqASLz1sXGFM_FhLAFTDwHVTfM3bjJy8rPZjucfQp-zlTnJQnQ4hQ0csuF5-7OLsM/exec';
 const GOOGLE_CLIENT_ID = '384904424093-j1a6kupjerhjufurpvur4hbik6k90bla.apps.googleusercontent.com';
 
 /* Freemium limits — enforced client-side, backed by server-verified Pro status */
@@ -855,8 +855,7 @@ function launchDashboard() {
   const vg = document.getElementById('view-grid');
   if (vg) vg.classList.add('active');
   document.getElementById('searchInput').value = '';
-  renderFolders();
-  render();
+  syncIndexFromServer();
   logActivity('page_load');
   setInterval(() => logActivity('heartbeat'), 5 * 60 * 1000);
   document.getElementById('lastSyncLabel').textContent = 'Synced ' + formatDate(new Date().toISOString());
@@ -1054,10 +1053,39 @@ let currentFilter = 'all';
 let currentFolder = null;
 let currentView   = 'grid';
 
-function readIndex() {
-  return JSON.parse(localStorage.getItem(userKey('index')) || '{"docs":{},"folders":{}}');
+// In-memory cache of the cloud index, hydrated from the server on login.
+// This is what readIndex() now returns — it's a *read* cache, never the
+// source of truth. All writes go to the server first, then update this
+// cache + a localStorage mirror (used only as an offline fallback / for
+// instant paint before the server responds).
+let cachedIndex = { docs: {}, folders: {} };
+
+function readIndex() { return cachedIndex; }
+
+function cacheIndexLocally() {
+  try { localStorage.setItem(userKey('index_cache'), JSON.stringify(cachedIndex)); } catch (e) {}
 }
-function writeIndex(i) { localStorage.setItem(userKey('index'), JSON.stringify(i)); }
+function loadCachedIndexFromLocal() {
+  try { cachedIndex = JSON.parse(localStorage.getItem(userKey('index_cache')) || '{"docs":{},"folders":{}}'); }
+  catch (e) { cachedIndex = { docs: {}, folders: {} }; }
+}
+
+async function syncIndexFromServer() {
+  if (!currentUser) return;
+  // Paint instantly from the last-known cache (works offline / on slow networks)...
+  loadCachedIndexFromLocal();
+  render(); renderFolders(); updatePlanPanel();
+  // ...then reconcile with the server, which is the real source of truth.
+  const result = await gasCall({ action: 'listAll', email: currentUser.email });
+  if (result && result.status === 'success') {
+    cachedIndex = { docs: result.docs || {}, folders: result.folders || {} };
+    cacheIndexLocally();
+    render(); renderFolders(); updatePlanPanel();
+  } else {
+    setStatus('Could not reach the cloud — showing last synced copy.');
+  }
+}
+
 function newId() { return 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2,6); }
 function now()   { return new Date().toISOString(); }
 
@@ -1150,25 +1178,28 @@ function openCreateFolderModal(parent = null) {
   openModal('createFolderModal');
 }
 
-function confirmCreateDoc() {
-  // Defense in depth: re-check the limit at confirm time too.
+async function confirmCreateDoc() {
   if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
     closeModal('createDocModal');
     openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents.`);
     return;
   }
   const title = document.getElementById('docNameInput').value.trim() || 'Untitled Document';
-  const idx = readIndex(), id = newId();
-  idx.docs[id] = { id, title, folder: currentFolder, starred: false, deleted: false, createdAt: now(), updatedAt: now() };
-  writeIndex(idx);
-  // Document content stored under user-scoped key
-  localStorage.setItem(userDocDataKey(id), JSON.stringify({ pages: [], versions: [], design: [] }));
   closeModal('createDocModal');
-  render(); logActivity('create_doc');
-  setStatus('Document "' + title + '" created.');
+  setStatus('Creating document…');
+  const result = await gasCall({ action: 'createDoc', email: currentUser.email, title, folder: currentFolder || '' });
+  if (result.status === 'success') {
+    cachedIndex.docs[result.doc.id] = result.doc;
+    cacheIndexLocally();
+    render(); updatePlanPanel();
+    logActivity('create_doc');
+    setStatus('Document "' + title + '" created.');
+  } else {
+    setStatus('Could not create document — try again.');
+  }
 }
 
-function confirmCreateFolder() {
+async function confirmCreateFolder() {
   if (!isProUser() && getActiveFolderCount() >= FREE_MAX_FOLDERS) {
     closeModal('createFolderModal');
     openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_FOLDERS} folder.`);
@@ -1176,13 +1207,17 @@ function confirmCreateFolder() {
   }
   const name = document.getElementById('folderNameInput').value.trim();
   if (!name) return;
-  const idx = readIndex(), id = newId();
-  idx.folders[id] = { id, name, parent: window._pendingFolderParent || currentFolder, deleted: false };
-  writeIndex(idx);
-  closeModal('createFolderModal'); renderFolders(); updatePlanPanel();
-  setStatus('Folder "' + name + '" created.');
+  closeModal('createFolderModal');
+  const result = await gasCall({ action: 'createFolder', email: currentUser.email, name, parent: window._pendingFolderParent || currentFolder || '' });
+  if (result.status === 'success') {
+    cachedIndex.folders[result.folder.id] = result.folder;
+    cacheIndexLocally();
+    renderFolders(); updatePlanPanel();
+    setStatus('Folder "' + name + '" created.');
+  } else {
+    setStatus('Could not create folder — try again.');
+  }
 }
-
 function openRenameModal(id) {
   const idx = readIndex();
   document.getElementById('renameDocId').value = id;
@@ -1190,16 +1225,21 @@ function openRenameModal(id) {
   openModal('renameModal');
   setTimeout(() => document.getElementById('renameInput').focus(), 60);
 }
-function confirmRename() {
+async function confirmRename() {
   const id = document.getElementById('renameDocId').value;
   const newName = document.getElementById('renameInput').value.trim();
   if (!newName) return;
-  const idx = readIndex();
-  idx.docs[id].title = newName;
-  writeIndex(idx); closeModal('renameModal'); render();
-  setStatus('Document renamed.');
+  closeModal('renameModal');
+  const result = await gasCall({ action: 'renameDoc', email: currentUser.email, id, title: newName });
+  if (result.status === 'success') {
+    cachedIndex.docs[id].title = newName;
+    cacheIndexLocally();
+    render();
+    setStatus('Document renamed.');
+  } else {
+    setStatus('Rename failed — try again.');
+  }
 }
-
 function openDoc(id) {
   const idx = readIndex();
   if (!idx.docs[id]) return;
@@ -1247,46 +1287,81 @@ function setView(v) {
 /* ─────────────────────────────────────────────
    DOC ACTIONS
 ───────────────────────────────────────────── */
-function toggleStar(id) {
-  const idx=readIndex(); idx.docs[id].starred=!idx.docs[id].starred; writeIndex(idx); render();
+async function toggleStar(id) {
+  // Optimistic UI update, then confirm with the server.
+  cachedIndex.docs[id].starred = !cachedIndex.docs[id].starred;
+  render();
+  const result = await gasCall({ action: 'toggleStar', email: currentUser.email, id });
+  if (result.status !== 'success') {
+    cachedIndex.docs[id].starred = !cachedIndex.docs[id].starred; // revert
+    render();
+    setStatus('Could not update star — try again.');
+  } else {
+    cacheIndexLocally();
+  }
 }
-function trashDoc(id) {
-  const idx=readIndex(); idx.docs[id].deleted=true; writeIndex(idx); render();
-  setStatus('Document moved to Trash.');
+async function trashDoc(id) {
+  cachedIndex.docs[id].deleted = true;
+  render();
+  const result = await gasCall({ action: 'trashDoc', email: currentUser.email, id });
+  if (result.status === 'success') { cacheIndexLocally(); setStatus('Document moved to Trash.'); }
+  else { cachedIndex.docs[id].deleted = false; render(); setStatus('Could not delete — try again.'); }
 }
-function restoreDoc(id) {
+
+async function restoreDoc(id) {
   if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
     openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents. Upgrade to restore this one.`);
     return;
   }
-  const idx=readIndex(); idx.docs[id].deleted=false; writeIndex(idx); render();
-  setStatus('Document restored.');
-}
-function deletePermanent(id) {
-  if (!confirm('Permanently delete this document? This cannot be undone.')) return;
-  const idx=readIndex(); delete idx.docs[id];
-  localStorage.removeItem(userDocDataKey(id));
-  writeIndex(idx); render(); setStatus('Document permanently deleted.');
-}
-function emptyTrash() {
-  if (!confirm('Empty entire Trash? All deleted documents will be permanently removed.')) return;
-  const idx=readIndex();
-  Object.keys(idx.docs).forEach(id => {
-    if (idx.docs[id].deleted) { delete idx.docs[id]; localStorage.removeItem(userDocDataKey(id)); }
-  });
-  writeIndex(idx); render(); setStatus('Trash emptied.');
-}
-function moveDoc(id) {
-  const idx=readIndex(), folders=Object.values(idx.folders).filter(f=>!f.deleted);
-  if (!folders.length) return alert('No folders exist. Create a folder first.');
-  const choice=prompt(`Move to folder:\n${folders.map((f,i)=>`${i+1}. ${f.name}`).join('\n')}\n\nEnter number, or 0 for root:`);
-  if (choice===null) return;
-  const num=parseInt(choice);
-  if (num===0) idx.docs[id].folder=null;
-  else if (num>=1 && num<=folders.length) idx.docs[id].folder=folders[num-1].id;
-  writeIndex(idx); render();
+  cachedIndex.docs[id].deleted = false;
+  render();
+  const result = await gasCall({ action: 'restoreDoc', email: currentUser.email, id });
+  if (result.status === 'success') { cacheIndexLocally(); setStatus('Document restored.'); }
+  else { cachedIndex.docs[id].deleted = true; render(); setStatus('Could not restore — try again.'); }
 }
 
+async function deletePermanent(id) {
+  if (!confirm('Permanently delete this document? This cannot be undone.')) return;
+  const result = await gasCall({ action: 'deleteDoc', email: currentUser.email, id });
+  if (result.status === 'success') {
+    delete cachedIndex.docs[id];
+    cacheIndexLocally();
+    render();
+    setStatus('Document permanently deleted.');
+  } else {
+    setStatus('Could not delete — try again.');
+  }
+}
+
+async function emptyTrash() {
+  if (!confirm('Empty entire Trash? All deleted documents will be permanently removed.')) return;
+  const result = await gasCall({ action: 'emptyTrash', email: currentUser.email });
+  if (result.status === 'success') {
+    Object.keys(cachedIndex.docs).forEach(id => { if (cachedIndex.docs[id].deleted) delete cachedIndex.docs[id]; });
+    cacheIndexLocally();
+    render();
+    setStatus('Trash emptied.');
+  } else {
+    setStatus('Could not empty trash — try again.');
+  }
+}
+async function moveDoc(id) {
+  const folders = Object.values(cachedIndex.folders).filter(f => !f.deleted);
+  if (!folders.length) return alert('No folders exist. Create a folder first.');
+  const choice = prompt(`Move to folder:\n${folders.map((f,i)=>`${i+1}. ${f.name}`).join('\n')}\n\nEnter number, or 0 for root:`);
+  if (choice === null) return;
+  const num = parseInt(choice);
+  let targetFolder = null;
+  if (num === 0) targetFolder = null;
+  else if (num >= 1 && num <= folders.length) targetFolder = folders[num-1].id;
+  else return;
+  const prevFolder = cachedIndex.docs[id].folder;
+  cachedIndex.docs[id].folder = targetFolder;
+  render();
+  const result = await gasCall({ action: 'moveDoc', email: currentUser.email, id, folder: targetFolder || '' });
+  if (result.status === 'success') cacheIndexLocally();
+  else { cachedIndex.docs[id].folder = prevFolder; render(); setStatus('Could not move — try again.'); }
+}
 /* ─────────────────────────────────────────────
    UPGRADE / PAYMENT FLOW
 ───────────────────────────────────────────── */
