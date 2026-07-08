@@ -36,7 +36,6 @@ href="https://prodocument.in/">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png"> 
 <link rel="icon" href="/favicon.ico">
 
 <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
@@ -445,6 +444,54 @@ line-height:2;
 
 
 
+.cookie-banner{
+
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+background:#020617;
+color:white;
+padding:18px 8%;
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:20px;
+flex-wrap:wrap;
+z-index:999;
+box-shadow:0 -5px 25px #0006;
+
+}
+
+
+
+.cookie-banner p{
+
+margin:0;
+font-size:14px;
+color:#dbeafe;
+max-width:640px;
+line-height:1.6;
+
+}
+
+
+
+.cookie-banner button{
+
+background:#2563eb;
+color:white;
+border:none;
+padding:12px 26px;
+border-radius:10px;
+font-weight:700;
+cursor:pointer;
+white-space:nowrap;
+
+}
+
+
+
 @media(max-width:900px){
 
 
@@ -479,6 +526,15 @@ footer{
 flex-direction:column;
 
 gap:20px;
+
+}
+
+
+
+.cookie-banner{
+
+flex-direction:column;
+align-items:flex-start;
 
 }
 
@@ -1049,6 +1105,46 @@ Terms
 </footer>
 
 
+
+
+<div class="cookie-banner" id="cookieBanner" style="display:none">
+
+<p>
+We use cookies to run Pro Document and improve your experience. By continuing to use this site, you agree to our use of cookies as described in our
+<a href="privacy.html" style="color:#60a5fa;">Privacy Policy</a>.
+</p>
+
+<button onclick="acceptCookies()">
+Got it
+</button>
+
+</div>
+
+
+
+
+<script>
+
+function acceptCookies(){
+
+localStorage.setItem('proDocCookieConsent', 'accepted');
+
+document.getElementById('cookieBanner').style.display = 'none';
+
+}
+
+
+document.addEventListener('DOMContentLoaded', function(){
+
+if(localStorage.getItem('proDocCookieConsent') !== 'accepted'){
+
+document.getElementById('cookieBanner').style.display = 'flex';
+
+}
+
+});
+
+</script>
 
 
 </body>
