@@ -165,6 +165,15 @@
   vertical-align:middle; margin-right:6px;
 }
 .gsi-wrap { display:flex; justify-content:center; margin-top:4px; min-height:44px; }
+.google-btn {
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; padding:11px 16px; border-radius:24px; border:1px solid #dadce0;
+  background:#fff; color:#3c4043; font-family:'Space Grotesk',sans-serif;
+  font-size:14px; font-weight:600; cursor:pointer; transition:box-shadow 0.15s,background 0.15s;
+}
+.google-btn:hover { background:#f8f9fa; box-shadow:0 1px 4px rgba(0,0,0,0.15); }
+.google-btn:disabled { opacity:0.6; cursor:not-allowed; }
+.google-btn img { width:18px; height:18px; }
 .auth-trust-note {
   margin-top:18px; text-align:center; font-family:'Space Grotesk',sans-serif;
   font-size:11px; color:#999; line-height:1.5;
@@ -513,10 +522,15 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
       <div class="auth-sub">Your intelligent workspace</div>
     </div>
     <div class="auth-body">
-      <div class="gsi-wrap" id="gsiButtonContainer"></div>
+      <div class="gsi-wrap" id="gsiButtonContainer">
+        <button type="button" class="google-btn" id="googleSignInBtn" onclick="signInWithGoogle()">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">
+          Sign in with Google
+        </button>
+      </div>
       <div class="auth-msg" id="authMsg"></div>
       <div class="auth-trust-note">
-        We use <b>Google Sign-In</b> so every account is tied to a real,<br>verified email address. No passwords to remember.
+        We use <b>Google Sign-In</b> via Firebase Authentication, so every account is tied to a real,<br>verified email address. No passwords to remember.
       </div>
     </div>
   </div>
@@ -741,19 +755,36 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
 
 </div><!-- /#appShell -->
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- Firebase (compat build — keeps the rest of this file's plain-script style) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script>
 /* ─────────────────────────────────────────────
-   CONFIG
+   FIREBASE INIT
 ───────────────────────────────────────────── */
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxqASLz1sXGFM_FhLAFTDwHVTfM3bjJy8rPZjucfQp-zlTnJQnQ4hQ0csuF5-7OLsM/exec';
-const GOOGLE_CLIENT_ID = '384904424093-j1a6kupjerhjufurpvur4hbik6k90bla.apps.googleusercontent.com';
+const firebaseConfig = {
+  apiKey: "AIzaSyBjM_4W6DsCfOOrcUW-BoTfttU0ZBAngUQ",
+  authDomain: "pro-document-1723a.firebaseapp.com",
+  projectId: "pro-document-1723a",
+  storageBucket: "pro-document-1723a.firebasestorage.app",
+  messagingSenderId: "358645984079",
+  appId: "1:358645984079:web:6be4b45228f5f35fa0333a"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+// Keep users signed in across visits/tabs (default is already 'local', set explicitly for clarity)
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
 
-/* Freemium limits — enforced client-side, backed by server-verified Pro status */
+/* Freemium limits — enforced client-side; the source of truth for isPro
+   is the users/{uid} document, which only an admin (Firebase console /
+   a trusted Cloud Function) can flip — see firestore.rules */
 const FREE_MAX_FOLDERS = 1;
 const FREE_MAX_DOCS = 3;
 
-/* UPI payment config — update VPA / payee name to your own before going live */
+/* UPI payment config */
 const UPI_VPA = 'banerjeearnab.live@oksbi';
 const UPI_PAYEE_NAME = 'Pro Document';
 const PRO_PLANS = {
@@ -765,6 +796,8 @@ let selectedUpgradeBilling = 'monthly';
 /* ─────────────────────────────────────────────
    LOADING SCREEN
 ───────────────────────────────────────────── */
+let loaderFinished = false;
+
 (function initLoader() {
   const pContainer = document.getElementById('particles');
   for (let i = 0; i < 28; i++) {
@@ -777,7 +810,7 @@ let selectedUpgradeBilling = 'monthly';
   }
   const steps = [
     { pct: 15,  label: 'Loading resources…',      sub: 'Preparing workspace environment' },
-    { pct: 35,  label: 'Connecting to backend…',  sub: 'Establishing secure connection' },
+    { pct: 35,  label: 'Connecting to Firebase…', sub: 'Establishing secure connection' },
     { pct: 55,  label: 'Authenticating session…', sub: 'Verifying credentials' },
     { pct: 75,  label: 'Loading your workspace…', sub: 'Fetching documents & folders' },
     { pct: 92,  label: 'Almost ready…',           sub: 'Applying your preferences' },
@@ -802,51 +835,73 @@ let selectedUpgradeBilling = 'monthly';
 function finishLoading() {
   const ls = document.getElementById('loadingScreen');
   ls.classList.add('fade-out');
-  setTimeout(() => { ls.style.display = 'none'; checkAuthAndLaunch(); }, 800);
+  setTimeout(() => {
+    ls.style.display = 'none';
+    loaderFinished = true;
+    if (authStateKnown) handleAuthState(lastAuthUser);
+  }, 800);
 }
 
 /* ─────────────────────────────────────────────
-   AUTH STATE
+   AUTH STATE (Firebase Authentication)
+   onAuthStateChanged is the single source of
+   truth for whether someone is signed in — no
+   more manual localStorage session juggling.
 ───────────────────────────────────────────── */
 let currentUser = null;
+let authStateKnown = false;
+let lastAuthUser = null;
+let unsubProfile = null, unsubDocs = null, unsubFolders = null;
 
-/* ─────────────────────────────────────────────
-   PER-ACCOUNT STORAGE KEYS
-   Every localStorage key is namespaced with the
-   user's email, so accounts never share data.
-   e.g. pd.alice_example_com.index
-        pd.alice_example_com.doc.item_123_ab
-        pd.bob_example_com.index  ← completely separate
-───────────────────────────────────────────── */
+auth.onAuthStateChanged(user => {
+  authStateKnown = true;
+  lastAuthUser = user;
+  if (loaderFinished) handleAuthState(user);
+});
+
+async function handleAuthState(user) {
+  if (user) {
+    currentUser = {
+      uid: user.uid,
+      email: user.email,
+      name: user.displayName || user.email,
+      picture: user.photoURL || null,
+      sessionId: 'ses_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      loginTime: new Date().toISOString(),
+      isPro: false, plan: 'free', planExpiresAt: null
+    };
+    document.getElementById('authModal').classList.remove('open');
+    try { await ensureUserProfile(); } catch (e) { console.warn('profile upsert failed', e); }
+    launchDashboard();
+    attachRealtimeListeners();
+    logActivity('login');
+  } else {
+    detachRealtimeListeners();
+    currentUser = null;
+    const shell = document.getElementById('appShell');
+    shell.classList.remove('visible');
+    shell.style.display = 'none';
+    document.getElementById('authMsg').className = 'auth-msg';
+    document.getElementById('authModal').classList.add('open');
+    setGoogleBtnBusy(false);
+  }
+}
+
+/* Per-user localStorage cache key (used only for instant paint / offline
+   fallback — Firestore is always the source of truth) */
 function userKey(base) {
-  const uid = currentUser ? currentUser.email.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'guest';
+  const uid = currentUser ? currentUser.uid : 'guest';
   return 'pd.' + uid + '.' + base;
 }
-function userDocDataKey(docId) { return userKey('doc.' + docId); }
 
 /* ─────────────────────────────────────────────
    LAUNCH
 ───────────────────────────────────────────── */
-function checkAuthAndLaunch() {
-  const saved = localStorage.getItem('pd_session');
-  if (saved) {
-    try {
-      currentUser = JSON.parse(saved);
-      launchDashboard();
-      refreshProStatus(); // re-verify with server in case admin approved while away
-      return;
-    } catch(e) {}
-  }
-  document.getElementById('authModal').classList.add('open');
-  initGoogleSignIn();
-}
-
 function launchDashboard() {
   updateUserUI();
   const shell = document.getElementById('appShell');
   shell.style.display = 'flex';
   requestAnimationFrame(() => shell.classList.add('visible'));
-  // Reset nav state for fresh login
   currentFilter = 'all'; currentFolder = null; currentView = 'grid';
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const navAll = document.getElementById('nav-all');
@@ -855,10 +910,10 @@ function launchDashboard() {
   const vg = document.getElementById('view-grid');
   if (vg) vg.classList.add('active');
   document.getElementById('searchInput').value = '';
-  syncIndexFromServer();
-  logActivity('page_load');
-  setInterval(() => logActivity('heartbeat'), 5 * 60 * 1000);
+  loadCachedIndexFromLocal();
+  render(); renderFolders(); updatePlanPanel();
   document.getElementById('lastSyncLabel').textContent = 'Synced ' + formatDate(new Date().toISOString());
+  setInterval(() => logActivity('heartbeat'), 5 * 60 * 1000);
 }
 
 function updateUserUI() {
@@ -877,56 +932,31 @@ function updateUserUI() {
 }
 
 /* ─────────────────────────────────────────────
-   GOOGLE SIGN-IN (Google Identity Services)
-   This is now the ONLY way into the app. Every
-   email is verified by Google — and re-verified
-   by the GAS backend against the ID token's
-   signature and audience — before a session is
-   ever created. There is no more manual
-   email/password entry, so there is no way to
-   "sign up" with a fake or unverifiable address.
+   GOOGLE SIGN-IN (Firebase Auth popup)
 ───────────────────────────────────────────── */
-let gsiInitialized = false;
-
-function initGoogleSignIn() {
-  if (gsiInitialized) return;
-  if (typeof google === 'undefined' || !google.accounts) {
-    // GIS script hasn't finished loading yet — retry shortly
-    setTimeout(initGoogleSignIn, 150);
-    return;
-  }
-  gsiInitialized = true;
-
-  google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: handleGoogleCredential,
-    auto_select: false
-  });
-
-  google.accounts.id.renderButton(
-    document.getElementById('gsiButtonContainer'),
-    { theme: 'filled_blue', size: 'large', shape: 'pill', width: 300, text: 'signin_with' }
-  );
-
-  // Optional One Tap prompt for returning Google users
-  google.accounts.id.prompt();
+function setGoogleBtnBusy(busy) {
+  const btn = document.getElementById('googleSignInBtn');
+  if (!btn) return;
+  btn.disabled = busy;
+  btn.innerHTML = busy
+    ? '<span class="auth-spinner" style="border-color:rgba(43,87,154,0.3);border-top-color:#2b579a;"></span> Signing in…'
+    : '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt=""> Sign in with Google';
 }
 
-async function handleGoogleCredential(response) {
-  showAuthMsg('authMsg', 'info', 'Verifying your Google account…');
+async function signInWithGoogle() {
+  setGoogleBtnBusy(true);
+  showAuthMsg('authMsg', 'info', 'Opening Google sign-in…');
   try {
-    const result = await gasCall({ action: 'googleSignIn', idToken: response.credential });
-
-    if (result.status === 'success' && result.user && result.user.email) {
-      showAuthMsg('authMsg', 'success', 'Welcome, ' + (result.user.name || result.user.email) + '!');
-      setTimeout(() => completeLogin(result.user), 500);
-    } else if (result.status === 'offline') {
-      showAuthMsg('authMsg', 'error', 'Could not reach the server. Please check your connection and try again.');
-    } else {
-      showAuthMsg('authMsg', 'error', result.message || 'Google sign-in failed. Please try again.');
-    }
+    await auth.signInWithPopup(googleProvider);
+    // onAuthStateChanged -> handleAuthState() takes it from here
   } catch (e) {
-    showAuthMsg('authMsg', 'error', 'Sign-in failed. Please try again.');
+    console.error(e);
+    setGoogleBtnBusy(false);
+    if (e.code === 'auth/popup-closed-by-user') {
+      document.getElementById('authMsg').className = 'auth-msg';
+    } else {
+      showAuthMsg('authMsg', 'error', 'Sign-in failed. Please try again.');
+    }
   }
 }
 
@@ -936,70 +966,114 @@ function showAuthMsg(id, type, text) {
 }
 
 /* ─────────────────────────────────────────────
-   GAS BACKEND
+   FIRESTORE: USER PROFILE
+   users/{uid} holds email/name/picture plus the
+   admin-controlled isPro/plan/planExpiresAt
+   fields (see firestore.rules — clients cannot
+   write those three fields themselves).
 ───────────────────────────────────────────── */
-async function gasCall(payload) {
-  try {
-    const res = await fetch(GAS_URL + '?' + new URLSearchParams(payload), { method: 'GET', mode: 'cors' });
-    return await res.json();
-  } catch(e) {
-    console.warn('GAS offline:', e.message);
-    return { status: 'offline' };
+async function ensureUserProfile() {
+  const ref = db.collection('users').doc(currentUser.uid);
+  const snap = await ref.get();
+  const patch = {
+    email: currentUser.email,
+    name: currentUser.name,
+    picture: currentUser.picture,
+    lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  if (!snap.exists) {
+    patch.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+    patch.isPro = false;
+    patch.plan = 'free';
+    patch.planExpiresAt = null;
   }
+  await ref.set(patch, { merge: true });
 }
 
 /* ─────────────────────────────────────────────
-   COMPLETE LOGIN / LOGOUT
-   `user` comes straight from the server-verified
-   Google payload: { email, name, picture }
+   REALTIME LISTENERS (docs / folders / profile)
+   These replace the old poll-the-backend model —
+   the dashboard now updates live, including when
+   an admin approves a Pro payment.
 ───────────────────────────────────────────── */
-function completeLogin(user) {
-  const sessionId = 'ses_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
-  currentUser = {
-    email: user.email,
-    name: user.name || user.email,
-    picture: user.picture || null,
-    sessionId,
-    loginTime: new Date().toISOString(),
-    isPro: false, plan: 'free', planExpiresAt: null
-  };
-  localStorage.setItem('pd_session', JSON.stringify(currentUser));
-  document.getElementById('authModal').classList.remove('open');
-  launchDashboard();
-  logActivity('login');
-  refreshProStatus();
+function attachRealtimeListeners() {
+  const uid = currentUser.uid;
+  const userRef = db.collection('users').doc(uid);
+
+  unsubProfile = userRef.onSnapshot(snap => {
+    if (!snap.exists) return;
+    const data = snap.data();
+    currentUser.isPro = !!data.isPro;
+    currentUser.plan = data.plan || (data.isPro ? 'pro' : 'free');
+    currentUser.planExpiresAt = data.planExpiresAt
+      ? (data.planExpiresAt.toDate ? data.planExpiresAt.toDate().toISOString() : data.planExpiresAt)
+      : null;
+    updatePlanPanel();
+  }, err => console.warn('profile listener error', err));
+
+  unsubDocs = userRef.collection('docs').onSnapshot(snap => {
+    snap.docChanges().forEach(change => {
+      if (change.type === 'removed') {
+        delete cachedIndex.docs[change.doc.id];
+      } else {
+        const d = { id: change.doc.id, ...change.doc.data() };
+        normalizeTimestamps(d);
+        cachedIndex.docs[d.id] = d;
+      }
+    });
+    cacheIndexLocally();
+    render(); updatePlanPanel();
+  }, err => { console.warn('docs listener error', err); setStatus('Could not sync documents.'); });
+
+  unsubFolders = userRef.collection('folders').onSnapshot(snap => {
+    snap.docChanges().forEach(change => {
+      if (change.type === 'removed') {
+        delete cachedIndex.folders[change.doc.id];
+      } else {
+        const f = { id: change.doc.id, ...change.doc.data() };
+        normalizeTimestamps(f);
+        cachedIndex.folders[f.id] = f;
+      }
+    });
+    cacheIndexLocally();
+    renderFolders(); updatePlanPanel();
+  }, err => console.warn('folders listener error', err));
 }
 
+function detachRealtimeListeners() {
+  if (unsubProfile) unsubProfile();
+  if (unsubDocs) unsubDocs();
+  if (unsubFolders) unsubFolders();
+  unsubProfile = unsubDocs = unsubFolders = null;
+  cachedIndex = { docs: {}, folders: {} };
+}
+
+function normalizeTimestamps(obj) {
+  ['createdAt', 'updatedAt'].forEach(k => {
+    if (obj[k] && typeof obj[k].toDate === 'function') obj[k] = obj[k].toDate().toISOString();
+  });
+}
+
+/* ─────────────────────────────────────────────
+   LOGOUT
+───────────────────────────────────────────── */
 function doLogout() {
   closeUserDropdown();
   logActivity('logout');
-  localStorage.removeItem('pd_session');
-  currentUser = null;
-  gsiInitialized = false;
-  if (typeof google !== 'undefined' && google.accounts) {
-    google.accounts.id.disableAutoSelect();
-  }
-  const shell = document.getElementById('appShell');
-  shell.classList.remove('visible');
-  shell.style.display = 'none';
-  document.getElementById('authMsg').className = 'auth-msg';
-  document.getElementById('gsiButtonContainer').innerHTML = '';
-  document.getElementById('authModal').classList.add('open');
-  initGoogleSignIn();
+  auth.signOut();
 }
 
 /* ─────────────────────────────────────────────
-   ACTIVITY LOGGING
+   ACTIVITY LOGGING (users/{uid}/sessions)
 ───────────────────────────────────────────── */
 function logActivity(action) {
   if (!currentUser) return;
-  gasCall({
-    action: 'logActivity',
-    email: currentUser.email, name: currentUser.name,
-    sessionId: currentUser.sessionId, event: action,
-    ts: new Date().toISOString(),
+  db.collection('users').doc(currentUser.uid).collection('sessions').add({
+    event: action,
+    sessionId: currentUser.sessionId,
+    ts: firebase.firestore.FieldValue.serverTimestamp(),
     ua: navigator.userAgent.slice(0, 120),
-    docCount: Object.values(readIndex().docs).filter(d => !d.deleted).length
+    docCount: Object.values(cachedIndex.docs || {}).filter(d => !d.deleted).length
   }).catch(() => {});
 }
 
@@ -1008,20 +1082,30 @@ async function openActivityModal() {
   openModal('activityModal');
   const el = document.getElementById('activityContent');
   el.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Loading session history…</div>';
-  const result = await gasCall({ action: 'getSessions', email: currentUser?.email });
-  const icons  = { login:'🔐', logout:'🚪', heartbeat:'💓', page_load:'🖥️', create_doc:'📄', open_doc:'📂' };
-  if (result.status === 'success' && result.sessions?.length) {
-    el.innerHTML = result.sessions.map(s => `
+  const icons = { login:'🔐', logout:'🚪', heartbeat:'💓', page_load:'🖥️', create_doc:'📄', open_doc:'📂' };
+  try {
+    const snap = await db.collection('users').doc(currentUser.uid)
+      .collection('sessions').orderBy('ts', 'desc').limit(25).get();
+    if (snap.empty) {
+      el.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">No session history yet.</div>';
+      return;
+    }
+    el.innerHTML = snap.docs.map(doc => {
+      const s = doc.data();
+      const when = s.ts && s.ts.toDate ? s.ts.toDate() : new Date();
+      return `
       <div style="padding:10px 0;border-bottom:1px solid #f0f0f0;display:flex;gap:12px;">
         <span style="font-size:18px;">${icons[s.event]||'📌'}</span>
         <div>
-          <div style="font-weight:600;color:#333;">${s.event.replace(/_/g,' ')}</div>
-          <div style="color:#999;font-size:11px;">${new Date(s.ts).toLocaleString()} · …${(s.sessionId||'').slice(-6)}</div>
+          <div style="font-weight:600;color:#333;">${(s.event||'').replace(/_/g,' ')}</div>
+          <div style="color:#999;font-size:11px;">${when.toLocaleString()} · …${(s.sessionId||'').slice(-6)}</div>
           ${s.docCount ? `<div style="color:#2b579a;font-size:11px;">${s.docCount} docs</div>` : ''}
         </div>
-      </div>`).join('');
-  } else {
-    el.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">No session history found.<br><small>Connect a GAS backend to track sessions.</small></div>';
+      </div>`;
+    }).join('');
+  } catch (e) {
+    console.warn(e);
+    el.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Could not load session history.</div>';
   }
 }
 
@@ -1043,21 +1127,15 @@ document.addEventListener('click', e => {
 });
 
 /* ─────────────────────────────────────────────
-   DASHBOARD DATA — ALL KEYS ARE USER-SCOPED
-   readIndex / cacheIndexLocally / userDocDataKey
-   all go through userKey() which prefixes with
-   the current user's email, giving each account
-   a completely private namespace in localStorage.
+   DASHBOARD DATA
+   cachedIndex is a live *read* mirror of Firestore,
+   kept in sync by the onSnapshot listeners above.
+   All writes go straight to Firestore; the
+   listeners then update cachedIndex + re-render.
 ───────────────────────────────────────────── */
 let currentFilter = 'all';
 let currentFolder = null;
 let currentView   = 'grid';
-
-// In-memory cache of the cloud index, hydrated from the server on login.
-// This is what readIndex() now returns — it's a *read* cache, never the
-// source of truth. All writes go to the server first, then update this
-// cache + a localStorage mirror (used only as an offline fallback / for
-// instant paint before the server responds).
 let cachedIndex = { docs: {}, folders: {} };
 
 function readIndex() { return cachedIndex; }
@@ -1070,24 +1148,7 @@ function loadCachedIndexFromLocal() {
   catch (e) { cachedIndex = { docs: {}, folders: {} }; }
 }
 
-async function syncIndexFromServer() {
-  if (!currentUser) return;
-  // Paint instantly from the last-known cache (works offline / on slow networks)...
-  loadCachedIndexFromLocal();
-  render(); renderFolders(); updatePlanPanel();
-  // ...then reconcile with the server, which is the real source of truth.
-  const result = await gasCall({ action: 'listAll', email: currentUser.email });
-  if (result && result.status === 'success') {
-    cachedIndex = { docs: result.docs || {}, folders: result.folders || {} };
-    cacheIndexLocally();
-    render(); renderFolders(); updatePlanPanel();
-  } else {
-    setStatus('Could not reach the cloud — showing last synced copy.');
-  }
-}
-
-function newId() { return 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2,6); }
-function now()   { return new Date().toISOString(); }
+function now() { return new Date().toISOString(); }
 
 /* ─────────────────────────────────────────────
    FREEMIUM PLAN / LIMITS
@@ -1099,22 +1160,6 @@ function getActiveFolderCount() {
   return Object.values(readIndex().folders).filter(f => !f.deleted).length;
 }
 function isProUser() { return !!(currentUser && currentUser.isPro); }
-
-/* Ask the server (Google Sheet, via Apps Script) whether this email has
-   an admin-approved Pro subscription. Falls back to the cached value
-   already in currentUser if the server can't be reached. */
-async function refreshProStatus() {
-  if (!currentUser) return false;
-  const result = await gasCall({ action: 'checkProStatus', email: currentUser.email });
-  if (result && result.status === 'success') {
-    currentUser.isPro = !!result.isPro;
-    currentUser.plan = result.plan || (result.isPro ? 'pro' : 'free');
-    currentUser.planExpiresAt = result.expiresAt || null;
-    localStorage.setItem('pd_session', JSON.stringify(currentUser));
-  }
-  updatePlanPanel();
-  return isProUser();
-}
 
 function updatePlanPanel() {
   const panel = document.getElementById('planPanel');
@@ -1178,6 +1223,11 @@ function openCreateFolderModal(parent = null) {
   openModal('createFolderModal');
 }
 
+/* ─────────────────────────────────────────────
+   DOC / FOLDER CRUD — straight to Firestore.
+   No manual cache mutation needed: the onSnapshot
+   listeners above pick up every write and re-render.
+───────────────────────────────────────────── */
 async function confirmCreateDoc() {
   if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
     closeModal('createDocModal');
@@ -1187,14 +1237,16 @@ async function confirmCreateDoc() {
   const title = document.getElementById('docNameInput').value.trim() || 'Untitled Document';
   closeModal('createDocModal');
   setStatus('Creating document…');
-  const result = await gasCall({ action: 'createDoc', email: currentUser.email, title, folder: currentFolder || '' });
-  if (result.status === 'success') {
-    cachedIndex.docs[result.doc.id] = result.doc;
-    cacheIndexLocally();
-    render(); updatePlanPanel();
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('docs').add({
+      title, folder: currentFolder || null, starred: false, deleted: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
     logActivity('create_doc');
     setStatus('Document "' + title + '" created.');
-  } else {
+  } catch (e) {
+    console.warn(e);
     setStatus('Could not create document — try again.');
   }
 }
@@ -1208,16 +1260,18 @@ async function confirmCreateFolder() {
   const name = document.getElementById('folderNameInput').value.trim();
   if (!name) return;
   closeModal('createFolderModal');
-  const result = await gasCall({ action: 'createFolder', email: currentUser.email, name, parent: window._pendingFolderParent || currentFolder || '' });
-  if (result.status === 'success') {
-    cachedIndex.folders[result.folder.id] = result.folder;
-    cacheIndexLocally();
-    renderFolders(); updatePlanPanel();
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('folders').add({
+      name, parent: window._pendingFolderParent || currentFolder || null, deleted: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
     setStatus('Folder "' + name + '" created.');
-  } else {
+  } catch (e) {
+    console.warn(e);
     setStatus('Could not create folder — try again.');
   }
 }
+
 function openRenameModal(id) {
   const idx = readIndex();
   document.getElementById('renameDocId').value = id;
@@ -1230,36 +1284,30 @@ async function confirmRename() {
   const newName = document.getElementById('renameInput').value.trim();
   if (!newName) return;
   closeModal('renameModal');
-  const result = await gasCall({ action: 'renameDoc', email: currentUser.email, id, title: newName });
-  if (result.status === 'success') {
-    cachedIndex.docs[id].title = newName;
-    cacheIndexLocally();
-    render();
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
+      title: newName, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
     setStatus('Document renamed.');
-  } else {
+  } catch (e) {
+    console.warn(e);
     setStatus('Rename failed — try again.');
   }
 }
 
 /* ─────────────────────────────────────────────
    OPEN DOCUMENT
-   FIX: previously called an undefined
-   writeIndex(idx) function, which threw a
-   ReferenceError and silently aborted the
-   navigation before window.location.href ran.
-   Now it just mutates the shared cachedIndex
-   object (idx is a reference to it) and persists
-   the change with cacheIndexLocally(), the same
-   pattern used everywhere else in this file.
 ───────────────────────────────────────────── */
 function openDoc(id) {
   const idx = readIndex();
   if (!idx.docs[id] || idx.docs[id].deleted) return;
 
-  idx.docs[id].updatedAt = now();
-  cacheIndexLocally();
+  db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(() => {});
   logActivity('open_doc');
 
+  sessionStorage.setItem('pd_active_uid', currentUser.uid);
   sessionStorage.setItem('pd_active_user', currentUser.email);
   window.location.href = 'document-editor.html?id=' + encodeURIComponent(id);
 }
@@ -1271,7 +1319,7 @@ function renderFolders() {
   const idx = readIndex(), container = document.getElementById('folderTree');
   container.innerHTML = '';
   function build(parent, el) {
-    Object.values(idx.folders).filter(f => f.parent === parent && !f.deleted).forEach(f => {
+    Object.values(idx.folders).filter(f => (f.parent||null) === parent && !f.deleted).forEach(f => {
       const div = document.createElement('div');
       div.innerHTML = `<div class="folder-item ${currentFolder===f.id?'active':''}" onclick="openFolder('${f.id}')">📁 ${f.name}</div>`;
       const ce = document.createElement('div'); ce.className='folder-children';
@@ -1302,24 +1350,24 @@ function setView(v) {
    DOC ACTIONS
 ───────────────────────────────────────────── */
 async function toggleStar(id) {
-  // Optimistic UI update, then confirm with the server.
-  cachedIndex.docs[id].starred = !cachedIndex.docs[id].starred;
-  render();
-  const result = await gasCall({ action: 'toggleStar', email: currentUser.email, id });
-  if (result.status !== 'success') {
-    cachedIndex.docs[id].starred = !cachedIndex.docs[id].starred; // revert
-    render();
+  const cur = !!cachedIndex.docs[id]?.starred;
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({ starred: !cur });
+  } catch (e) {
+    console.warn(e);
     setStatus('Could not update star — try again.');
-  } else {
-    cacheIndexLocally();
   }
 }
 async function trashDoc(id) {
-  cachedIndex.docs[id].deleted = true;
-  render();
-  const result = await gasCall({ action: 'trashDoc', email: currentUser.email, id });
-  if (result.status === 'success') { cacheIndexLocally(); setStatus('Document moved to Trash.'); }
-  else { cachedIndex.docs[id].deleted = false; render(); setStatus('Could not delete — try again.'); }
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
+      deleted: true, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setStatus('Document moved to Trash.');
+  } catch (e) {
+    console.warn(e);
+    setStatus('Could not delete — try again.');
+  }
 }
 
 async function restoreDoc(id) {
@@ -1327,35 +1375,40 @@ async function restoreDoc(id) {
     openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents. Upgrade to restore this one.`);
     return;
   }
-  cachedIndex.docs[id].deleted = false;
-  render();
-  const result = await gasCall({ action: 'restoreDoc', email: currentUser.email, id });
-  if (result.status === 'success') { cacheIndexLocally(); setStatus('Document restored.'); }
-  else { cachedIndex.docs[id].deleted = true; render(); setStatus('Could not restore — try again.'); }
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
+      deleted: false, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setStatus('Document restored.');
+  } catch (e) {
+    console.warn(e);
+    setStatus('Could not restore — try again.');
+  }
 }
 
 async function deletePermanent(id) {
   if (!confirm('Permanently delete this document? This cannot be undone.')) return;
-  const result = await gasCall({ action: 'deleteDoc', email: currentUser.email, id });
-  if (result.status === 'success') {
-    delete cachedIndex.docs[id];
-    cacheIndexLocally();
-    render();
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).delete();
     setStatus('Document permanently deleted.');
-  } else {
+  } catch (e) {
+    console.warn(e);
     setStatus('Could not delete — try again.');
   }
 }
 
 async function emptyTrash() {
   if (!confirm('Empty entire Trash? All deleted documents will be permanently removed.')) return;
-  const result = await gasCall({ action: 'emptyTrash', email: currentUser.email });
-  if (result.status === 'success') {
-    Object.keys(cachedIndex.docs).forEach(id => { if (cachedIndex.docs[id].deleted) delete cachedIndex.docs[id]; });
-    cacheIndexLocally();
-    render();
+  const toDelete = Object.values(cachedIndex.docs).filter(d => d.deleted);
+  if (!toDelete.length) return;
+  try {
+    const batch = db.batch();
+    const docsRef = db.collection('users').doc(currentUser.uid).collection('docs');
+    toDelete.forEach(d => batch.delete(docsRef.doc(d.id)));
+    await batch.commit();
     setStatus('Trash emptied.');
-  } else {
+  } catch (e) {
+    console.warn(e);
     setStatus('Could not empty trash — try again.');
   }
 }
@@ -1369,15 +1422,24 @@ async function moveDoc(id) {
   if (num === 0) targetFolder = null;
   else if (num >= 1 && num <= folders.length) targetFolder = folders[num-1].id;
   else return;
-  const prevFolder = cachedIndex.docs[id].folder;
-  cachedIndex.docs[id].folder = targetFolder;
-  render();
-  const result = await gasCall({ action: 'moveDoc', email: currentUser.email, id, folder: targetFolder || '' });
-  if (result.status === 'success') cacheIndexLocally();
-  else { cachedIndex.docs[id].folder = prevFolder; render(); setStatus('Could not move — try again.'); }
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
+      folder: targetFolder, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (e) {
+    console.warn(e);
+    setStatus('Could not move — try again.');
+  }
 }
+
 /* ─────────────────────────────────────────────
    UPGRADE / PAYMENT FLOW
+   Payment submissions land in a top-level
+   `payments` collection for manual/admin review.
+   Approval is done in the Firebase console (or an
+   admin tool) by setting isPro/plan/planExpiresAt
+   on users/{uid} — clients cannot set those
+   fields themselves (see firestore.rules).
 ───────────────────────────────────────────── */
 function openUpgradeModal(reason) {
   closeUserDropdown();
@@ -1415,40 +1477,45 @@ async function submitUpgradePayment() {
   statusEl.className = 'up-status show info';
   statusEl.textContent = 'Submitting your payment for review…';
 
-  const result = await gasCall({
-    action: 'submitPayment',
-    email: currentUser.email,
-    name: currentUser.name || '',
-    plan: 'pro',
-    billing: selectedUpgradeBilling,
-    method: 'gpay'
-  });
-
-  if (result && result.status === 'success') {
+  try {
+    await db.collection('payments').add({
+      uid: currentUser.uid,
+      email: currentUser.email,
+      name: currentUser.name || '',
+      plan: 'pro',
+      billing: selectedUpgradeBilling,
+      amount: PRO_PLANS[selectedUpgradeBilling].price,
+      method: 'gpay',
+      status: 'pending',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
     btn.textContent = 'Payment submitted';
     statusEl.className = 'up-status show success';
     statusEl.textContent = "✔️ Submitted! You'll get Pro access once an admin approves your payment.";
-  } else {
+  } catch (e) {
+    console.warn(e);
     btn.disabled = false; btn.textContent = "I've paid via GPay / UPI";
     statusEl.className = 'up-status show error';
     statusEl.textContent = 'Could not reach the server. Please check your connection and try again.';
   }
 }
 
-async function checkApprovalStatus() {
+function checkApprovalStatus() {
   const statusEl = document.getElementById('upgradeStatus');
   statusEl.className = 'up-status show info';
   statusEl.textContent = 'Checking approval status…';
-
-  const proNow = await refreshProStatus();
-  if (proNow) {
-    statusEl.className = 'up-status show success';
-    statusEl.textContent = "🎉 You're now on Pro! Closing…";
-    setTimeout(() => { closeModal('upgradeModal'); render(); }, 1200);
-  } else {
-    statusEl.className = 'up-status show info';
-    statusEl.textContent = 'Still pending admin approval. Please check back later.';
-  }
+  // isPro is kept live by the users/{uid} onSnapshot listener, so this
+  // just reads the latest known value instead of polling a server.
+  setTimeout(() => {
+    if (isProUser()) {
+      statusEl.className = 'up-status show success';
+      statusEl.textContent = "🎉 You're now on Pro! Closing…";
+      setTimeout(() => { closeModal('upgradeModal'); render(); }, 1200);
+    } else {
+      statusEl.className = 'up-status show info';
+      statusEl.textContent = 'Still pending admin approval. Please check back later.';
+    }
+  }, 400);
 }
 
 /* ─────────────────────────────────────────────
@@ -1478,7 +1545,7 @@ function render() {
   else if (currentFilter==='recent')  docs=docs.filter(d=>!d.deleted).sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt)).slice(0,20);
   else if (currentFilter==='trash')   docs=docs.filter(d=>d.deleted);
   else if (currentFilter==='folder')  docs=docs.filter(d=>d.folder===currentFolder&&!d.deleted);
-  if (searchQuery) docs=docs.filter(d=>d.title.toLowerCase().includes(searchQuery));
+  if (searchQuery) docs=docs.filter(d=>(d.title||'').toLowerCase().includes(searchQuery));
 
   document.getElementById('sectionTitle').textContent={all:'All Documents',starred:'Starred',recent:'Recent',trash:'Trash',folder:'📁 Folder'}[currentFilter]||'Documents';
   document.getElementById('trashHeader').style.display=currentFilter==='trash'?'flex':'none';
