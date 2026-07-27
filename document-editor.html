@@ -1149,25 +1149,14 @@ let slideshowIndex = 0;
 // ── Who's editing? (used to scope Drive storage to this user) ──
 let currentUser = null;
 (function loadSession() {
-  const saved = localStorage.getItem('pd_session');
-  if (saved) { try { currentUser = JSON.parse(saved); } catch(e) {} }
+  const uid = sessionStorage.getItem('pd_active_uid');
+  const email = sessionStorage.getItem('pd_active_user');
+  if (uid && email) currentUser = { uid, email };
 })();
 function currentEmail() { return currentUser ? currentUser.email : 'guest'; }
 
-/* Mirrors the dashboard's userKey() sanitization so we can read its
-   localStorage index cache and pick up the title the user typed in the
-   "New Document" modal, even before this document has ever been saved
-   to Drive.
-
-   FIX: this previously pointed at 'pd.<email>.index', but the dashboard
-   actually persists its cache under 'pd.<email>.index_cache' (see
-   cacheIndexLocally() in dashboard.html). Because the keys never
-   matched, getDashboardTitle() always returned null, and — since a
-   brand-new document also hasn't been saved to Drive yet, so the GAS
-   "load" call finds nothing either — the title displayed here was
-   always stuck on the generic "New Document" placeholder. */
 function dashboardIndexKey() {
-  const uid = currentUser ? currentUser.email.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'guest';
+  const uid = currentUser ? currentUser.uid : 'guest';
   return 'pd.' + uid + '.index_cache';
 }
 function getDashboardTitle(id) {
