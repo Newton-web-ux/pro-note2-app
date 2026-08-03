@@ -1410,6 +1410,11 @@ async function confirmCreateDoc() {
     });
     logActivity('create_doc');
     setStatus('Document "' + title + '" created.');
+    // Hand the chosen template to the editor via sessionStorage so a brand
+    // new (never-saved) document opens pre-styled. See document-editor.html
+    // loadDocument(): it only applies this when Drive has no saved content
+    // yet, so it never clobbers a real document's existing style.
+    try { sessionStorage.setItem('pd_new_doc_template', template); } catch (e) {}
     // Jump straight into the new document, template pre-selected.
     openDoc(ref.id);
   } catch (e) {
@@ -1614,12 +1619,11 @@ async function moveDoc(id) {
    A share record lives at the top-level
    `sharedDocs/{docId}` — deliberately keyed by
    the *same* id as `users/{uid}/docs/{docId}`,
-   so Firestore security rules can grant read (and,
-   for "Can edit" links, write) access to that doc
-   whenever a matching sharedDocs entry exists,
-   without ever exposing the rest of the owner's
-   library. See the note in document-editor.html
-   for the exact rules this depends on.
+   so document-editor.html can resolve a share
+   link (?share=docId) back to the owner's uid +
+   email and load the actual Drive content via
+   the GAS backend under that identity, without
+   ever exposing the rest of the owner's library.
 ───────────────────────────────────────────── */
 let shareTargetId = null;
 let selectedSharePermission = 'view';
@@ -1655,7 +1659,7 @@ function updateShareModalUI(doc) {
     linkInput.value = '';
   }
   note.textContent = selectedSharePermission === 'edit'
-    ? 'Anyone with the link can view and edit this document. They\u2019ll need to sign in with Google before their changes are saved.'
+    ? 'Anyone with the link can view and edit this document — changes save straight back to your copy.'
     : 'Anyone with the link will be able to view this document — no sign-in required.';
 }
 
@@ -1678,6 +1682,7 @@ async function createOrUpdateShare() {
   try {
     await db.collection('sharedDocs').doc(shareTargetId).set({
       ownerUid: currentUser.uid,
+      ownerEmail: currentUser.email,
       ownerName: currentUser.name || currentUser.email,
       title: doc.title,
       permission: selectedSharePermission,
