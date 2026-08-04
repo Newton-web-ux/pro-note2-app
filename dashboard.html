@@ -370,7 +370,7 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
 .doc-card-body { padding:10px 12px; }
 .doc-card-title { font-weight:600; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px; }
 .doc-card-meta { font-size:11px; color:var(--muted); }
-.doc-card-actions { padding:6px 8px; display:flex; gap:4px; border-top:1px solid var(--border); background:#fafafa; }
+.doc-card-actions { padding:6px 8px; display:flex; gap:4px; flex-wrap:wrap; border-top:1px solid var(--border); background:#fafafa; }
 .doc-action-btn {
   padding:3px 8px; border:1px solid var(--border); background:white; border-radius:3px;
   cursor:pointer; font-size:11px; font-family:'Space Grotesk',sans-serif; color:var(--text); transition:all 0.15s;
@@ -383,6 +383,11 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
 }
 .star-btn.on { color:#f5c518; }
 .star-btn:hover { color:#f5c518; }
+.shared-badge {
+  position:absolute; top:8px; left:8px; background:rgba(43,87,154,0.9); color:#fff;
+  font-size:9px; font-weight:700; padding:2px 7px; border-radius:10px; letter-spacing:0.3px;
+  z-index:2; font-family:'Space Grotesk',sans-serif;
+}
 .doc-list-item {
   background:white; border:1px solid var(--border); border-radius:3px;
   display:flex; align-items:center; padding:8px 12px; gap:12px; cursor:pointer; transition:background 0.15s;
@@ -392,7 +397,7 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
 .doc-list-info { flex:1; min-width:0; }
 .doc-list-title { font-weight:500; font-size:13px; }
 .doc-list-meta { font-size:11px; color:var(--muted); }
-.doc-list-actions { display:flex; gap:4px; }
+.doc-list-actions { display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end; }
 .trash-header {
   background:#fff3cd; border:1px solid #ffc107; border-radius:4px;
   padding:8px 14px; margin-bottom:16px; display:flex; align-items:center;
@@ -483,6 +488,16 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
 .up-status.error { background:#fef0f0; color:#c0392b; border:1px solid #f5c6c6; }
 .up-status.info { background:#eef4fd; color:#2b579a; border:1px solid #b8d0f5; }
 .up-note { font-size:11px; color:#888; text-align:center; margin-top:10px; }
+
+/* ── SHARE MODAL ── */
+.share-toggle-row { display:flex; align-items:center; gap:8px; font-weight:500; text-transform:none; letter-spacing:0; color:var(--text); font-size:13px; cursor:pointer; }
+.share-toggle-row input[type="checkbox"] { width:16px; height:16px; cursor:pointer; }
+.share-link-row { display:none; flex-direction:column; gap:10px; margin-top:14px; }
+.share-link-row.show { display:flex; }
+.share-copy-row { display:flex; gap:6px; }
+.share-copy-row input[type="text"] { flex:1; font-size:12px; color:var(--muted); background:#fafafa; }
+.share-status-line { margin-top:10px; font-size:12px; color:var(--muted); }
+.share-perm-note { font-size:11px; color:#888; margin-top:4px; }
 </style>
 </head>
 <body>
@@ -597,6 +612,9 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
     <button class="ribbon-btn" onclick="setFilter('recent')">
       <span class="icon">🕐</span> Recent
     </button>
+    <button class="ribbon-btn" onclick="setFilter('shared')">
+      <span class="icon">🤝</span> Shared
+    </button>
     <div class="ribbon-sep"></div>
     <button class="ribbon-btn gold" onclick="openUpgradeModal()">
       <span class="icon">💎</span> Upgrade
@@ -628,6 +646,10 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
       </div>
       <div class="nav-item" id="nav-recent" onclick="setFilter('recent')">
         <span class="nav-icon">🕐</span> Recent
+      </div>
+      <div class="nav-item" id="nav-shared" onclick="setFilter('shared')">
+        <span class="nav-icon">🤝</span> Shared with me
+        <span class="nav-badge" id="badge-shared">0</span>
       </div>
       <div class="nav-item" id="nav-trash" onclick="setFilter('trash')">
         <span class="nav-icon">🗑️</span> Trash
@@ -715,6 +737,40 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('activityModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal-overlay" id="shareModal">
+  <div class="modal" style="width:420px;">
+    <div class="modal-header">🔗 Share "<span id="shareDocTitle">Document</span>" <button onclick="closeModal('shareModal')">×</button></div>
+    <div class="modal-body">
+      <label class="share-toggle-row" style="text-transform:none;font-weight:500;">
+        <input type="checkbox" id="shareToggle" onchange="onShareToggleChange(this.checked)">
+        Enable link sharing
+      </label>
+
+      <div class="share-link-row" id="shareLinkRow">
+        <div>
+          <label>Anyone with the link can</label>
+          <select class="tb-select-like" id="sharePermSelect" onchange="onSharePermChange(this.value)"
+                  style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:3px;font-size:13px;font-family:inherit;">
+            <option value="view">View only</option>
+            <option value="edit">View and edit</option>
+          </select>
+          <div class="share-perm-note">Edit access lets anyone with the link change and save this document.</div>
+        </div>
+        <div class="share-copy-row">
+          <input type="text" id="shareLinkInput" readonly>
+          <button class="btn btn-secondary" onclick="copyShareLink()">Copy</button>
+        </div>
+      </div>
+
+      <div class="share-status-line" id="shareStatus"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('shareModal')">Done</button>
     </div>
   </div>
 </div>
@@ -851,7 +907,7 @@ function finishLoading() {
 let currentUser = null;
 let authStateKnown = false;
 let lastAuthUser = null;
-let unsubProfile = null, unsubDocs = null, unsubFolders = null;
+let unsubProfile = null, unsubDocs = null, unsubFolders = null, unsubSharedWithMe = null;
 
 auth.onAuthStateChanged(user => {
   authStateKnown = true;
@@ -875,6 +931,7 @@ async function handleAuthState(user) {
     launchDashboard();
     attachRealtimeListeners();
     logActivity('login');
+    handleIncomingShareLink();
   } else {
     detachRealtimeListeners();
     currentUser = null;
@@ -991,10 +1048,12 @@ async function ensureUserProfile() {
 }
 
 /* ─────────────────────────────────────────────
-   REALTIME LISTENERS (docs / folders / profile)
-   These replace the old poll-the-backend model —
-   the dashboard now updates live, including when
-   an admin approves a Pro payment.
+   REALTIME LISTENERS (docs / folders / profile /
+   shared-with-me). These replace the old
+   poll-the-backend model — the dashboard now
+   updates live, including when an admin approves
+   a Pro payment, or when a document is newly
+   shared with this user.
 ───────────────────────────────────────────── */
 function attachRealtimeListeners() {
   const uid = currentUser.uid;
@@ -1038,18 +1097,33 @@ function attachRealtimeListeners() {
     cacheIndexLocally();
     renderFolders(); updatePlanPanel();
   }, err => console.warn('folders listener error', err));
+
+  unsubSharedWithMe = userRef.collection('sharedWithMe').onSnapshot(snap => {
+    snap.docChanges().forEach(change => {
+      if (change.type === 'removed') {
+        delete cachedSharedWithMe[change.doc.id];
+      } else {
+        const s = { id: change.doc.id, ...change.doc.data() };
+        normalizeTimestamps(s);
+        cachedSharedWithMe[s.id] = s;
+      }
+    });
+    render();
+  }, err => console.warn('sharedWithMe listener error', err));
 }
 
 function detachRealtimeListeners() {
   if (unsubProfile) unsubProfile();
   if (unsubDocs) unsubDocs();
   if (unsubFolders) unsubFolders();
-  unsubProfile = unsubDocs = unsubFolders = null;
+  if (unsubSharedWithMe) unsubSharedWithMe();
+  unsubProfile = unsubDocs = unsubFolders = unsubSharedWithMe = null;
   cachedIndex = { docs: {}, folders: {} };
+  cachedSharedWithMe = {};
 }
 
 function normalizeTimestamps(obj) {
-  ['createdAt', 'updatedAt'].forEach(k => {
+  ['createdAt', 'updatedAt', 'addedAt'].forEach(k => {
     if (obj[k] && typeof obj[k].toDate === 'function') obj[k] = obj[k].toDate().toISOString();
   });
 }
@@ -1132,11 +1206,14 @@ document.addEventListener('click', e => {
    kept in sync by the onSnapshot listeners above.
    All writes go straight to Firestore; the
    listeners then update cachedIndex + re-render.
+   cachedSharedWithMe mirrors this user's
+   sharedWithMe subcollection the same way.
 ───────────────────────────────────────────── */
 let currentFilter = 'all';
 let currentFolder = null;
 let currentView   = 'grid';
 let cachedIndex = { docs: {}, folders: {} };
+let cachedSharedWithMe = {};
 
 function readIndex() { return cachedIndex; }
 
@@ -1200,7 +1277,7 @@ function updatePlanPanel() {
 ───────────────────────────────────────────── */
 function openModal(id) {
   document.getElementById(id).classList.add('open');
-  setTimeout(() => { const inp = document.querySelector('#'+id+' input[type="text"]'); if(inp){inp.value='';inp.focus();} }, 50);
+  setTimeout(() => { const inp = document.querySelector('#'+id+' input[type="text"]'); if(inp && !inp.readOnly){inp.value='';inp.focus();} }, 50);
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(m => {
@@ -1288,6 +1365,12 @@ async function confirmRename() {
     await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
       title: newName, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+    // Keep the share record's display title (if this doc is shared) in sync.
+    db.collection('shares').doc(id).get().then(snap => {
+      if (snap.exists && snap.data().ownerUid === currentUser.uid) {
+        snap.ref.update({ title: newName }).catch(() => {});
+      }
+    }).catch(() => {});
     setStatus('Document renamed.');
   } catch (e) {
     console.warn(e);
@@ -1296,7 +1379,7 @@ async function confirmRename() {
 }
 
 /* ─────────────────────────────────────────────
-   OPEN DOCUMENT
+   OPEN DOCUMENT (owned by the current user)
 ───────────────────────────────────────────── */
 function openDoc(id) {
   const idx = readIndex();
@@ -1390,6 +1473,12 @@ async function deletePermanent(id) {
   if (!confirm('Permanently delete this document? This cannot be undone.')) return;
   try {
     await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).delete();
+    // Best-effort: also retire any share link that pointed at it.
+    db.collection('shares').doc(id).get().then(snap => {
+      if (snap.exists && snap.data().ownerUid === currentUser.uid) {
+        snap.ref.update({ enabled: false }).catch(() => {});
+      }
+    }).catch(() => {});
     setStatus('Document permanently deleted.');
   } catch (e) {
     console.warn(e);
@@ -1429,6 +1518,192 @@ async function moveDoc(id) {
   } catch (e) {
     console.warn(e);
     setStatus('Could not move — try again.');
+  }
+}
+
+/* ─────────────────────────────────────────────
+   SHARING
+   shares/{docId} (top-level collection, doc id ==
+   the owner's Firestore docId) holds who owns the
+   document and what permission the link grants.
+   Anyone signed in can `get` a share record if
+   they already know its id (i.e. clicked the
+   link) — see firestore.rules — but only the
+   owner can create/update/delete it, and `list`
+   is disabled so the collection can't be browsed.
+
+   Accepting a link writes a small pointer into
+   the *viewer's own* users/{uid}/sharedWithMe
+   subcollection, which is what powers the
+   "Shared with me" view and keeps things in sync
+   live via attachRealtimeListeners().
+
+   The actual document body still lives in Google
+   Drive (via document-editor.html's GAS_URL calls,
+   keyed by the *owner's* email) — so a viewer's
+   editor is pointed at the owner's file by passing
+   ownerUid/ownerEmail/role through the URL.
+───────────────────────────────────────────── */
+let shareModalDocId = null;
+
+function shareLinkFor(id) {
+  const base = location.origin + location.pathname.replace(/[^/]*$/, '');
+  return `${base}dashboard.html?share=${encodeURIComponent(id)}`;
+}
+
+async function openShareModal(id) {
+  shareModalDocId = id;
+  const doc = cachedIndex.docs[id];
+  if (!doc) return;
+  document.getElementById('shareDocTitle').textContent = doc.title;
+  document.getElementById('shareStatus').textContent = 'Loading sharing status…';
+  document.getElementById('shareLinkRow').classList.remove('show');
+  document.getElementById('shareToggle').checked = false;
+  openModal('shareModal');
+  try {
+    const snap = await db.collection('shares').doc(id).get();
+    if (snap.exists && snap.data().enabled) renderShareEnabled(snap.data());
+    else renderShareDisabled();
+  } catch (e) {
+    console.warn(e);
+    document.getElementById('shareStatus').textContent = 'Could not load sharing status — try again.';
+  }
+}
+function renderShareEnabled(data) {
+  document.getElementById('shareToggle').checked = true;
+  document.getElementById('sharePermSelect').value = data.permission || 'view';
+  document.getElementById('shareLinkRow').classList.add('show');
+  document.getElementById('shareLinkInput').value = shareLinkFor(shareModalDocId);
+  document.getElementById('shareStatus').textContent = 'Anyone with this link can open this document.';
+}
+function renderShareDisabled() {
+  document.getElementById('shareToggle').checked = false;
+  document.getElementById('shareLinkRow').classList.remove('show');
+  document.getElementById('shareStatus').textContent = 'Sharing is currently off for this document.';
+}
+async function onShareToggleChange(checked) {
+  const id = shareModalDocId;
+  const doc = cachedIndex.docs[id];
+  if (!id || !doc) return;
+  const statusEl = document.getElementById('shareStatus');
+  try {
+    if (!checked) {
+      await db.collection('shares').doc(id).set({
+        enabled: false, ownerUid: currentUser.uid,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      renderShareDisabled();
+      setStatus('Sharing turned off.');
+      return;
+    }
+    const perm = document.getElementById('sharePermSelect').value || 'view';
+    await db.collection('shares').doc(id).set({
+      ownerUid: currentUser.uid,
+      ownerEmail: currentUser.email,
+      title: doc.title,
+      permission: perm,
+      enabled: true,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    renderShareEnabled({ permission: perm });
+    setStatus('Sharing turned on.');
+  } catch (e) {
+    console.warn(e);
+    statusEl.textContent = 'Could not update sharing — try again.';
+  }
+}
+async function onSharePermChange(perm) {
+  if (!shareModalDocId) return;
+  try {
+    await db.collection('shares').doc(shareModalDocId).update({
+      permission: perm, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById('shareStatus').textContent = 'Anyone with this link can open this document.';
+    setStatus('Sharing permission updated.');
+  } catch (e) {
+    console.warn(e);
+    setStatus('Could not update permission — try again.');
+  }
+}
+function copyShareLink() {
+  const input = document.getElementById('shareLinkInput');
+  input.select();
+  input.setSelectionRange(0, 99999);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(input.value)
+      .then(() => setStatus('Share link copied.'))
+      .catch(() => document.execCommand('copy'));
+  } else {
+    document.execCommand('copy');
+    setStatus('Share link copied.');
+  }
+}
+
+/* Open a document that someone else shared with the current user. The
+   editor is loaded with the owner's uid/email/role so it reads & (if
+   permitted) writes the owner's Drive-backed file, not the viewer's own. */
+function openSharedDoc(id) {
+  const s = cachedSharedWithMe[id];
+  if (!s) return;
+  sessionStorage.setItem('pd_active_uid', currentUser.uid);
+  sessionStorage.setItem('pd_active_user', currentUser.email);
+  const params = new URLSearchParams({
+    id, ownerUid: s.ownerUid, ownerEmail: s.ownerEmail, role: s.permission || 'view'
+  });
+  window.location.href = 'document-editor.html?' + params.toString();
+}
+async function removeSharedDoc(id) {
+  if (!confirm('Remove this document from "Shared with me"? You can re-open it again with the same link later.')) return;
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('sharedWithMe').doc(id).delete();
+    setStatus('Removed from Shared with me.');
+  } catch (e) {
+    console.warn(e);
+    setStatus('Could not remove — try again.');
+  }
+}
+
+/* Handles ?share=<docId> links. If it's the owner's own link, just opens
+   the doc normally; otherwise records a pointer in sharedWithMe and jumps
+   straight into the shared editor view. */
+async function handleIncomingShareLink() {
+  const params = new URLSearchParams(window.location.search);
+  const shareId = params.get('share');
+  if (!shareId) return;
+  window.history.replaceState(null, document.title, window.location.origin + window.location.pathname);
+
+  setStatus('Opening shared document…');
+  try {
+    const snap = await db.collection('shares').doc(shareId).get();
+    if (!snap.exists || snap.data().enabled === false) {
+      alert('This share link is invalid or sharing has been turned off by the owner.');
+      return;
+    }
+    const data = snap.data();
+
+    if (data.ownerUid === currentUser.uid) {
+      // It's our own document — just open it the normal way.
+      return openDoc(shareId);
+    }
+
+    await db.collection('users').doc(currentUser.uid).collection('sharedWithMe').doc(shareId).set({
+      ownerUid: data.ownerUid,
+      ownerEmail: data.ownerEmail,
+      title: data.title || 'Untitled Document',
+      permission: data.permission || 'view',
+      addedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    sessionStorage.setItem('pd_active_uid', currentUser.uid);
+    sessionStorage.setItem('pd_active_user', currentUser.email);
+    const p = new URLSearchParams({
+      id: shareId, ownerUid: data.ownerUid, ownerEmail: data.ownerEmail, role: data.permission || 'view'
+    });
+    window.location.href = 'document-editor.html?' + p.toString();
+  } catch (e) {
+    console.warn(e);
+    alert('Could not open the shared document. The link may be invalid.');
   }
 }
 
@@ -1539,28 +1814,47 @@ function formatDate(iso) {
 function render() {
   const idx=readIndex(), container=document.getElementById('docContainer');
   const searchQuery=document.getElementById('searchInput').value.toLowerCase();
-  let docs=Object.values(idx.docs);
-  if      (currentFilter==='all')     docs=docs.filter(d=>!d.deleted);
-  else if (currentFilter==='starred') docs=docs.filter(d=>d.starred&&!d.deleted);
-  else if (currentFilter==='recent')  docs=docs.filter(d=>!d.deleted).sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt)).slice(0,20);
-  else if (currentFilter==='trash')   docs=docs.filter(d=>d.deleted);
-  else if (currentFilter==='folder')  docs=docs.filter(d=>d.folder===currentFolder&&!d.deleted);
-  if (searchQuery) docs=docs.filter(d=>(d.title||'').toLowerCase().includes(searchQuery));
+  let docs=[];
+  let isSharedView = false;
 
-  document.getElementById('sectionTitle').textContent={all:'All Documents',starred:'Starred',recent:'Recent',trash:'Trash',folder:'📁 Folder'}[currentFilter]||'Documents';
+  if (currentFilter === 'shared') {
+    isSharedView = true;
+    docs = Object.values(cachedSharedWithMe).map(s => ({
+      id: s.id,
+      title: s.title || 'Untitled Document',
+      updatedAt: s.addedAt,
+      createdAt: s.addedAt,
+      starred: false,
+      shared: true,
+      role: s.permission || 'view',
+      ownerEmail: s.ownerEmail
+    }));
+    if (searchQuery) docs = docs.filter(d => (d.title||'').toLowerCase().includes(searchQuery));
+  } else {
+    docs=Object.values(idx.docs);
+    if      (currentFilter==='all')     docs=docs.filter(d=>!d.deleted);
+    else if (currentFilter==='starred') docs=docs.filter(d=>d.starred&&!d.deleted);
+    else if (currentFilter==='recent')  docs=docs.filter(d=>!d.deleted).sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt)).slice(0,20);
+    else if (currentFilter==='trash')   docs=docs.filter(d=>d.deleted);
+    else if (currentFilter==='folder')  docs=docs.filter(d=>d.folder===currentFolder&&!d.deleted);
+    if (searchQuery) docs=docs.filter(d=>(d.title||'').toLowerCase().includes(searchQuery));
+  }
+
+  document.getElementById('sectionTitle').textContent={all:'All Documents',starred:'Starred',recent:'Recent',trash:'Trash',folder:'📁 Folder',shared:'🤝 Shared with me'}[currentFilter]||'Documents';
   document.getElementById('trashHeader').style.display=currentFilter==='trash'?'flex':'none';
   const all=Object.values(idx.docs);
   document.getElementById('badge-all').textContent     = all.filter(d=>!d.deleted).length;
   document.getElementById('badge-starred').textContent = all.filter(d=>d.starred&&!d.deleted).length;
   document.getElementById('badge-trash').textContent   = all.filter(d=>d.deleted).length;
+  document.getElementById('badge-shared').textContent  = Object.keys(cachedSharedWithMe).length;
   document.getElementById('docCount').textContent      = docs.length+' item'+(docs.length!==1?'s':'');
 
   if (!docs.length) {
     container.innerHTML=`
       <div class="empty-state">
-        <div class="empty-icon">📄</div>
-        <div class="empty-title">${searchQuery?'No results found':'Nothing here'}</div>
-        <div class="empty-sub">${searchQuery?'Try a different search term.':currentFilter==='trash'?'Trash is empty.':'Create a new document to get started.'}</div>
+        <div class="empty-icon">${isSharedView ? '🤝' : '📄'}</div>
+        <div class="empty-title">${searchQuery?'No results found':(isSharedView?'Nothing shared with you yet':'Nothing here')}</div>
+        <div class="empty-sub">${searchQuery?'Try a different search term.':(isSharedView?'Documents someone shares a link with you for will show up here.':(currentFilter==='trash'?'Trash is empty.':'Create a new document to get started.'))}</div>
       </div>`;
     renderFolders(); updatePlanPanel(); return;
   }
@@ -1569,46 +1863,56 @@ function render() {
     container.innerHTML=''; container.className='doc-grid';
     docs.forEach(d=>{
       const el=document.createElement('div'); el.className='doc-card';
+      const openAction = d.shared ? `openSharedDoc('${d.id}')` : `openDoc('${d.id}')`;
+      const actionsHtml = d.shared
+        ? `<button class="doc-action-btn" onclick="${openAction}">Open</button>
+           <span class="doc-action-btn" style="cursor:default;background:#f5f5f5;color:var(--muted);">${d.role==='edit'?'✏️ Can edit':'👁 View only'}</span>
+           <button class="doc-action-btn danger" onclick="removeSharedDoc('${d.id}')">Remove</button>`
+        : `<button class="doc-action-btn" onclick="openDoc('${d.id}')">Open</button>
+           <button class="doc-action-btn" onclick="openRenameModal('${d.id}')">Rename</button>
+           <button class="doc-action-btn" onclick="moveDoc('${d.id}')">Move</button>
+           ${currentFilter!=='trash' ? `<button class="doc-action-btn" onclick="openShareModal('${d.id}')">Share</button>` : ''}
+           ${currentFilter==='trash'
+             ?`<button class="doc-action-btn" onclick="restoreDoc('${d.id}')">Restore</button>
+               <button class="doc-action-btn danger" onclick="deletePermanent('${d.id}')">Delete</button>`
+             :`<button class="doc-action-btn danger" onclick="trashDoc('${d.id}')">Trash</button>`}`;
       el.innerHTML=`
-        <button class="star-btn ${d.starred?'on':''}" onclick="event.stopPropagation();toggleStar('${d.id}')" title="${d.starred?'Unstar':'Star'}">★</button>
-        <div class="doc-card-preview" onclick="openDoc('${d.id}')">
+        ${d.shared ? `<span class="shared-badge">🤝 Shared</span>` : `<button class="star-btn ${d.starred?'on':''}" onclick="event.stopPropagation();toggleStar('${d.id}')" title="${d.starred?'Unstar':'Star'}">★</button>`}
+        <div class="doc-card-preview" onclick="${openAction}">
           <div class="doc-lines"><div class="doc-line"></div><div class="doc-line"></div><div class="doc-line"></div></div>
         </div>
-        <div class="doc-card-body" onclick="openDoc('${d.id}')">
+        <div class="doc-card-body" onclick="${openAction}">
           <div class="doc-card-title" title="${d.title}">${d.title}</div>
-          <div class="doc-card-meta">Modified ${formatDate(d.updatedAt)}</div>
+          <div class="doc-card-meta">${d.shared ? ('Shared by ' + (d.ownerEmail||'')) : ('Modified ' + formatDate(d.updatedAt))}</div>
         </div>
-        <div class="doc-card-actions">
-          <button class="doc-action-btn" onclick="openDoc('${d.id}')">Open</button>
-          <button class="doc-action-btn" onclick="openRenameModal('${d.id}')">Rename</button>
-          <button class="doc-action-btn" onclick="moveDoc('${d.id}')">Move</button>
-          ${currentFilter==='trash'
-            ?`<button class="doc-action-btn" onclick="restoreDoc('${d.id}')">Restore</button>
-              <button class="doc-action-btn danger" onclick="deletePermanent('${d.id}')">Delete</button>`
-            :`<button class="doc-action-btn danger" onclick="trashDoc('${d.id}')">Trash</button>`}
-        </div>`;
+        <div class="doc-card-actions">${actionsHtml}</div>`;
       container.appendChild(el);
     });
   } else {
     container.innerHTML=''; container.className='doc-list';
     docs.forEach(d=>{
       const el=document.createElement('div'); el.className='doc-list-item';
+      const openAction = d.shared ? `openSharedDoc('${d.id}')` : `openDoc('${d.id}')`;
+      const actionsHtml = d.shared
+        ? `<button class="doc-action-btn" onclick="event.stopPropagation();${openAction}">Open</button>
+           <span class="doc-action-btn" style="cursor:default;background:#f5f5f5;color:var(--muted);">${d.role==='edit'?'✏️ Can edit':'👁 View only'}</span>
+           <button class="doc-action-btn danger" onclick="event.stopPropagation();removeSharedDoc('${d.id}')">Remove</button>`
+        : `<button class="doc-action-btn" onclick="event.stopPropagation();toggleStar('${d.id}')">${d.starred?'⭐':'☆'}</button>
+           <button class="doc-action-btn" onclick="event.stopPropagation();openDoc('${d.id}')">Open</button>
+           <button class="doc-action-btn" onclick="event.stopPropagation();openRenameModal('${d.id}')">Rename</button>
+           <button class="doc-action-btn" onclick="event.stopPropagation();moveDoc('${d.id}')">Move</button>
+           ${currentFilter!=='trash' ? `<button class="doc-action-btn" onclick="event.stopPropagation();openShareModal('${d.id}')">Share</button>` : ''}
+           ${currentFilter==='trash'
+             ?`<button class="doc-action-btn" onclick="event.stopPropagation();restoreDoc('${d.id}')">Restore</button>
+               <button class="doc-action-btn danger" onclick="event.stopPropagation();deletePermanent('${d.id}')">Delete</button>`
+             :`<button class="doc-action-btn danger" onclick="event.stopPropagation();trashDoc('${d.id}')">Trash</button>`}`;
       el.innerHTML=`
-        <div class="doc-list-icon">📄</div>
-        <div class="doc-list-info" onclick="openDoc('${d.id}')">
+        <div class="doc-list-icon">${d.shared ? '🤝' : '📄'}</div>
+        <div class="doc-list-info" onclick="${openAction}">
           <div class="doc-list-title">${d.title}</div>
-          <div class="doc-list-meta">Modified ${formatDate(d.updatedAt)} · Created ${formatDate(d.createdAt)}</div>
+          <div class="doc-list-meta">${d.shared ? ('Shared by ' + (d.ownerEmail||'')) : ('Modified ' + formatDate(d.updatedAt) + ' · Created ' + formatDate(d.createdAt))}</div>
         </div>
-        <div class="doc-list-actions">
-          <button class="doc-action-btn" onclick="event.stopPropagation();toggleStar('${d.id}')">${d.starred?'⭐':'☆'}</button>
-          <button class="doc-action-btn" onclick="event.stopPropagation();openDoc('${d.id}')">Open</button>
-          <button class="doc-action-btn" onclick="event.stopPropagation();openRenameModal('${d.id}')">Rename</button>
-          <button class="doc-action-btn" onclick="event.stopPropagation();moveDoc('${d.id}')">Move</button>
-          ${currentFilter==='trash'
-            ?`<button class="doc-action-btn" onclick="event.stopPropagation();restoreDoc('${d.id}')">Restore</button>
-              <button class="doc-action-btn danger" onclick="event.stopPropagation();deletePermanent('${d.id}')">Delete</button>`
-            :`<button class="doc-action-btn danger" onclick="event.stopPropagation();trashDoc('${d.id}')">Trash</button>`}
-        </div>`;
+        <div class="doc-list-actions">${actionsHtml}</div>`;
       container.appendChild(el);
     });
   }
