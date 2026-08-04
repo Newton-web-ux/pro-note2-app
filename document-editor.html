@@ -1136,7 +1136,12 @@ May:55</textarea>
 // ── State ──
 const GAS_URL =
 "https://script.google.com/macros/s/AKfycbzybAi0aMvbLnx55WEFlBSXUJOU-Ej9bv2ZbU44gvW_qczTCxoGBiIWweIyyF6E-eIbBg/exec";
-let docId = new URLSearchParams(window.location.search).get('id') || null;
+const urlParams = new URLSearchParams(window.location.search);
+let docId = urlParams.get('id') || null;
+const sharedOwnerUid   = urlParams.get('ownerUid') || null;
+const sharedOwnerEmail = urlParams.get('ownerEmail') || null;
+const sharedRole       = urlParams.get('role') || null; // 'view' | 'edit' | null
+const isReadOnly       = sharedRole === 'view';
 let pages = [], currentPage = 0;
 let selectedImage = null;
 let versions = [];
@@ -1145,6 +1150,7 @@ let currentZoom = 1;
 let selectedVersionIndex = -1;
 let slideshowInterval = null;
 let slideshowIndex = 0;
+
 
 // ── Who's editing? (used to scope Drive storage to this user) ──
 let currentUser = null;
@@ -1215,6 +1221,7 @@ function replaceAllText() {
   });
   setStatus('Replaced all instances.');
 }
+  
 
 /* ─────────────────────────────────────────────
    LOAD — pulls the full document (text, styling,
@@ -1340,11 +1347,10 @@ function saveDocument() {
   .catch(() => setStatus("Could not reach Google Drive."));
 }
 
-// ── Pages ──
 function addPage(html = '') {
   const page = document.createElement('div');
   page.className = 'page';
-  page.contentEditable = 'true';
+  page.contentEditable = isReadOnly ? 'false' : 'true';
   page.setAttribute('data-page-num', pages.length + 1);
   page.innerHTML = html || '<p>Start typing here...</p>';
   page.addEventListener('input', updateWordCount);
@@ -2488,6 +2494,28 @@ if (location.pathname.endsWith(".html")) {
   const cleanURL = location.pathname.replace(".html", "");
   history.replaceState(null, "", cleanURL);
 }
+</script>
+<script>
+  function applyReadOnlyMode() {
+  if (!isReadOnly) return;
+  const banner = document.createElement('div');
+  banner.style.cssText = 'background:#fff3cd;color:#7a5d00;padding:6px 16px;font-size:12px;text-align:center;border-bottom:1px solid #f5c518;';
+  banner.textContent = '👁 Viewing a shared document (view only) — changes cannot be saved.';
+  document.body.insertBefore(banner, document.body.firstChild);
+  ['saveDocument','saveVersion','restoreVersion','deleteVersion'].forEach(fn => {
+    window[fn] = () => setStatus('This document is read-only.');
+  });
+}
+applyReadOnlyMode();
+if (sharedOwnerEmail) {
+  const suffix = ' · Shared by ' + sharedOwnerEmail + (isReadOnly ? ' (view only)' : ' (can edit)');
+  const obs = new MutationObserver(() => {
+    const el = document.getElementById('docTitleDisplay');
+    if (el && !el.textContent.includes('Shared by')) el.textContent += suffix;
+  });
+  obs.observe(document.getElementById('docTitleDisplay'), { childList: true });
+}
+loadDocument();
 </script>
 
 </body>
