@@ -722,8 +722,10 @@ img.draggable.img-selected { outline: 1.5px dashed var(--accent); outline-offset
     <button class="hdr-btn" onclick="exportPNG()">🖼 Export PNG</button>
     <button class="hdr-btn" onclick="exportPPT()">📊 Export PPT</button>
     <button class="hdr-btn primary" onclick="saveDocument()">💾 Save</button>
-    <button class="hdr-btn" onclick="openShareModal()">🤝 Share</button>
+    <!-- ══════════════════ 1. SHARE BUTTON — inside .title-bar-right ══════════════════ -->
+    <button class="hdr-btn" onclick="console.log('Share clicked, docId=', docId); openShareModal()">🤝 Share</button>
     <span class="presence-badges" id="presenceBadges"></span>
+ 
     <button class="hdr-btn" onclick="goDashboard()">🏠 Dashboard</button>
   </div>
 </div>
@@ -1248,7 +1250,7 @@ May:55</textarea>
     </div>
   </div>
 </div>
-  <!-- ══════════════════ 3. SHARE MODAL — add before </body> ══════════════════ -->
+ <!-- ══════════════════ 2. SHARE MODAL — right after #floatingPanel closes ══════════════════ -->
 <div class="share-modal-overlay" id="shareModalOverlay">
   <div class="share-modal">
     <div class="share-modal-header">
@@ -1264,14 +1266,14 @@ May:55</textarea>
         </select>
         <button onclick="addCollaborator()">Add</button>
       </div>
-
+ 
       <div class="share-collab-list" id="shareCollabList"></div>
-
+ 
       <div class="share-link-row">
         <input type="text" id="shareLinkInput" readonly>
         <button onclick="copyShareLink()">Copy Link</button>
       </div>
-
+ 
       <div class="share-status" id="shareStatus"></div>
     </div>
   </div>
@@ -2637,7 +2639,11 @@ if (location.pathname.endsWith(".html")) {
 }
 </script>
 
+
+<!-- ══════════════════ 3. SCRIPT — very end, before </body> ══════════════════ -->
 <script type="module">
+console.log('[share] module script starting to load');
+ 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged
@@ -2645,7 +2651,9 @@ import {
 import {
   getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp, deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+ 
+console.log('[share] Firebase SDK imports succeeded');
+ 
 // ── Fill this in with your Firebase project's config ──
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
@@ -2655,28 +2663,29 @@ const firebaseConfig = {
   messagingSenderId: "YOUR_SENDER_ID",
   appId: "YOUR_APP_ID"
 };
-
+ 
 let fbApp, auth, db;
 let firebaseInitError = null;
 try {
   fbApp = initializeApp(firebaseConfig);
   auth = getAuth(fbApp);
   db = getFirestore(fbApp);
+  console.log('[share] Firebase initialized OK');
 } catch (err) {
   // Most common cause: firebaseConfig still has placeholder values.
   firebaseInitError = err;
-  console.error('Firebase init failed — check firebaseConfig values:', err);
+  console.error('[share] Firebase init FAILED — check firebaseConfig values:', err);
 }
-
+ 
 let fbUser = null;
 let shareUnsub = null;
 let applyingRemoteChange = false; // guards against feedback loops
 let pushTimer = null;
 let inputListenerAttached = false; // guards against stacking listeners on repeated modal opens
-
+ 
 // ── Sign into Firebase Auth (separate from your GAS Google sign-in) ──
 if (auth) onAuthStateChanged(auth, (user) => { fbUser = user; });
-
+ 
 async function ensureFirebaseAuth() {
   if (firebaseInitError) throw firebaseInitError;
   if (fbUser) return fbUser;
@@ -2684,7 +2693,7 @@ async function ensureFirebaseAuth() {
   fbUser = result.user;
   return fbUser;
 }
-
+ 
 // ── Serialize / apply document content (reuses your existing `pages` array) ──
 function serializeCurrentDoc() {
   return pages.map(page => ({
@@ -2703,7 +2712,7 @@ function serializeCurrentDoc() {
     }
   }));
 }
-
+ 
 function applyRemoteDoc(remotePages) {
   applyingRemoteChange = true;
   document.getElementById('contentArea').querySelectorAll('.page').forEach(p => p.remove());
@@ -2715,28 +2724,51 @@ function applyRemoteDoc(remotePages) {
   updateWordCount();
   applyingRemoteChange = false;
 }
-
+ 
 // ── Open / close modal ──
-// Modal visibility is decoupled from auth: it opens first, so a config or
-// popup-blocker failure shows up as a message inside the modal instead of
-// silently preventing it from ever appearing.
+// Modal visibility is decoupled from auth: it opens first (as long as a
+// docId exists), so a config or popup-blocker failure shows up as a
+// message inside the modal instead of silently preventing it from
+// appearing at all.
 window.openShareModal = function () {
-  if (!docId) return setStatus('Save the document once before sharing.');
-
+  console.log('[share] openShareModal() called, docId =', typeof docId !== 'undefined' ? docId : '(docId not defined!)');
+ 
+  if (typeof docId === 'undefined') {
+    // This means this script loaded BEFORE your main editor script defined
+    // `docId` — i.e. this script tag is in the wrong position in the file.
+    // It must come AFTER your existing <script>...</script> block.
+    console.error('[share] `docId` is undefined — this script is probably placed before your main editor <script> block.');
+    alert('Sharing script loaded out of order — see console for details.');
+    return;
+  }
+ 
+  if (!docId) {
+    alert('Save the document once (click Save) before sharing.');
+    return;
+  }
+ 
+  const overlay = document.getElementById('shareModalOverlay');
+  if (!overlay) {
+    console.error('[share] #shareModalOverlay not found in the DOM — the modal HTML block is missing or was not pasted in.');
+    alert('Share modal HTML is missing from the page — see console.');
+    return;
+  }
+ 
   document.getElementById('shareModalDocTitle').textContent =
     document.getElementById('docTitleDisplay').textContent.replace(/^—\s*/, '');
   document.getElementById('shareLinkInput').value =
     `${location.origin}${location.pathname}?id=${docId}&shared=1`;
-  document.getElementById('shareModalOverlay').classList.add('active');
+  overlay.classList.add('active');
   document.getElementById('shareStatus').textContent = '';
-
+  console.log('[share] modal opened');
+ 
   ensureFirebaseAuth()
     .then(async () => {
       await loadCollaborators();
       startRealtimeSync();
     })
     .catch((err) => {
-      console.error('Share auth/init failed:', err);
+      console.error('[share] auth/init failed:', err);
       const msg = firebaseInitError
         ? 'Sharing isn\'t configured yet — check firebaseConfig in the script.'
         : (err && err.code === 'auth/popup-blocked')
@@ -2756,7 +2788,7 @@ window.copyShareLink = function () {
   navigator.clipboard.writeText(input.value);
   document.getElementById('shareStatus').textContent = 'Link copied.';
 };
-
+ 
 // ── Create/refresh the canonical share record ──
 async function pushShareSnapshot() {
   if (!docId || !fbUser) return;
@@ -2768,7 +2800,7 @@ async function pushShareSnapshot() {
     updatedBy: fbUser.uid
   }, { merge: true });
 }
-
+ 
 // ── Add a collaborator by email ──
 // `collaborators` is stored as a MAP keyed by email — { "alice@x.com": "edit" } —
 // to match the Firestore rules' `collaborators[request.auth.token.email]` lookup.
@@ -2784,26 +2816,26 @@ window.addCollaborator = async function () {
   const email = document.getElementById('shareEmailInput').value.trim();
   const permission = document.getElementById('sharePermissionSelect').value;
   if (!email) return;
-
+ 
   try {
     await ensureFirebaseAuth();
   } catch (err) {
     document.getElementById('shareStatus').textContent = 'Not signed in — could not add collaborator.';
     return;
   }
-
+ 
   const shareRef = doc(db, "shares", docId);
   await setDoc(shareRef, {
     ownerUid: fbUser.uid,
     collaborators: { [email]: permission },
     updatedAt: serverTimestamp()
   }, { merge: true });
-
+ 
   document.getElementById('shareEmailInput').value = '';
   document.getElementById('shareStatus').textContent = `Invited ${email} (${permission}).`;
   loadCollaborators();
 };
-
+ 
 async function loadCollaborators() {
   const snap = await getDoc(doc(db, "shares", docId));
   const list = document.getElementById('shareCollabList');
@@ -2818,7 +2850,7 @@ async function loadCollaborators() {
     list.appendChild(row);
   });
 }
-
+ 
 window.removeCollaborator = async function (email) {
   const shareRef = doc(db, "shares", docId);
   // deleteField() removes just this key from the map instead of rewriting the whole thing
@@ -2828,14 +2860,14 @@ window.removeCollaborator = async function (email) {
   }, { merge: true });
   loadCollaborators();
 };
-
+ 
 // ── Real-time sync while the share modal / doc is open ──
 function startRealtimeSync() {
   if (shareUnsub) shareUnsub();
-
+ 
   // Push our initial state so there's something to sync from
   pushShareSnapshot();
-
+ 
   shareUnsub = onSnapshot(doc(db, "shares", docId), (snap) => {
     if (!snap.exists()) return;
     const data = snap.data();
@@ -2845,7 +2877,7 @@ function startRealtimeSync() {
       setStatus('Document updated by a collaborator.');
     }
   });
-
+ 
   // Push local edits, debounced, whenever a page changes.
   // Attached once — repeated modal opens no longer stack duplicate listeners.
   if (!inputListenerAttached) {
@@ -2857,11 +2889,13 @@ function startRealtimeSync() {
     inputListenerAttached = true;
   }
 }
-
+ 
 function stopRealtimeSync() {
   if (shareUnsub) { shareUnsub(); shareUnsub = null; }
 }
 window.addEventListener('beforeunload', stopRealtimeSync);
+ 
+console.log('[share] module script finished loading — openShareModal is now', typeof window.openShareModal);
 </script>
 </body>
 </html>
