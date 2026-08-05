@@ -2656,9 +2656,17 @@ const firebaseConfig = {
   appId: "YOUR_APP_ID"
 };
 
-const fbApp = initializeApp(firebaseConfig);
-const auth = getAuth(fbApp);
-const db = getFirestore(fbApp);
+let fbApp, auth, db;
+let firebaseInitError = null;
+try {
+  fbApp = initializeApp(firebaseConfig);
+  auth = getAuth(fbApp);
+  db = getFirestore(fbApp);
+} catch (err) {
+  // Most common cause: firebaseConfig still has placeholder values.
+  firebaseInitError = err;
+  console.error('Firebase init failed — check firebaseConfig values:', err);
+}
 
 let fbUser = null;
 let shareUnsub = null;
@@ -2667,9 +2675,10 @@ let pushTimer = null;
 let inputListenerAttached = false; // guards against stacking listeners on repeated modal opens
 
 // ── Sign into Firebase Auth (separate from your GAS Google sign-in) ──
-onAuthStateChanged(auth, (user) => { fbUser = user; });
+if (auth) onAuthStateChanged(auth, (user) => { fbUser = user; });
 
 async function ensureFirebaseAuth() {
+  if (firebaseInitError) throw firebaseInitError;
   if (fbUser) return fbUser;
   const result = await signInWithPopup(auth, new GoogleAuthProvider());
   fbUser = result.user;
@@ -2708,16 +2717,35 @@ function applyRemoteDoc(remotePages) {
 }
 
 // ── Open / close modal ──
-window.openShareModal = async function () {
+// Modal visibility is decoupled from auth: it opens first, so a config or
+// popup-blocker failure shows up as a message inside the modal instead of
+// silently preventing it from ever appearing.
+window.openShareModal = function () {
   if (!docId) return setStatus('Save the document once before sharing.');
-  await ensureFirebaseAuth();
+
   document.getElementById('shareModalDocTitle').textContent =
     document.getElementById('docTitleDisplay').textContent.replace(/^—\s*/, '');
   document.getElementById('shareLinkInput').value =
     `${location.origin}${location.pathname}?id=${docId}&shared=1`;
   document.getElementById('shareModalOverlay').classList.add('active');
-  await loadCollaborators();
-  startRealtimeSync();
+  document.getElementById('shareStatus').textContent = '';
+
+  ensureFirebaseAuth()
+    .then(async () => {
+      await loadCollaborators();
+      startRealtimeSync();
+    })
+    .catch((err) => {
+      console.error('Share auth/init failed:', err);
+      const msg = firebaseInitError
+        ? 'Sharing isn\'t configured yet — check firebaseConfig in the script.'
+        : (err && err.code === 'auth/popup-blocked')
+          ? 'Sign-in popup was blocked — allow popups for this site and try again.'
+          : (err && err.code === 'auth/popup-closed-by-user')
+            ? 'Sign-in was closed before completing.'
+            : 'Could not sign in for sharing — see console for details.';
+      document.getElementById('shareStatus').textContent = msg;
+    });
 };
 window.closeShareModal = function () {
   document.getElementById('shareModalOverlay').classList.remove('active');
@@ -2756,7 +2784,13 @@ window.addCollaborator = async function () {
   const email = document.getElementById('shareEmailInput').value.trim();
   const permission = document.getElementById('sharePermissionSelect').value;
   if (!email) return;
-  await ensureFirebaseAuth();
+
+  try {
+    await ensureFirebaseAuth();
+  } catch (err) {
+    document.getElementById('shareStatus').textContent = 'Not signed in — could not add collaborator.';
+    return;
+  }
 
   const shareRef = doc(db, "shares", docId);
   await setDoc(shareRef, {
