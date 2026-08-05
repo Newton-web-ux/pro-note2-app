@@ -722,8 +722,37 @@ img.draggable.img-selected { outline: 1.5px dashed var(--accent); outline-offset
     <button class="hdr-btn" onclick="exportPNG()">🖼 Export PNG</button>
     <button class="hdr-btn" onclick="exportPPT()">📊 Export PPT</button>
     <button class="hdr-btn primary" onclick="saveDocument()">💾 Save</button>
-<button class="hdr-btn" onclick="openShareModal()">🤝 Share</button>
-  <span class="presence-badges" id="presenceBadges"></span>
+    <button class="hdr-btn" onclick="openShareModal()">🤝 Share</button>
+    <span class="presence-badges" id="presenceBadges"></span>
+    <!-- ══════════════════ 3. SHARE MODAL — add before </body> ══════════════════ -->
+<div class="share-modal-overlay" id="shareModalOverlay">
+  <div class="share-modal">
+    <div class="share-modal-header">
+      🤝 Share "<span id="shareModalDocTitle">Document</span>"
+      <button class="close-btn" onclick="closeShareModal()">✕</button>
+    </div>
+    <div class="share-modal-body">
+      <div class="share-row">
+        <input type="email" id="shareEmailInput" placeholder="Collaborator's email">
+        <select id="sharePermissionSelect">
+          <option value="edit">Can edit</option>
+          <option value="view">Can view</option>
+        </select>
+        <button onclick="addCollaborator()">Add</button>
+      </div>
+
+      <div class="share-collab-list" id="shareCollabList"></div>
+
+      <div class="share-link-row">
+        <input type="text" id="shareLinkInput" readonly>
+        <button onclick="copyShareLink()">Copy Link</button>
+      </div>
+
+      <div class="share-status" id="shareStatus"></div>
+    </div>
+  </div>
+</div>
+
     <button class="hdr-btn" onclick="goDashboard()">🏠 Dashboard</button>
   </div>
 </div>
@@ -1245,34 +1274,6 @@ May:55</textarea>
       <button onclick="clearAllFunctions()">Clear</button>
       <button onclick="zoomGraphIn()">+ Zoom</button>
       <button onclick="zoomGraphOut()">- Zoom</button>
-    </div>
-  </div>
-</div>
-<!-- ══════════════════ 3. SHARE MODAL — add before </body> ══════════════════ -->
-<div class="share-modal-overlay" id="shareModalOverlay">
-  <div class="share-modal">
-    <div class="share-modal-header">
-      🤝 Share "<span id="shareModalDocTitle">Document</span>"
-      <button class="close-btn" onclick="closeShareModal()">✕</button>
-    </div>
-    <div class="share-modal-body">
-      <div class="share-row">
-        <input type="email" id="shareEmailInput" placeholder="Collaborator's email">
-        <select id="sharePermissionSelect">
-          <option value="edit">Can edit</option>
-          <option value="view">Can view</option>
-        </select>
-        <button onclick="addCollaborator()">Add</button>
-      </div>
-
-      <div class="share-collab-list" id="shareCollabList"></div>
-
-      <div class="share-link-row">
-        <input type="text" id="shareLinkInput" readonly>
-        <button onclick="copyShareLink()">Copy Link</button>
-      </div>
-
-      <div class="share-status" id="shareStatus"></div>
     </div>
   </div>
 </div>
