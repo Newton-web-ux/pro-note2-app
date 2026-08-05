@@ -2643,7 +2643,7 @@ import {
   getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp
+  getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp, deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ── Fill this in with your Firebase project's config ──
@@ -2664,6 +2664,7 @@ let fbUser = null;
 let shareUnsub = null;
 let applyingRemoteChange = false; // guards against feedback loops
 let pushTimer = null;
+let inputListenerAttached = false; // guards against stacking listeners on repeated modal opens
 
 // ── Sign into Firebase Auth (separate from your GAS Google sign-in) ──
 onAuthStateChanged(auth, (user) => { fbUser = user; });
@@ -2741,12 +2742,16 @@ async function pushShareSnapshot() {
 }
 
 // ── Add a collaborator by email ──
+// `collaborators` is stored as a MAP keyed by email — { "alice@x.com": "edit" } —
+// to match the Firestore rules' `collaborators[request.auth.token.email]` lookup.
+// merge:true deep-merges maps, so this only touches the one key.
+//
 // NOTE: writing users/{recipientUid}/sharedWithMe/{docId} needs the
 // recipient's uid, which you normally resolve + write via a Cloud
-// Function (Admin SDK, bypasses rules) triggered off this collaborators
-// array — a client can't write another user's subcollection under your
-// current rules. This function stores the *intent* on the share doc;
-// the Function does the fan-out.
+// Function (Admin SDK, bypasses rules) triggered off changes to this
+// collaborators map — a client can't write another user's subcollection
+// under your current rules. This function stores the *intent* on the
+// share doc; the Function does the fan-out.
 window.addCollaborator = async function () {
   const email = document.getElementById('shareEmailInput').value.trim();
   const permission = document.getElementById('sharePermissionSelect').value;
@@ -2754,13 +2759,9 @@ window.addCollaborator = async function () {
   await ensureFirebaseAuth();
 
   const shareRef = doc(db, "shares", docId);
-  const snap = await getDoc(shareRef);
-  const existing = snap.exists() ? (snap.data().collaborators || []) : [];
-  const collaborators = [...existing.filter(c => c.email !== email), { email, permission }];
-
   await setDoc(shareRef, {
     ownerUid: fbUser.uid,
-    collaborators,
+    collaborators: { [email]: permission },
     updatedAt: serverTimestamp()
   }, { merge: true });
 
@@ -2774,21 +2775,23 @@ async function loadCollaborators() {
   const list = document.getElementById('shareCollabList');
   list.innerHTML = '';
   if (!snap.exists()) return;
-  const collaborators = snap.data().collaborators || [];
-  collaborators.forEach(c => {
+  const collaborators = snap.data().collaborators || {};
+  Object.entries(collaborators).forEach(([email, permission]) => {
     const row = document.createElement('div');
     row.className = 'share-collab-item';
-    row.innerHTML = `<span>${c.email} — ${c.permission}</span>
-      <button onclick="removeCollaborator('${c.email}')">Remove</button>`;
+    row.innerHTML = `<span>${email} — ${permission}</span>
+      <button onclick="removeCollaborator('${email}')">Remove</button>`;
     list.appendChild(row);
   });
 }
+
 window.removeCollaborator = async function (email) {
   const shareRef = doc(db, "shares", docId);
-  const snap = await getDoc(shareRef);
-  if (!snap.exists()) return;
-  const collaborators = (snap.data().collaborators || []).filter(c => c.email !== email);
-  await setDoc(shareRef, { collaborators, updatedAt: serverTimestamp() }, { merge: true });
+  // deleteField() removes just this key from the map instead of rewriting the whole thing
+  await setDoc(shareRef, {
+    collaborators: { [email]: deleteField() },
+    updatedAt: serverTimestamp()
+  }, { merge: true });
   loadCollaborators();
 };
 
@@ -2809,12 +2812,16 @@ function startRealtimeSync() {
     }
   });
 
-  // Push local edits, debounced, whenever a page changes
-  document.getElementById('contentArea').addEventListener('input', () => {
-    if (applyingRemoteChange) return;
-    clearTimeout(pushTimer);
-    pushTimer = setTimeout(pushShareSnapshot, 800);
-  });
+  // Push local edits, debounced, whenever a page changes.
+  // Attached once — repeated modal opens no longer stack duplicate listeners.
+  if (!inputListenerAttached) {
+    document.getElementById('contentArea').addEventListener('input', () => {
+      if (applyingRemoteChange) return;
+      clearTimeout(pushTimer);
+      pushTimer = setTimeout(pushShareSnapshot, 800);
+    });
+    inputListenerAttached = true;
+  }
 }
 
 function stopRealtimeSync() {
