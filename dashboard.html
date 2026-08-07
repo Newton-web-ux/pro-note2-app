@@ -1,43 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
+
 <title>Pro Document — Dashboard</title>
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- PWA -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1a4d8f">
+
+<meta name="theme-color" content="#2b579a">
+
 <link rel="apple-touch-icon" href="icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Segoe+UI:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+</head>
 <style>
 :root {
-  --primary: #1a4d8f;
-  --primary-light: #2962c3;
-  --primary-dark: #0d2d54;
-  --accent: #0078d4;
-  --accent-light: #e8f4fd;
-  --success: #107c10;
-  --warning: #ff8c00;
-  --danger: #d13438;
-  --bg-primary: #ffffff;
-  --bg-secondary: #f7f8fa;
-  --bg-tertiary: #f0f2f5;
-  --text-primary: #242424;
-  --text-secondary: #605e5c;
-  --text-tertiary: #797775;
-  --border: #e1dfdd;
-  --border-light: #efefef;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.08);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
-  --shadow-lg: 0 8px 28px rgba(0,0,0,0.16);
-  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --bg: #f3f3f3;
+  --white: #ffffff;
+  --sidebar-bg: #2b579a;
+  --sidebar-text: #ffffff;
+  --sidebar-hover: #1e3f73;
+  --sidebar-active: #16305a;
+  --accent: #2b579a;
+  --accent-light: #dce6f7;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #d0d0d0;
+  --danger: #c0392b;
+  --toolbar-bg: #f8f8f8;
+  --card-hover: #eaf0fb;
+  --shadow: 0 1px 4px rgba(0,0,0,0.12);
+  --shadow-hover: 0 4px 16px rgba(0,0,0,0.16);
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* ── LOADING SCREEN ── */
 #loadingScreen {
   position: fixed; inset: 0;
-  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+  background: #0a1628;
   z-index: 9999;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
@@ -46,135 +52,184 @@
 #loadingScreen::before {
   content: ''; position: absolute; inset: -50%;
   background-image:
-    linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px);
-  background-size: 80px 80px;
-  animation: gridPan 15s linear infinite;
+    linear-gradient(rgba(43,87,154,0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(43,87,154,0.15) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: gridPan 12s linear infinite;
 }
-@keyframes gridPan { 0%{transform:translate(0,0)} 100%{transform:translate(80px,80px)} }
+@keyframes gridPan { 0%{transform:translate(0,0)} 100%{transform:translate(60px,60px)} }
 #loadingScreen::after {
   content: ''; position: absolute;
-  width: 800px; height: 800px;
-  background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(43,87,154,0.25) 0%, transparent 70%);
   border-radius: 50%;
-  animation: bgPulse 3.5s ease-in-out infinite;
+  animation: bgPulse 3s ease-in-out infinite;
 }
-@keyframes bgPulse { 0%,100%{transform:scale(1);opacity:0.6} 50%{transform:scale(1.1);opacity:0.8} }
+@keyframes bgPulse { 0%,100%{transform:scale(1);opacity:0.7} 50%{transform:scale(1.15);opacity:1} }
 .loader-content { position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; }
-.loader-ring { position:relative; width:140px; height:140px; margin-bottom:40px; }
+.loader-ring { position:relative; width:130px; height:130px; margin-bottom:36px; }
 .loader-ring-outer {
   position:absolute; inset:0; border-radius:50%;
-  border:3px solid rgba(255,255,255,0.2);
-  border-top-color:#fff; border-right-color:rgba(255,255,255,0.8);
-  animation:spinA 1.2s linear infinite;
+  border:2px solid rgba(43,87,154,0.3);
+  border-top-color:#4a90d9; border-right-color:rgba(74,144,217,0.6);
+  animation:spinA 1.4s linear infinite;
 }
 .loader-ring-inner {
-  position:absolute; inset:16px; border-radius:50%;
-  border:3px solid rgba(255,255,255,0.15);
-  border-bottom-color:#fff; border-left-color:rgba(255,255,255,0.6);
-  animation:spinA 1.8s linear infinite reverse;
+  position:absolute; inset:14px; border-radius:50%;
+  border:2px solid rgba(43,87,154,0.2);
+  border-bottom-color:#2b579a; border-left-color:rgba(43,87,154,0.5);
+  animation:spinA 0.9s linear infinite reverse;
 }
 .loader-ring-dot {
-  position:absolute; inset:32px; border-radius:50%;
-  background:rgba(255,255,255,0.15); backdrop-filter: blur(10px);
-  display:flex; align-items:center; justify-content:center; font-size:32px;
-  box-shadow:inset 0 0 20px rgba(255,255,255,0.2);
-  animation:logoPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.3s both;
+  position:absolute; inset:28px; border-radius:50%;
+  background:radial-gradient(circle at 40% 40%, #4a90d9, #2b579a);
+  box-shadow:0 0 30px rgba(74,144,217,0.6),0 0 60px rgba(43,87,154,0.3);
+  display:flex; align-items:center; justify-content:center; font-size:26px;
+  animation:logoPop 0.6s ease-out 0.3s both;
 }
-@keyframes logoPop { from{transform:scale(0.4);opacity:0} to{transform:scale(1);opacity:1} }
+@keyframes logoPop { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
 @keyframes spinA { to{transform:rotate(360deg)} }
 .loader-brand {
-  font-family:'Inter',sans-serif; font-size:36px; font-weight:700;
-  color:#fff; letter-spacing:-0.8px;
+  font-family:'Outfit',sans-serif; font-size:32px; font-weight:800;
+  color:#fff; letter-spacing:-0.5px;
   animation:fadeUp 0.7s ease-out 0.5s both;
 }
+.loader-brand span { color:#4a90d9; }
 .loader-tagline {
-  font-family:'Segoe UI',sans-serif; font-size:13px; font-weight:500;
-  color:rgba(255,255,255,0.6); letter-spacing:1.2px; text-transform:uppercase; margin-top:8px;
+  font-family:'Space Grotesk',sans-serif; font-size:12px; font-weight:500;
+  color:rgba(255,255,255,0.45); letter-spacing:3px; text-transform:uppercase; margin-top:6px;
   animation:fadeUp 0.7s ease-out 0.7s both;
 }
-.loader-progress-wrap { margin-top:50px; width:320px; animation:fadeUp 0.7s ease-out 0.9s both; }
+.loader-progress-wrap { margin-top:48px; width:280px; animation:fadeUp 0.7s ease-out 0.9s both; }
 .loader-progress-label {
   display:flex; justify-content:space-between;
-  font-family:'Segoe UI',sans-serif; font-size:12px;
-  color:rgba(255,255,255,0.5); margin-bottom:10px;
+  font-family:'Space Grotesk',sans-serif; font-size:11px;
+  color:rgba(255,255,255,0.4); margin-bottom:8px;
 }
-.loader-progress-bar { height:4px; background:rgba(255,255,255,0.12); border-radius:3px; overflow:hidden; }
+.loader-progress-bar { height:3px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden; }
 .loader-progress-fill {
-  height:100%; background:linear-gradient(90deg,rgba(255,255,255,0.8),#fff);
-  border-radius:3px; width:0%; transition:width 0.4s ease;
-  box-shadow:0 0 16px rgba(255,255,255,0.4);
+  height:100%; background:linear-gradient(90deg,#2b579a,#4a90d9,#7bb8f0);
+  border-radius:2px; width:0%; transition:width 0.4s ease;
+  box-shadow:0 0 12px rgba(74,144,217,0.8);
 }
-.loader-status { font-family:'Segoe UI',sans-serif; font-size:12px; color:rgba(255,255,255,0.4); text-align:center; margin-top:12px; }
-@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+.loader-status { font-family:'Space Grotesk',sans-serif; font-size:11px; color:rgba(255,255,255,0.35); text-align:center; margin-top:10px; min-height:16px; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.loader-particles { position:absolute; inset:0; pointer-events:none; }
 .particle {
-  position:absolute; width:3px; height:3px;
-  background:rgba(255,255,255,0.5); border-radius:50%;
+  position:absolute; width:2px; height:2px;
+  background:rgba(74,144,217,0.6); border-radius:50%;
   animation:floatUp var(--dur) linear infinite;
   animation-delay:var(--delay); left:var(--x); bottom:-10px;
 }
 @keyframes floatUp { 0%{transform:translateY(0) scale(1);opacity:0.8} 100%{transform:translateY(-100vh) scale(0);opacity:0} }
-#loadingScreen.fade-out { animation:screenFadeOut 0.6s ease forwards; }
-@keyframes screenFadeOut { 0%{opacity:1} 100%{opacity:0;pointer-events:none} }
+#loadingScreen.fade-out { animation:screenFadeOut 0.8s ease forwards; }
+@keyframes screenFadeOut { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(1.04);pointer-events:none} }
 
 /* ── AUTH MODAL ── */
 #authModal {
   display:none; position:fixed; inset:0;
-  background:rgba(0,0,0,0.5); backdrop-filter:blur(12px);
+  background:rgba(10,22,40,0.92); backdrop-filter:blur(8px);
   z-index:8888; align-items:center; justify-content:center;
 }
 #authModal.open { display:flex; }
 .auth-card {
-  background:var(--bg-primary); border-radius:12px; width:440px; overflow:hidden;
-  box-shadow:var(--shadow-lg);
-  animation:authPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+  background:#fff; border-radius:12px; width:420px; overflow:hidden;
+  box-shadow:0 24px 80px rgba(0,0,0,0.5);
+  animation:authPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
 }
-@keyframes authPop { from{opacity:0;transform:scale(0.88) translateY(24px)} to{opacity:1;transform:scale(1) translateY(0)} }
+@keyframes authPop { from{opacity:0;transform:scale(0.85) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
 .auth-header {
-  background:linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 60%, var(--primary-light) 100%);
-  padding:40px 32px 36px; text-align:center; position:relative; overflow:hidden;
+  background:linear-gradient(135deg,#1a3a6b 0%,#2b579a 60%,#3b6fbf 100%);
+  padding:32px 32px 28px; text-align:center; position:relative; overflow:hidden;
 }
 .auth-header::before {
-  content:''; position:absolute; width:300px; height:300px;
-  background:rgba(255,255,255,0.08); border-radius:50%; top:-100px; right:-60px;
+  content:''; position:absolute; width:200px; height:200px;
+  background:rgba(255,255,255,0.05); border-radius:50%; top:-60px; right:-40px;
 }
 .auth-logo-circle {
-  width:72px; height:72px; background:rgba(255,255,255,0.15); border-radius:12px;
-  display:flex; align-items:center; justify-content:center; font-size:36px;
-  margin:0 auto 20px; border:2px solid rgba(255,255,255,0.3); backdrop-filter: blur(10px);
+  width:64px; height:64px; background:rgba(255,255,255,0.15); border-radius:50%;
+  display:flex; align-items:center; justify-content:center; font-size:28px;
+  margin:0 auto 16px; border:2px solid rgba(255,255,255,0.3);
 }
-.auth-title { font-family:'Inter',sans-serif; font-size:26px; font-weight:700; color:#fff; margin-bottom:6px; }
-.auth-sub { font-family:'Segoe UI',sans-serif; font-size:13px; color:rgba(255,255,255,0.65); }
-.auth-body { padding:36px; }
-.auth-msg { margin-top:16px; padding:12px 14px; border-radius:8px; font-family:'Segoe UI',sans-serif; font-size:13px; text-align:center; display:none; border-left:4px solid; }
-.auth-msg.error  { background:#fef3f1; color:var(--danger); border-color:var(--danger); }
-.auth-msg.success{ background:#f1fdf5; color:var(--success); border-color:var(--success); }
-.auth-msg.info   { background:var(--accent-light); color:var(--accent); border-color:var(--accent); display:block; }
+.auth-title { font-family:'Outfit',sans-serif; font-size:22px; font-weight:700; color:#fff; margin-bottom:4px; }
+.auth-sub { font-family:'Space Grotesk',sans-serif; font-size:12px; color:rgba(255,255,255,0.6); letter-spacing:0.5px; }
+.auth-body { padding:32px; }
+.auth-msg { margin-top:16px; padding:10px 14px; border-radius:7px; font-family:'Space Grotesk',sans-serif; font-size:12px; text-align:center; display:none; }
+.auth-msg.error  { background:#fef0f0; color:#c0392b; border:1px solid #f5c6c6; display:block; }
+.auth-msg.success{ background:#edfaf1; color:#27ae60; border:1px solid #a9e5c3; display:block; }
+.auth-msg.info   { background:#eef4fd; color:#2b579a; border:1px solid #b8d0f5; display:block; }
+.auth-spinner {
+  display:inline-block; width:14px; height:14px;
+  border:2px solid rgba(255,255,255,0.4); border-top-color:white;
+  border-radius:50%; animation:spinA 0.7s linear infinite;
+  vertical-align:middle; margin-right:6px;
+}
+.gsi-wrap { display:flex; justify-content:center; margin-top:4px; min-height:44px; }
 .google-btn {
-  display:flex; align-items:center; justify-content:center; gap:12px;
-  width:100%; padding:12px 16px; border-radius:8px; border:1px solid var(--border);
-  background:var(--bg-primary); color:var(--text-primary); font-family:'Segoe UI',sans-serif;
-  font-size:14px; font-weight:600; cursor:pointer; transition:var(--transition);
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; padding:11px 16px; border-radius:24px; border:1px solid #dadce0;
+  background:#fff; color:#3c4043; font-family:'Space Grotesk',sans-serif;
+  font-size:14px; font-weight:600; cursor:pointer; transition:box-shadow 0.15s,background 0.15s;
 }
-.google-btn:hover:not(:disabled) { background:var(--bg-secondary); box-shadow:var(--shadow-sm); transform:translateY(-1px); }
+.google-btn:hover { background:#f8f9fa; box-shadow:0 1px 4px rgba(0,0,0,0.15); }
 .google-btn:disabled { opacity:0.6; cursor:not-allowed; }
-.google-btn img { width:20px; height:20px; }
+.google-btn img { width:18px; height:18px; }
 .auth-trust-note {
-  margin-top:20px; text-align:center; font-family:'Segoe UI',sans-serif;
-  font-size:12px; color:var(--text-tertiary); line-height:1.6;
+  margin-top:18px; text-align:center; font-family:'Space Grotesk',sans-serif;
+  font-size:11px; color:#999; line-height:1.5;
 }
+.auth-trust-note b { color:#555; }
+
+/* ── USER BADGE ── */
+.user-badge {
+  display:flex; align-items:center; gap:8px; cursor:pointer;
+  padding:3px 8px 3px 4px; border-radius:20px; transition:background 0.15s; position:relative;
+}
+.user-badge:hover { background:rgba(255,255,255,0.15); }
+.user-avatar {
+  width:26px; height:26px; background:rgba(255,255,255,0.25); border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; font-family:'Outfit',sans-serif; color:white;
+  border:1.5px solid rgba(255,255,255,0.4); flex-shrink:0; overflow:hidden;
+}
+.user-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.user-name-display {
+  font-family:'Space Grotesk',sans-serif; font-size:12px; font-weight:500;
+  color:rgba(255,255,255,0.9); max-width:120px; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis;
+}
+.user-dropdown {
+  position:absolute; top:calc(100% + 8px); right:0; background:white;
+  border-radius:8px; box-shadow:0 8px 32px rgba(0,0,0,0.2);
+  border:1px solid #e0e6ef; min-width:210px; z-index:1000;
+  display:none; overflow:hidden; animation:dropIn 0.2s ease;
+}
+@keyframes dropIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+.user-dropdown.open { display:block; }
+.user-dropdown-header { padding:14px 16px; background:#f8fafd; border-bottom:1px solid #e8ecf0; }
+.user-dropdown-name { font-family:'Outfit',sans-serif; font-size:14px; font-weight:600; color:#1a1a1a; }
+.user-dropdown-email { font-family:'Space Grotesk',sans-serif; font-size:11px; color:#999; margin-top:2px; }
+.user-dropdown-item {
+  display:flex; align-items:center; gap:10px; padding:10px 16px;
+  font-family:'Space Grotesk',sans-serif; font-size:12px; color:#444;
+  cursor:pointer; transition:background 0.15s; border:none; background:none; width:100%; text-align:left;
+}
+.user-dropdown-item:hover { background:#f0f4fa; }
+.user-dropdown-item.danger { color:#c0392b; }
+.user-dropdown-item.upgrade { color:#9a7a00; }
+.user-dropdown-item .item-icon { font-size:14px; width:18px; }
+.user-dropdown-divider { height:1px; background:#f0f0f0; margin:4px 0; }
+
+/* ── PLAN TAG (title bar) ── */
+.plan-tag {
+  font-size:9px; font-weight:700; padding:2px 7px; border-radius:8px;
+  background:rgba(255,255,255,0.2); letter-spacing:0.5px; margin-left:2px;
+  font-family:'Space Grotesk',sans-serif;
+}
+.plan-tag.pro { background:#f5c518; color:#3a2c00; }
 
 /* ── BODY / SHELL ── */
-body { 
-  font-family:'Segoe UI','Inter',system-ui,sans-serif; 
-  background:var(--bg-secondary); 
-  color:var(--text-primary); 
-  font-size:13px; 
-  margin:0; 
-  padding:0;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
+body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); color:var(--text); font-size:13px; margin:0; padding:0; }
 #appShell {
   display:none; flex-direction:column; height:100vh; overflow:hidden;
   opacity:0; transition:opacity 0.5s ease;
@@ -183,384 +238,280 @@ body {
 
 /* ── TITLE BAR ── */
 .title-bar {
-  background:var(--primary); 
-  color:white; 
-  padding:10px 20px;
-  display:flex; 
-  align-items:center; 
-  gap:14px; 
-  font-size:12px;
-  user-select:none; 
-  flex-shrink:0;
-  box-shadow:var(--shadow-sm);
+  background:var(--sidebar-bg); color:white; padding:8px 16px;
+  display:flex; align-items:center; gap:12px; font-size:12px;
+  user-select:none; flex-shrink:0;
 }
-.title-bar .app-name { 
-  font-family:'Inter',sans-serif; 
-  font-weight:700; 
-  font-size:16px; 
-  letter-spacing:-0.3px; 
-}
+.title-bar .app-name { font-family:'Outfit',sans-serif; font-weight:700; font-size:14px; letter-spacing:0.3px; }
+.title-bar .doc-name { opacity:0.6; font-size:12px; }
 .title-bar-spacer { flex:1; }
-.plan-tag {
-  font-size:10px; 
-  font-weight:700; 
-  padding:3px 10px; 
-  border-radius:10px;
-  background:rgba(255,255,255,0.2); 
-  letter-spacing:0.4px; 
-  font-family:'Segoe UI',sans-serif;
-  backdrop-filter: blur(10px);
-}
-.plan-tag.pro { background:#f5c518; color:#3a2c00; }
-
-/* ── USER BADGE ── */
-.user-badge {
-  display:flex; align-items:center; gap:10px; cursor:pointer;
-  padding:4px 8px 4px 6px; border-radius:20px; transition:var(--transition); 
-  position:relative;
-}
-.user-badge:hover { background:rgba(255,255,255,0.15); }
-.user-avatar {
-  width:28px; height:28px; background:rgba(255,255,255,0.3); border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-size:12px; font-weight:700; font-family:'Inter',sans-serif; 
-  color:white; border:1.5px solid rgba(255,255,255,0.4); 
-  flex-shrink:0; overflow:hidden;
-}
-.user-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
-.user-name-display {
-  font-family:'Segoe UI',sans-serif; font-size:12px; font-weight:500;
-  color:rgba(255,255,255,0.95); max-width:140px; white-space:nowrap;
-  overflow:hidden; text-overflow:ellipsis;
-}
-.user-dropdown {
-  position:absolute; top:calc(100% + 10px); right:0; background:var(--bg-primary);
-  border-radius:8px; box-shadow:var(--shadow-lg);
-  border:1px solid var(--border); min-width:240px; z-index:1000;
-  display:none; overflow:hidden; animation:dropIn 0.2s ease;
-}
-@keyframes dropIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
-.user-dropdown.open { display:block; }
-.user-dropdown-header { padding:14px 16px; background:var(--bg-secondary); border-bottom:1px solid var(--border); }
-.user-dropdown-name { font-family:'Inter',sans-serif; font-size:14px; font-weight:600; color:var(--text-primary); }
-.user-dropdown-email { font-family:'Segoe UI',sans-serif; font-size:12px; color:var(--text-tertiary); margin-top:3px; }
-.user-dropdown-item {
-  display:flex; align-items:center; gap:10px; padding:10px 16px;
-  font-family:'Segoe UI',sans-serif; font-size:13px; color:var(--text-primary);
-  cursor:pointer; transition:var(--transition); border:none; background:none; 
-  width:100%; text-align:left;
-}
-.user-dropdown-item:hover { background:var(--bg-secondary); }
-.user-dropdown-item.danger { color:var(--danger); }
-.user-dropdown-divider { height:1px; background:var(--border); margin:6px 0; }
 
 /* ── RIBBON ── */
 .ribbon {
-  background:var(--bg-primary); 
-  border-bottom:1px solid var(--border);
-  padding:0 20px; 
-  display:flex; 
-  align-items:center; 
-  justify-content:space-between;
-  gap:16px; 
-  min-height:52px; 
-  flex-shrink:0;
-  box-shadow:var(--shadow-sm);
+  background:var(--toolbar-bg); border-bottom:1px solid var(--border);
+  padding:0 16px; display:flex; align-items:center; justify-content:space-between;
+  gap:8px; min-height:44px; flex-shrink:0;
 }
-.ribbon-left { display:flex; align-items:center; gap:12px; }
+.ribbon-left { display:flex; align-items:center; gap:8px; }
 .ribbon-logo {
-  display:flex; align-items:center; gap:10px;
-  font-family:'Inter',sans-serif; 
-  font-weight:700; 
-  font-size:16px;
-  color:var(--primary); 
-  padding-right:16px; 
-  border-right:1px solid var(--border);
+  display:flex; align-items:center; gap:8px;
+  font-family:'Outfit',sans-serif; font-weight:700; font-size:15px;
+  color:var(--accent); padding-right:12px; border-right:1px solid var(--border);
 }
 .ribbon-logo .logo-icon {
-  background:var(--primary); 
-  color:white; 
-  width:32px; 
-  height:32px;
-  border-radius:6px; 
-  display:flex; 
-  align-items:center; 
-  justify-content:center; 
-  font-size:18px;
+  background:var(--accent); color:white; width:28px; height:28px;
+  border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:16px;
 }
 .ribbon-btn {
-  display:flex; 
-  flex-direction:column; 
-  align-items:center; 
-  gap:3px;
-  padding:8px 12px; 
-  border:1px solid transparent; 
-  background:transparent; 
-  border-radius:6px;
-  cursor:pointer; 
-  color:var(--text-primary); 
-  font-size:11px; 
-  font-family:'Segoe UI',sans-serif;
-  font-weight:500;
-  transition:var(--transition); 
-  min-width:60px;
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  padding:6px 10px; border:none; background:transparent; border-radius:4px;
+  cursor:pointer; color:var(--text); font-size:11px; font-family:'Space Grotesk',sans-serif;
+  transition:background 0.15s; min-width:52px;
 }
-.ribbon-btn:hover { background:var(--bg-tertiary); border-color:var(--border-light); }
+.ribbon-btn:hover { background:var(--accent-light); color:var(--accent); }
 .ribbon-btn .icon { font-size:18px; line-height:1; }
-.ribbon-btn.primary { background:var(--primary); color:white; border-color:var(--primary); }
-.ribbon-btn.primary:hover { background:var(--primary-dark); box-shadow:var(--shadow-sm); }
-.ribbon-sep { width:1px; height:32px; background:var(--border); margin:0 6px; }
+.ribbon-btn.primary { background:var(--accent); color:white; }
+.ribbon-btn.primary:hover { background:#1e3f73; }
+.ribbon-btn.gold { background:#f5c518; color:#3a2c00; }
+.ribbon-btn.gold:hover { background:#e0b400; }
+.ribbon-sep { width:1px; height:36px; background:var(--border); margin:0 4px; }
 .search-bar {
-  display:flex; align-items:center; gap:8px; background:var(--bg-secondary);
-  border:1px solid var(--border); border-radius:6px; padding:6px 12px; width:280px;
-  transition:var(--transition);
+  display:flex; align-items:center; gap:6px; background:white;
+  border:1px solid var(--border); border-radius:4px; padding:5px 10px; width:260px;
 }
-.search-bar:focus-within { border-color:var(--primary); box-shadow:0 0 0 3px rgba(26,77,143,0.08); }
-.search-bar input { border:none; outline:none; font-size:13px; width:100%; font-family:'Segoe UI',sans-serif; color:var(--text-primary); background:transparent; }
-.search-bar input::placeholder { color:var(--text-tertiary); }
-.search-bar .search-icon { color:var(--text-tertiary); font-size:14px; }
+.search-bar input { border:none; outline:none; font-size:13px; width:100%; font-family:'Space Grotesk',sans-serif; color:var(--text); }
+.search-bar .search-icon { color:var(--muted); font-size:14px; }
 
 /* ── LAYOUT ── */
 .layout { display:flex; flex:1; overflow:hidden; }
 .sidebar {
-  width:250px; background:var(--bg-primary); color:var(--text-primary);
+  width:220px; background:var(--sidebar-bg); color:var(--sidebar-text);
   display:flex; flex-direction:column; overflow:hidden; flex-shrink:0;
-  border-right:1px solid var(--border);
 }
-.sidebar-section { padding:12px; }
+.sidebar-section { padding:8px; }
 .sidebar-label {
-  font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px;
-  opacity:0.7; padding:12px 12px 6px; font-family:'Segoe UI',sans-serif;
-  color:var(--text-secondary);
+  font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.8px;
+  opacity:0.6; padding:8px 8px 4px; font-family:'Space Grotesk',sans-serif;
 }
 .nav-item {
-  display:flex; align-items:center; gap:12px; padding:9px 12px; border-radius:6px;
-  cursor:pointer; transition:var(--transition); font-size:13px; user-select:none;
-  color:var(--text-primary); font-weight:500;
+  display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:4px;
+  cursor:pointer; transition:background 0.15s; font-size:13px; user-select:none;
 }
-.nav-item:hover { background:var(--bg-secondary); }
-.nav-item.active { background:var(--accent-light); color:var(--accent); font-weight:600; }
-.nav-item .nav-icon { font-size:16px; width:20px; text-align:center; }
+.nav-item:hover { background:var(--sidebar-hover); }
+.nav-item.active { background:var(--sidebar-active); font-weight:600; }
+.nav-item .nav-icon { font-size:15px; width:18px; text-align:center; }
 .nav-item .nav-badge {
-  margin-left:auto; background:var(--primary); color:white;
-  font-size:11px; padding:2px 8px; border-radius:12px; min-width:22px; 
-  text-align:center; font-weight:600;
+  margin-left:auto; background:rgba(255,255,255,0.2); color:white;
+  font-size:10px; padding:1px 6px; border-radius:10px; min-width:20px; text-align:center;
 }
-.sidebar-divider { height:1px; background:var(--border); margin:8px 12px; }
-.folder-section { flex:1; overflow-y:auto; padding:0 8px 12px; }
-.folder-section::-webkit-scrollbar { width:6px; }
-.folder-section::-webkit-scrollbar-track { background:transparent; }
-.folder-section::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
-.folder-section::-webkit-scrollbar-thumb:hover { background:var(--text-tertiary); }
+.sidebar-divider { height:1px; background:rgba(255,255,255,0.15); margin:4px 12px; }
+.folder-section { flex:1; overflow-y:auto; padding:0 8px 8px; }
+.folder-section::-webkit-scrollbar { width:4px; }
+.folder-section::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.2); border-radius:2px; }
 .folder-item {
-  display:flex; align-items:center; gap:10px; padding:7px 10px; border-radius:6px;
-  cursor:pointer; font-size:12px; color:var(--text-primary); transition:var(--transition); 
-  user-select:none; font-weight:500;
+  display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:4px;
+  cursor:pointer; font-size:12px; color:rgba(255,255,255,0.85); transition:background 0.15s; user-select:none;
 }
-.folder-item:hover { background:var(--bg-secondary); }
-.folder-item.active { background:var(--accent-light); color:var(--accent); }
-.folder-children { padding-left:16px; margin-top:2px; }
+.folder-item:hover { background:var(--sidebar-hover); }
+.folder-item.active { background:var(--sidebar-active); }
+.folder-children { padding-left:16px; }
 
-/* ── PLAN PANEL ── */
-.plan-panel { margin:12px; padding:14px; border-radius:8px; background:var(--accent-light); border:1px solid rgba(0,120,212,0.2); flex-shrink:0; }
-.plan-panel-title { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; color:var(--accent); }
-.plan-pill { font-size:10px; padding:3px 8px; border-radius:10px; font-weight:700; letter-spacing:0.4px; }
+/* ── PLAN PANEL (sidebar, bottom) ── */
+.plan-panel { margin:8px; padding:12px; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); flex-shrink:0; }
+.plan-panel-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.plan-pill { font-size:9px; padding:2px 7px; border-radius:10px; font-weight:700; letter-spacing:0.4px; }
+.plan-pill.free { background:rgba(255,255,255,0.18); color:#fff; }
 .plan-pill.pro { background:#f5c518; color:#3a2c00; }
-.usage-row { font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:flex; justify-content:space-between; font-weight:500; }
-.usage-bar { height:5px; background:rgba(0,120,212,0.15); border-radius:3px; overflow:hidden; margin-bottom:10px; }
-.usage-fill { height:100%; background:linear-gradient(90deg, var(--accent), var(--primary)); border-radius:3px; transition:width .3s ease; }
-.usage-fill.full { background:var(--warning); }
+.usage-row { font-size:11px; opacity:0.85; margin-bottom:4px; display:flex; justify-content:space-between; }
+.usage-bar { height:4px; background:rgba(255,255,255,0.15); border-radius:2px; overflow:hidden; margin-bottom:8px; }
+.usage-fill { height:100%; background:#4a90d9; border-radius:2px; transition:width .3s; }
+.usage-fill.full { background:#f5c518; }
 .plan-upgrade-btn {
-  width:100%; padding:8px; border:none; border-radius:6px;
-  background:linear-gradient(135deg, var(--primary), var(--primary-light)); 
-  color:white;
-  font-weight:600; font-size:12px; cursor:pointer; font-family:'Segoe UI',sans-serif;
-  transition:var(--transition); margin-top:4px;
+  width:100%; padding:7px; border:none; border-radius:6px;
+  background:linear-gradient(135deg,#4a90d9,#7bb8f0); color:#0a1628;
+  font-weight:700; font-size:11px; cursor:pointer; font-family:'Space Grotesk',sans-serif;
 }
-.plan-upgrade-btn:hover { box-shadow:var(--shadow-sm); transform:translateY(-1px); }
-.plan-expiry { font-size:11px; opacity:0.7; margin-top:8px; color:var(--text-secondary); }
+.plan-upgrade-btn:hover { filter:brightness(1.05); }
+.plan-expiry { font-size:10px; opacity:0.7; margin-top:6px; }
 
-/* ── MAIN CONTENT ── */
-.main { flex:1; overflow:auto; padding:24px 32px; }
+/* ── MAIN ── */
+.main { flex:1; overflow:auto; padding:20px 28px; }
 .main::-webkit-scrollbar { width:8px; }
-.main::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
-.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; gap:16px; }
-.section-title { font-family:'Inter',sans-serif; font-size:24px; font-weight:700; color:var(--text-primary); }
-.view-toggle { display:flex; gap:6px; }
+.main::-webkit-scrollbar-thumb { background:#ccc; border-radius:4px; }
+.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.section-title { font-family:'Outfit',sans-serif; font-size:20px; font-weight:600; color:var(--text); }
+.view-toggle { display:flex; gap:4px; }
 .view-btn {
-  padding:6px 12px; border:1px solid var(--border); background:var(--bg-primary);
-  border-radius:6px; cursor:pointer; font-size:13px; color:var(--text-primary); 
-  transition:var(--transition); font-weight:500;
+  padding:5px 8px; border:1px solid var(--border); background:white;
+  border-radius:3px; cursor:pointer; font-size:14px; color:var(--muted); transition:all 0.15s;
 }
-.view-btn.active, .view-btn:hover { background:var(--primary); color:white; border-color:var(--primary); }
+.view-btn.active,.view-btn:hover { background:var(--accent); color:white; border-color:var(--accent); }
 
 /* ── DOC CARDS ── */
-.doc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:20px; }
-.doc-list { display:flex; flex-direction:column; gap:8px; }
+.doc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
+.doc-list { display:flex; flex-direction:column; gap:4px; }
 .doc-card {
-  background:var(--bg-primary); border:1px solid var(--border); border-radius:8px;
-  cursor:pointer; transition:var(--transition); overflow:hidden; position:relative;
-  box-shadow:var(--shadow-sm);
+  background:white; border:1px solid var(--border); border-radius:4px;
+  cursor:pointer; transition:box-shadow 0.2s,border-color 0.2s; overflow:hidden; position:relative;
 }
-.doc-card:hover { 
-  box-shadow:var(--shadow-md); 
-  border-color:var(--primary); 
-  transform:translateY(-4px);
-}
+.doc-card:hover { box-shadow:var(--shadow-hover); border-color:var(--accent); }
 .doc-card-preview {
-  height:140px; background:linear-gradient(135deg, var(--accent-light) 0%, #f5f8fc 100%);
+  height:120px; background:linear-gradient(135deg,#f0f4ff 0%,#e8ecf7 100%);
   display:flex; align-items:center; justify-content:center;
-  border-bottom:1px solid var(--border); position:relative; overflow:hidden;
-}
-.doc-card-preview::before {
-  content:''; position:absolute; inset:0;
-  background:linear-gradient(45deg, transparent 48%, rgba(0,120,212,0.1) 49%, rgba(0,120,212,0.1) 51%, transparent 52%);
-  opacity:0.3;
+  border-bottom:1px solid var(--border); position:relative;
 }
 .doc-card-preview .doc-lines {
-  position:absolute; bottom:14px; left:14px; right:14px;
-  display:flex; flex-direction:column; gap:5px; z-index:1;
+  position:absolute; bottom:12px; left:12px; right:12px;
+  display:flex; flex-direction:column; gap:4px;
 }
-.doc-line { height:3px; background:rgba(26,77,143,0.25); border-radius:2px; }
-.doc-line:nth-child(2) { width:80%; }
-.doc-line:nth-child(3) { width:60%; }
-.doc-card-body { padding:12px 14px; }
-.doc-card-title { font-weight:600; font-size:13px; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:4px; }
-.doc-card-meta { font-size:11px; color:var(--text-tertiary); display:flex; justify-content:space-between; }
-.doc-card-actions { padding:8px 10px; display:flex; gap:6px; border-top:1px solid var(--border); background:var(--bg-secondary); }
+.doc-line { height:4px; background:rgba(43,87,154,0.2); border-radius:2px; }
+.doc-line:nth-child(2) { width:75%; }
+.doc-line:nth-child(3) { width:55%; }
+.doc-card-body { padding:10px 12px; }
+.doc-card-title { font-weight:600; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px; }
+.doc-card-meta { font-size:11px; color:var(--muted); }
+.doc-card-actions { padding:6px 8px; display:flex; gap:4px; border-top:1px solid var(--border); background:#fafafa; flex-wrap:wrap; }
 .doc-action-btn {
-  padding:4px 10px; border:1px solid var(--border); background:var(--bg-primary); 
-  border-radius:4px;
-  cursor:pointer; font-size:11px; font-family:'Segoe UI',sans-serif; 
-  color:var(--text-primary); transition:var(--transition); font-weight:500;
-  flex:1; text-align:center;
+  padding:3px 8px; border:1px solid var(--border); background:white; border-radius:3px;
+  cursor:pointer; font-size:11px; font-family:'Space Grotesk',sans-serif; color:var(--text); transition:all 0.15s;
 }
-.doc-action-btn:hover { background:var(--primary); color:white; border-color:var(--primary); }
-.doc-action-btn.danger:hover { background:var(--danger); border-color:var(--danger); }
+.doc-action-btn:hover { background:var(--accent-light); border-color:var(--accent); color:var(--accent); }
+.doc-action-btn.danger:hover { background:#fce8e6; border-color:var(--danger); color:var(--danger); }
 .star-btn {
-  background:none; border:none; cursor:pointer; font-size:16px; color:#d4af37;
-  position:absolute; top:10px; right:10px; transition:var(--transition); z-index:2;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+  background:none; border:none; cursor:pointer; font-size:14px; color:#ccc;
+  position:absolute; top:8px; right:8px; transition:color 0.15s; z-index:2;
 }
-.star-btn:hover { transform:scale(1.2); }
+.star-btn.on { color:#f5c518; }
+.star-btn:hover { color:#f5c518; }
 .doc-list-item {
-  background:var(--bg-primary); border:1px solid var(--border); border-radius:8px;
-  display:flex; align-items:center; padding:12px 14px; gap:14px; cursor:pointer; 
-  transition:var(--transition); box-shadow:var(--shadow-sm);
+  background:white; border:1px solid var(--border); border-radius:3px;
+  display:flex; align-items:center; padding:8px 12px; gap:12px; cursor:pointer; transition:background 0.15s;
 }
-.doc-list-item:hover { background:var(--bg-secondary); border-color:var(--primary); box-shadow:var(--shadow-md); }
-.doc-list-icon { font-size:24px; width:32px; text-align:center; flex-shrink:0; }
+.doc-list-item:hover { background:var(--card-hover); }
+.doc-list-icon { font-size:22px; width:28px; text-align:center; }
 .doc-list-info { flex:1; min-width:0; }
-.doc-list-title { font-weight:600; font-size:13px; color:var(--text-primary); margin-bottom:2px; }
-.doc-list-meta { font-size:11px; color:var(--text-tertiary); }
-.doc-list-actions { display:flex; gap:6px; flex-shrink:0; }
+.doc-list-title { font-weight:500; font-size:13px; }
+.doc-list-meta { font-size:11px; color:var(--muted); }
+.doc-list-actions { display:flex; gap:4px; flex-wrap:wrap; }
 .trash-header {
-  background:#fff4cd; border:1px solid #ffc107; border-radius:8px;
-  padding:10px 16px; margin-bottom:20px; display:flex; align-items:center;
-  justify-content:space-between; font-size:13px; color:var(--text-primary); font-weight:500;
+  background:#fff3cd; border:1px solid #ffc107; border-radius:4px;
+  padding:8px 14px; margin-bottom:16px; display:flex; align-items:center;
+  justify-content:space-between; font-size:12px;
 }
 .trash-header button {
-  background:var(--danger); color:white; border:none; border-radius:6px;
-  padding:6px 14px; cursor:pointer; font-size:12px; font-family:'Segoe UI',sans-serif; font-weight:600;
+  background:var(--danger); color:white; border:none; border-radius:3px;
+  padding:4px 12px; cursor:pointer; font-size:12px; font-family:'Space Grotesk',sans-serif;
 }
-.empty-state { text-align:center; padding:80px 40px; }
-.empty-state .empty-icon { font-size:72px; margin-bottom:20px; opacity:0.5; }
-.empty-state .empty-title { font-size:18px; font-weight:600; margin-bottom:8px; color:var(--text-primary); }
-.empty-state .empty-sub { font-size:14px; color:var(--text-tertiary); }
+.empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
+.empty-state .empty-icon { font-size:56px; margin-bottom:16px; opacity:0.4; }
+.empty-state .empty-title { font-size:16px; font-weight:600; margin-bottom:6px; }
+.empty-state .empty-sub { font-size:13px; }
+
+/* ── SHARING ── */
+.shared-badge {
+  display:inline-block; font-size:9px; padding:1px 6px; border-radius:8px;
+  background:var(--accent-light); color:var(--accent); font-weight:700;
+  margin-left:6px; vertical-align:middle; letter-spacing:0.2px;
+}
+.share-row { display:flex; gap:6px; margin-bottom:10px; }
+.share-row input { flex:1; }
+.share-row select {
+  padding:8px; border:1px solid var(--border); border-radius:3px;
+  font-family:'Space Grotesk',sans-serif; font-size:12px; background:white;
+}
+.share-people-list { margin-top:14px; border-top:1px solid var(--border); padding-top:12px; max-height:180px; overflow-y:auto; }
+.share-people-label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); margin-bottom:8px; }
+.share-person { display:flex; align-items:center; justify-content:space-between; padding:7px 0; font-size:12px; border-bottom:1px solid #f4f4f4; }
+.share-person:last-child { border-bottom:none; }
+.share-person-email { color:#333; }
+.share-role-badge {
+  font-size:9px; padding:2px 6px; border-radius:8px; background:var(--accent-light);
+  color:var(--accent); font-weight:700; margin-left:6px;
+}
+.share-remove-btn { background:none; border:none; color:var(--danger); cursor:pointer; font-size:11px; font-family:'Space Grotesk',sans-serif; }
+.share-remove-btn:hover { text-decoration:underline; }
+.share-empty { color:#999; font-size:12px; padding:4px 0; }
 
 /* ── STATUS BAR ── */
 .status-bar {
-  background:var(--primary); 
-  color:rgba(255,255,255,0.85); 
-  font-size:12px;
-  padding:4px 20px; 
-  display:flex; 
-  align-items:center; 
-  gap:24px;
-  flex-shrink:0; 
-  font-family:'Segoe UI',sans-serif;
-  box-shadow:var(--shadow-sm);
+  background:var(--accent); color:rgba(255,255,255,0.8); font-size:11px;
+  padding:3px 16px; display:flex; align-items:center; gap:20px;
+  flex-shrink:0; font-family:'Space Grotesk',sans-serif;
 }
-.status-bar .online-dot { width:8px; height:8px; background:#4caf50; border-radius:50%; display:inline-block; box-shadow:0 0 0 3px rgba(76,175,80,0.25); animation:onlinePulse 2s ease infinite; }
-@keyframes onlinePulse { 0%,100%{box-shadow:0 0 0 3px rgba(76,175,80,0.25)} 50%{box-shadow:0 0 0 6px rgba(76,175,80,0.1)} }
 
 /* ── MODALS ── */
 .modal-overlay {
   display:none; position:fixed; inset:0;
-  background:rgba(0,0,0,0.45); backdrop-filter:blur(8px);
-  z-index:999;
+  background:rgba(0,0,0,0.4); z-index:999;
   align-items:center; justify-content:center;
 }
 .modal-overlay.open { display:flex; }
-.modal { background:var(--bg-primary); border-radius:12px; box-shadow:var(--shadow-lg); width:420px; overflow:hidden; max-height:90vh; overflow-y:auto; animation:modalIn 0.3s ease; }
-@keyframes modalIn { from{opacity:0;transform:scale(0.92) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.modal { background:white; border-radius:4px; box-shadow:0 8px 32px rgba(0,0,0,0.3); width:400px; overflow:hidden; max-height:90vh; overflow-y:auto; }
 .modal-header {
-  background:linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
-  color:white; padding:14px 20px; font-weight:600;
-  font-size:15px; display:flex; align-items:center; justify-content:space-between; 
-  font-family:'Inter',sans-serif;
+  background:var(--accent); color:white; padding:12px 16px; font-weight:600;
+  font-size:14px; display:flex; align-items:center; justify-content:space-between; font-family:'Outfit',sans-serif;
   position:sticky; top:0; z-index:2;
 }
-.modal-header button { background:none; border:none; color:white; cursor:pointer; font-size:20px; opacity:0.8; transition:var(--transition); }
-.modal-header button:hover { opacity:1; }
-.modal-body { padding:24px; }
+.modal-header button { background:none; border:none; color:white; cursor:pointer; font-size:18px; }
+.modal-body { padding:20px; }
 .modal-body label {
-  font-size:12px; font-weight:700; display:block; margin-bottom:8px; color:var(--text-secondary);
-  text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI',sans-serif;
+  font-size:12px; font-weight:600; display:block; margin-bottom:6px; color:var(--muted);
+  text-transform:uppercase; letter-spacing:0.5px; font-family:'Space Grotesk',sans-serif;
 }
 .modal-body input {
-  width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:6px;
-  font-size:13px; font-family:'Segoe UI',sans-serif; outline:none; transition:var(--transition);
-  color:var(--text-primary); background:var(--bg-primary);
+  width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:3px;
+  font-size:13px; font-family:'Space Grotesk',sans-serif; outline:none;
 }
-.modal-body input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(26,77,143,0.1); }
-.modal-footer { padding:14px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; }
-.btn { padding:8px 18px; border-radius:6px; border:1px solid var(--border); cursor:pointer; font-size:13px; font-family:'Segoe UI',sans-serif; font-weight:600; transition:var(--transition); }
-.btn-primary { background:var(--primary); color:white; border-color:var(--primary); }
-.btn-primary:hover { background:var(--primary-dark); box-shadow:var(--shadow-sm); }
-.btn-secondary { background:var(--bg-secondary); color:var(--text-primary); }
-.btn-secondary:hover { background:var(--bg-tertiary); }
+.modal-body input:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(43,87,154,0.15); }
+.modal-footer { padding:12px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+.btn { padding:7px 16px; border-radius:3px; border:1px solid var(--border); cursor:pointer; font-size:12px; font-family:'Space Grotesk',sans-serif; font-weight:500; }
+.btn-primary { background:var(--accent); color:white; border-color:var(--accent); }
+.btn-primary:hover { background:#1e3f73; }
+.btn-secondary { background:white; }
+.btn-secondary:hover { background:var(--bg); }
+
+.online-dot { width:7px; height:7px; background:#27ae60; border-radius:50%; display:inline-block; box-shadow:0 0 0 2px rgba(39,174,96,0.3); animation:onlinePulse 2s ease infinite; }
+@keyframes onlinePulse { 0%,100%{box-shadow:0 0 0 2px rgba(39,174,96,0.3)} 50%{box-shadow:0 0 0 4px rgba(39,174,96,0.15)} }
 
 /* ── UPGRADE / PAYMENT MODAL ── */
 .up-reason {
-  background:#fff4cd; border:1px solid #ffc107; color:#7a5d00;
-  font-size:12px; padding:10px 14px; border-radius:8px; margin-bottom:16px; text-align:center; font-weight:500;
+  background:#fff7e0; border:1px solid #f5c518; color:#7a5d00;
+  font-size:12px; padding:9px 12px; border-radius:6px; margin-bottom:14px; text-align:center;
 }
-.up-toggle { display:flex; border-radius:8px; overflow:hidden; border:1px solid var(--primary); margin:4px 0 16px; }
+.up-toggle { display:flex; border-radius:8px; overflow:hidden; border:1px solid var(--accent); margin:2px 0 14px; }
 .up-toggle button {
-  flex:1; padding:10px; border:none; cursor:pointer; font-size:12px;
-  background:var(--bg-primary); color:var(--primary); font-family:'Segoe UI',sans-serif; font-weight:600;
-  transition:var(--transition);
+  flex:1; padding:9px; border:none; cursor:pointer; font-size:12px;
+  background:#fff; color:var(--accent); font-family:'Space Grotesk',sans-serif; font-weight:600;
 }
-.up-toggle button.active { background:var(--primary); color:white; }
-.up-amount { font-size:28px; font-weight:700; color:var(--primary); text-align:center; margin:0 0 16px; font-family:'Inter',sans-serif; }
-.up-features { list-style:none; padding:0; margin:0 0 18px; font-size:12px; color:var(--text-primary); }
-.up-features li { padding:7px 0 7px 24px; position:relative; font-weight:500; }
-.up-features li::before { content:'✓'; position:absolute; left:0; color:var(--success); font-weight:700; font-size:14px; }
-.up-qr-wrap { text-align:center; margin:12px 0 16px; }
-.up-qr-wrap img { width:180px; height:180px; border-radius:8px; border:2px solid var(--border); }
+.up-toggle button.active { background:var(--accent); color:#fff; }
+.up-amount { font-size:24px; font-weight:700; color:var(--accent); text-align:center; margin:0 0 14px; font-family:'Outfit',sans-serif; }
+.up-features { list-style:none; padding:0; margin:0 0 16px; font-size:12px; color:#444; }
+.up-features li { padding:5px 0 5px 22px; position:relative; }
+.up-features li::before { content:'✓'; position:absolute; left:0; color:#27ae60; font-weight:700; }
+.up-qr-wrap { text-align:center; margin:10px 0 14px; }
+.up-qr-wrap img { width:180px; height:180px; border-radius:8px; border:1px solid var(--border); }
 .up-pay-btn {
-  width:100%; padding:12px; border:none; border-radius:8px; background:linear-gradient(135deg, var(--primary), var(--primary-light));
-  color:#fff; font-size:13px; font-weight:700; cursor:pointer; font-family:'Segoe UI',sans-serif;
-  transition:var(--transition); margin-bottom:8px;
+  width:100%; padding:11px; border:none; border-radius:7px; background:var(--accent);
+  color:#fff; font-size:14px; font-weight:600; cursor:pointer; font-family:'Outfit',sans-serif;
 }
-.up-pay-btn:hover:not(:disabled) { box-shadow:var(--shadow-md); transform:translateY(-2px); }
+.up-pay-btn:hover { background:#1e3f73; }
 .up-pay-btn:disabled { opacity:0.6; cursor:not-allowed; }
 .up-check-btn {
-  width:100%; padding:10px; border:1px solid var(--primary); border-radius:8px; background:var(--bg-primary);
-  color:var(--primary); font-size:12px; font-weight:700; cursor:pointer;
-  font-family:'Segoe UI',sans-serif; transition:var(--transition);
+  width:100%; padding:9px; border:1px solid var(--accent); border-radius:7px; background:#fff;
+  color:var(--accent); font-size:12px; font-weight:600; cursor:pointer;
+  font-family:'Space Grotesk',sans-serif; margin-top:8px;
 }
 .up-check-btn:hover { background:var(--accent-light); }
-.up-status { margin-top:12px; padding:10px 14px; border-radius:8px; font-size:12px; text-align:center; display:none; border-left:4px solid; font-weight:500; }
+.up-status { margin-top:10px; padding:9px 12px; border-radius:6px; font-size:12px; text-align:center; display:none; }
 .up-status.show { display:block; }
-.up-status.success { background:#f1fdf5; color:var(--success); border-color:var(--success); }
-.up-status.error { background:#fef3f1; color:var(--danger); border-color:var(--danger); }
-.up-status.info { background:var(--accent-light); color:var(--accent); border-color:var(--accent); }
-.up-note { font-size:11px; color:var(--text-tertiary); text-align:center; margin-top:10px; }
+.up-status.success { background:#edfaf1; color:#27ae60; border:1px solid #a9e5c3; }
+.up-status.error { background:#fef0f0; color:#c0392b; border:1px solid #f5c6c6; }
+.up-status.info { background:#eef4fd; color:#2b579a; border:1px solid #b8d0f5; }
+.up-note { font-size:11px; color:#888; text-align:center; margin-top:10px; }
 </style>
 </head>
 <body>
+
 
 <!-- LOADING SCREEN -->
 <div id="loadingScreen">
@@ -571,7 +522,7 @@ body {
       <div class="loader-ring-inner"></div>
       <div class="loader-ring-dot">📋</div>
     </div>
-    <div class="loader-brand">Pro Document</div>
+    <div class="loader-brand">Pro <span>Document</span></div>
     <div class="loader-tagline">Your intelligent workspace</div>
     <div class="loader-progress-wrap">
       <div class="loader-progress-label">
@@ -585,6 +536,7 @@ body {
     </div>
   </div>
 </div>
+
 
 <!-- AUTH MODAL -->
 <div id="authModal">
@@ -603,7 +555,7 @@ body {
       </div>
       <div class="auth-msg" id="authMsg"></div>
       <div class="auth-trust-note">
-        Secure sign-in powered by Google. Your data is encrypted and private.
+        We use <b>Google Sign-In</b> via Firebase Authentication, so every account is tied to a real,<br>verified email address. No passwords to remember.
       </div>
     </div>
   </div>
@@ -613,32 +565,32 @@ body {
 <div id="appShell">
 
 <div class="title-bar">
-  <span style="font-size:16px;">📋</span>
+  <span style="background:rgba(255,255,255,0.2);padding:2px 6px;border-radius:3px;font-size:13px;">📋</span>
   <span class="app-name">Pro Document</span>
   <span class="plan-tag" id="planTag">FREE</span>
-  <span style="opacity:0.7;">— Dashboard</span>
+  <span class="doc-name">— Dashboard</span>
   <div class="title-bar-spacer"></div>
   <div class="user-badge" id="userBadge" onclick="toggleUserDropdown()">
     <div class="user-avatar" id="userAvatarLetter">?</div>
     <span class="user-name-display" id="userNameDisplay">Guest</span>
-    <span style="font-size:11px;opacity:0.7;">▾</span>
+    <span style="font-size:10px;opacity:0.6;">▾</span>
     <div class="user-dropdown" id="userDropdown">
       <div class="user-dropdown-header">
         <div class="user-dropdown-name" id="ddName">—</div>
         <div class="user-dropdown-email" id="ddEmail">—</div>
       </div>
       <button class="user-dropdown-item" onclick="openProfileModal()">
-        <span>👤</span> My Profile
+        <span class="item-icon">👤</span> My Profile
       </button>
       <button class="user-dropdown-item" onclick="openActivityModal()">
-        <span>📊</span> Session History
+        <span class="item-icon">📊</span> Session History
       </button>
-      <button class="user-dropdown-item" id="ddUpgradeItem" onclick="openUpgradeModal()">
-        <span>💎</span> Upgrade to Pro
+      <button class="user-dropdown-item upgrade" id="ddUpgradeItem" onclick="openUpgradeModal()">
+        <span class="item-icon">💎</span> Upgrade to Pro
       </button>
       <div class="user-dropdown-divider"></div>
       <button class="user-dropdown-item danger" onclick="doLogout()">
-        <span>🚪</span> Sign Out
+        <span class="item-icon">🚪</span> Sign Out
       </button>
     </div>
   </div>
@@ -650,6 +602,10 @@ body {
       <div class="logo-icon">📋</div>
       Pro Document
     </div>
+<button class="ribbon-btn" id="installBtn" style="display:none;">
+  <span class="icon">⬇️</span>
+  Install App
+</button>
     <button class="ribbon-btn primary" onclick="openCreateDocModal()">
       <span class="icon">📄</span> New Document
     </button>
@@ -667,12 +623,12 @@ body {
       <span class="icon">🕐</span> Recent
     </button>
     <div class="ribbon-sep"></div>
-    <button class="ribbon-btn" style="background:linear-gradient(135deg,#f5c518,#e0b400);color:#3a2c00;border-color:transparent;" onclick="openUpgradeModal()">
+    <button class="ribbon-btn gold" onclick="openUpgradeModal()">
       <span class="icon">💎</span> Upgrade
     </button>
   </div>
-  <div style="display:flex;align-items:center;gap:14px;">
-    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#888;">
       <span class="online-dot"></span>
       <span id="sessionLabel">Connected</span>
     </div>
@@ -686,7 +642,7 @@ body {
 <div class="layout">
   <aside class="sidebar">
     <div class="sidebar-section">
-      <div class="sidebar-label">📁 Navigation</div>
+      <div class="sidebar-label">Navigation</div>
       <div class="nav-item active" id="nav-all" onclick="setFilter('all')">
         <span class="nav-icon">📋</span> All Documents
         <span class="nav-badge" id="badge-all">0</span>
@@ -698,6 +654,10 @@ body {
       <div class="nav-item" id="nav-recent" onclick="setFilter('recent')">
         <span class="nav-icon">🕐</span> Recent
       </div>
+      <div class="nav-item" id="nav-shared" onclick="setFilter('shared')">
+        <span class="nav-icon">🔗</span> Shared with Me
+        <span class="nav-badge" id="badge-shared">0</span>
+      </div>
       <div class="nav-item" id="nav-trash" onclick="setFilter('trash')">
         <span class="nav-icon">🗑️</span> Trash
         <span class="nav-badge" id="badge-trash">0</span>
@@ -705,7 +665,7 @@ body {
     </div>
     <div class="sidebar-divider"></div>
     <div class="sidebar-section">
-      <div class="sidebar-label">📂 Folders</div>
+      <div class="sidebar-label">Folders</div>
     </div>
     <div class="folder-section" id="folderTree"></div>
     <div class="plan-panel" id="planPanel"></div>
@@ -727,16 +687,15 @@ body {
 </div>
 
 <div class="status-bar">
-  <span class="online-dot"></span>
   <span id="statusText">Ready</span>
   <span id="docCount"></span>
-  <span style="margin-left:auto;opacity:0.8;" id="lastSyncLabel"></span>
+  <span style="margin-left:auto;opacity:0.6;" id="lastSyncLabel"></span>
 </div>
 
 <!-- MODALS -->
 <div class="modal-overlay" id="createDocModal">
   <div class="modal">
-    <div class="modal-header">📄 New Document</div>
+    <div class="modal-header">📄 New Document <button onclick="closeModal('createDocModal')">×</button></div>
     <div class="modal-body">
       <label>Document Name</label>
       <input type="text" id="docNameInput" placeholder="Untitled Document" onkeydown="if(event.key==='Enter')confirmCreateDoc()">
@@ -750,7 +709,7 @@ body {
 
 <div class="modal-overlay" id="createFolderModal">
   <div class="modal">
-    <div class="modal-header">📁 New Folder</div>
+    <div class="modal-header">📁 New Folder <button onclick="closeModal('createFolderModal')">×</button></div>
     <div class="modal-body">
       <label>Folder Name</label>
       <input type="text" id="folderNameInput" placeholder="My Folder" onkeydown="if(event.key==='Enter')confirmCreateFolder()">
@@ -764,7 +723,7 @@ body {
 
 <div class="modal-overlay" id="renameModal">
   <div class="modal">
-    <div class="modal-header">✏️ Rename Document</div>
+    <div class="modal-header">✏️ Rename Document <button onclick="closeModal('renameModal')">×</button></div>
     <div class="modal-body">
       <label>New Name</label>
       <input type="text" id="renameInput" placeholder="Document name" onkeydown="if(event.key==='Enter')confirmRename()">
@@ -778,10 +737,10 @@ body {
 </div>
 
 <div class="modal-overlay" id="activityModal">
-  <div class="modal" style="width:540px;">
-    <div class="modal-header">📊 Session History</div>
+  <div class="modal" style="width:520px;">
+    <div class="modal-header">📊 Session History <button onclick="closeModal('activityModal')">×</button></div>
     <div class="modal-body" style="padding:0;">
-      <div id="activityContent" style="padding:20px;max-height:380px;overflow-y:auto;font-family:'Segoe UI',sans-serif;font-size:12px;">Loading…</div>
+      <div id="activityContent" style="padding:20px;max-height:360px;overflow-y:auto;font-family:'Space Grotesk',sans-serif;font-size:12px;">Loading…</div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('activityModal')">Close</button>
@@ -789,9 +748,38 @@ body {
   </div>
 </div>
 
+<!-- SHARE MODAL -->
+<div class="modal-overlay" id="shareModal">
+  <div class="modal" style="width:420px;">
+    <div class="modal-header">🔗 Share Document <button onclick="closeModal('shareModal')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="shareDocId">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;" id="shareDocTitle"></div>
+      <label>Invite by email</label>
+      <div class="share-row">
+        <input type="text" id="shareEmailInput" placeholder="name@example.com" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmShare();}">
+        <select id="shareRoleSelect">
+          <option value="view">Can view</option>
+          <option value="edit">Can edit</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="confirmShare()">Share</button>
+      <div class="auth-msg" id="shareMsg"></div>
+      <div class="share-people-list">
+        <div class="share-people-label">People with access</div>
+        <div id="sharePeopleList"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('shareModal')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPGRADE / PAYMENT MODAL -->
 <div class="modal-overlay" id="upgradeModal">
-  <div class="modal" style="width:400px;">
-    <div class="modal-header">💎 Upgrade to Pro</div>
+  <div class="modal" style="width:380px;">
+    <div class="modal-header">💎 Upgrade to Pro <button onclick="closeModal('upgradeModal')">×</button></div>
     <div class="modal-body">
       <div class="up-reason" id="upgradeReason" style="display:none;"></div>
 
@@ -802,11 +790,11 @@ body {
       <div class="up-amount" id="upPrice">₹199 / month</div>
 
       <ul class="up-features">
-        <li>Unlimited folders & documents</li>
+        <li>Unlimited folders</li>
+        <li>Unlimited documents</li>
         <li>Advanced PDF & Word export</li>
         <li>20-step version history</li>
         <li>Priority cloud sync</li>
-        <li>Pro badge & early access</li>
       </ul>
 
       <div class="up-qr-wrap">
@@ -814,22 +802,24 @@ body {
       </div>
 
       <button class="up-pay-btn" id="upPayBtn" onclick="submitUpgradePayment()">I've paid via GPay / UPI</button>
-      <button class="up-check-btn" onclick="checkApprovalStatus()">✓ Check approval status</button>
+      <button class="up-check-btn" onclick="checkApprovalStatus()">✓ I've already paid — check status</button>
 
       <div class="up-status" id="upgradeStatus"></div>
-      <div class="up-note">Access unlocks after verification (usually within a few hours).</div>
+      <div class="up-note">Access unlocks after manual verification (usually within a few hours).</div>
     </div>
   </div>
 </div>
 
 </div><!-- /#appShell -->
 
-<!-- Firebase SDK -->
+<!-- Firebase (compat build — keeps the rest of this file's plain-script style) -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script>
-/* Firebase configuration (keep original) */
+/* ─────────────────────────────────────────────
+   FIREBASE INIT
+───────────────────────────────────────────── */
 const firebaseConfig = {
   apiKey: "AIzaSyBjM_4W6DsCfOOrcUW-BoTfttU0ZBAngUQ",
   authDomain: "pro-document-1723a.firebaseapp.com",
@@ -838,53 +828,50 @@ const firebaseConfig = {
   messagingSenderId: "358645984079",
   appId: "1:358645984079:web:6be4b45228f5f35fa0333a"
 };
-
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const googleProvider = new firebase.auth.GoogleAuthProvider();
+// Keep users signed in across visits/tabs (default is already 'local', set explicitly for clarity)
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
 
-/* App constants */
+/* Freemium limits — enforced client-side; the source of truth for isPro
+   is the users/{uid} document, which only an admin (Firebase console /
+   a trusted Cloud Function) can flip — see firestore.rules */
 const FREE_MAX_FOLDERS = 1;
 const FREE_MAX_DOCS = 3;
+
+/* UPI payment config */
 const UPI_VPA = 'banerjeearnab.live@oksbi';
 const UPI_PAYEE_NAME = 'Pro Document';
 const PRO_PLANS = {
   monthly: { price: 199,  label: '₹199 / month' },
   yearly:  { price: 1999, label: '₹1999 / year (2 months free)' }
 };
-
 let selectedUpgradeBilling = 'monthly';
-let loaderFinished = false;
-let currentUser = null;
-let authStateKnown = false;
-let lastAuthUser = null;
-let unsubProfile = null, unsubDocs = null, unsubFolders = null;
-let currentFilter = 'all';
-let currentFolder = null;
-let currentView = 'grid';
-let cachedIndex = { docs: {}, folders: {} };
 
 /* ─────────────────────────────────────────────
-   LOADER
-   ───────────────────────────────────────────── */
+   LOADING SCREEN
+───────────────────────────────────────────── */
+let loaderFinished = false;
+
 (function initLoader() {
   const pContainer = document.getElementById('particles');
-  for (let i = 0; i < 32; i++) {
+  for (let i = 0; i < 28; i++) {
     const p = document.createElement('div');
     p.className = 'particle';
     p.style.setProperty('--x', Math.random() * 100 + 'vw');
-    p.style.setProperty('--dur', (7 + Math.random() * 12) + 's');
+    p.style.setProperty('--dur', (6 + Math.random() * 10) + 's');
     p.style.setProperty('--delay', (Math.random() * 8) + 's');
     pContainer.appendChild(p);
   }
   const steps = [
-    { pct: 20,  label: 'Loading resources…',      sub: 'Initializing workspace' },
-    { pct: 40,  label: 'Connecting to Firebase…', sub: 'Establishing secure connection' },
-    { pct: 60,  label: 'Authenticating…',          sub: 'Verifying your session' },
-    { pct: 80,  label: 'Loading documents…',       sub: 'Synchronizing your library' },
-    { pct: 100, label: 'Ready!',                    sub: 'Launching your dashboard' }
+    { pct: 15,  label: 'Loading resources…',      sub: 'Preparing workspace environment' },
+    { pct: 35,  label: 'Connecting to Firebase…', sub: 'Establishing secure connection' },
+    { pct: 55,  label: 'Authenticating session…', sub: 'Verifying credentials' },
+    { pct: 75,  label: 'Loading your workspace…', sub: 'Fetching documents & folders' },
+    { pct: 92,  label: 'Almost ready…',           sub: 'Applying your preferences' },
+    { pct: 100, label: 'Welcome back!',            sub: 'Launching dashboard…' }
   ];
   const fill = document.getElementById('loaderFill');
   const pct  = document.getElementById('loaderPct');
@@ -896,10 +883,10 @@ let cachedIndex = { docs: {}, folders: {} };
     const s = steps[idx++];
     fill.style.width = s.pct + '%'; pct.textContent = s.pct + '%';
     lbl.textContent  = s.label;     sub.textContent  = s.sub;
-    if (idx < steps.length) setTimeout(nextStep, 400 + Math.random() * 280);
+    if (idx < steps.length) setTimeout(nextStep, 380 + Math.random() * 320);
     else setTimeout(finishLoading, 600);
   }
-  setTimeout(nextStep, 350);
+  setTimeout(nextStep, 300);
 })();
 
 function finishLoading() {
@@ -909,12 +896,20 @@ function finishLoading() {
     ls.style.display = 'none';
     loaderFinished = true;
     if (authStateKnown) handleAuthState(lastAuthUser);
-  }, 600);
+  }, 800);
 }
 
 /* ─────────────────────────────────────────────
-   AUTH STATE
-   ───────────────────────────────────────────── */
+   AUTH STATE (Firebase Authentication)
+   onAuthStateChanged is the single source of
+   truth for whether someone is signed in — no
+   more manual localStorage session juggling.
+───────────────────────────────────────────── */
+let currentUser = null;
+let authStateKnown = false;
+let lastAuthUser = null;
+let unsubProfile = null, unsubDocs = null, unsubFolders = null, unsubSharedDocs = null;
+
 auth.onAuthStateChanged(user => {
   authStateKnown = true;
   lastAuthUser = user;
@@ -933,26 +928,32 @@ async function handleAuthState(user) {
       isPro: false, plan: 'free', planExpiresAt: null
     };
     document.getElementById('authModal').classList.remove('open');
-    try { await ensureUserProfile(); } catch (e) { console.warn(e); }
+    try { await ensureUserProfile(); } catch (e) { console.warn('profile upsert failed', e); }
     launchDashboard();
     attachRealtimeListeners();
     logActivity('login');
   } else {
     detachRealtimeListeners();
     currentUser = null;
-    document.getElementById('appShell').classList.remove('visible');
-    document.getElementById('appShell').style.display = 'none';
+    const shell = document.getElementById('appShell');
+    shell.classList.remove('visible');
+    shell.style.display = 'none';
     document.getElementById('authMsg').className = 'auth-msg';
     document.getElementById('authModal').classList.add('open');
     setGoogleBtnBusy(false);
   }
 }
 
+/* Per-user localStorage cache key (used only for instant paint / offline
+   fallback — Firestore is always the source of truth) */
 function userKey(base) {
   const uid = currentUser ? currentUser.uid : 'guest';
   return 'pd.' + uid + '.' + base;
 }
 
+/* ─────────────────────────────────────────────
+   LAUNCH
+───────────────────────────────────────────── */
 function launchDashboard() {
   updateUserUI();
   const shell = document.getElementById('appShell');
@@ -981,21 +982,21 @@ function updateUserUI() {
   } else {
     avatarEl.textContent = initial;
   }
-  document.getElementById('userNameDisplay').textContent  = (currentUser.name || currentUser.email).split(' ')[0];
+  document.getElementById('userNameDisplay').textContent  = currentUser.name || currentUser.email;
   document.getElementById('ddName').textContent  = currentUser.name || '—';
   document.getElementById('ddEmail').textContent = currentUser.email || '—';
-  document.getElementById('sessionLabel').textContent = 'Connected';
+  document.getElementById('sessionLabel').textContent = 'Signed in as ' + (currentUser.name || currentUser.email).split(' ')[0];
 }
 
 /* ─────────────────────────────────────────────
-   AUTH / GOOGLE SIGN-IN
-   ───────────────────────────────────────────── */
+   GOOGLE SIGN-IN (Firebase Auth popup)
+───────────────────────────────────────────── */
 function setGoogleBtnBusy(busy) {
   const btn = document.getElementById('googleSignInBtn');
   if (!btn) return;
   btn.disabled = busy;
   btn.innerHTML = busy
-    ? '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(26,77,143,0.3);border-top-color:#1a4d8f;border-radius:50%;animation:spinA 0.7s linear infinite;vertical-align:middle;margin-right:6px;"></span> Signing in…'
+    ? '<span class="auth-spinner" style="border-color:rgba(43,87,154,0.3);border-top-color:#2b579a;"></span> Signing in…'
     : '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt=""> Sign in with Google';
 }
 
@@ -1004,10 +1005,13 @@ async function signInWithGoogle() {
   showAuthMsg('authMsg', 'info', 'Opening Google sign-in…');
   try {
     await auth.signInWithPopup(googleProvider);
+    // onAuthStateChanged -> handleAuthState() takes it from here
   } catch (e) {
     console.error(e);
     setGoogleBtnBusy(false);
-    if (e.code !== 'auth/popup-closed-by-user') {
+    if (e.code === 'auth/popup-closed-by-user') {
+      document.getElementById('authMsg').className = 'auth-msg';
+    } else {
       showAuthMsg('authMsg', 'error', 'Sign-in failed. Please try again.');
     }
   }
@@ -1018,6 +1022,18 @@ function showAuthMsg(id, type, text) {
   el.textContent = text; el.className = 'auth-msg ' + type;
 }
 
+/* ─────────────────────────────────────────────
+   FIRESTORE: USER PROFILE
+   users/{uid} holds email/name/picture plus the
+   admin-controlled isPro/plan/planExpiresAt
+   fields (see firestore.rules — clients cannot
+   write those three fields themselves).
+
+   We also maintain usersByEmail/{emailLower} ->
+   {uid, email, name} so that sharing a document
+   by typing someone's email can be resolved to
+   their uid client-side (no Admin SDK needed).
+───────────────────────────────────────────── */
 async function ensureUserProfile() {
   const ref = db.collection('users').doc(currentUser.uid);
   const snap = await ref.get();
@@ -1034,8 +1050,24 @@ async function ensureUserProfile() {
     patch.planExpiresAt = null;
   }
   await ref.set(patch, { merge: true });
+
+  if (currentUser.email) {
+    const emailKey = currentUser.email.trim().toLowerCase();
+    await db.collection('usersByEmail').doc(emailKey).set({
+      uid: currentUser.uid,
+      email: currentUser.email,
+      name: currentUser.name || null
+    }, { merge: true }).catch(e => console.warn('usersByEmail upsert failed', e));
+  }
 }
 
+/* ─────────────────────────────────────────────
+   REALTIME LISTENERS (docs / folders / profile / shared-with-me)
+   These replace the old poll-the-backend model —
+   the dashboard now updates live, including when
+   an admin approves a Pro payment or someone
+   shares a document with you.
+───────────────────────────────────────────── */
 function attachRealtimeListeners() {
   const uid = currentUser.uid;
   const userRef = db.collection('users').doc(uid);
@@ -1045,9 +1077,11 @@ function attachRealtimeListeners() {
     const data = snap.data();
     currentUser.isPro = !!data.isPro;
     currentUser.plan = data.plan || (data.isPro ? 'pro' : 'free');
-    currentUser.planExpiresAt = data.planExpiresAt ? (data.planExpiresAt.toDate ? data.planExpiresAt.toDate().toISOString() : data.planExpiresAt) : null;
+    currentUser.planExpiresAt = data.planExpiresAt
+      ? (data.planExpiresAt.toDate ? data.planExpiresAt.toDate().toISOString() : data.planExpiresAt)
+      : null;
     updatePlanPanel();
-  }, err => console.warn(err));
+  }, err => console.warn('profile listener error', err));
 
   unsubDocs = userRef.collection('docs').onSnapshot(snap => {
     snap.docChanges().forEach(change => {
@@ -1061,7 +1095,7 @@ function attachRealtimeListeners() {
     });
     cacheIndexLocally();
     render(); updatePlanPanel();
-  }, err => { console.warn(err); setStatus('Could not sync documents.'); });
+  }, err => { console.warn('docs listener error', err); setStatus('Could not sync documents.'); });
 
   unsubFolders = userRef.collection('folders').onSnapshot(snap => {
     snap.docChanges().forEach(change => {
@@ -1075,15 +1109,19 @@ function attachRealtimeListeners() {
     });
     cacheIndexLocally();
     renderFolders(); updatePlanPanel();
-  }, err => console.warn(err));
+  }, err => console.warn('folders listener error', err));
+
+  attachSharedDocsListener();
 }
 
 function detachRealtimeListeners() {
   if (unsubProfile) unsubProfile();
   if (unsubDocs) unsubDocs();
   if (unsubFolders) unsubFolders();
-  unsubProfile = unsubDocs = unsubFolders = null;
+  if (unsubSharedDocs) unsubSharedDocs();
+  unsubProfile = unsubDocs = unsubFolders = unsubSharedDocs = null;
   cachedIndex = { docs: {}, folders: {} };
+  sharedDocsCache = {};
 }
 
 function normalizeTimestamps(obj) {
@@ -1092,16 +1130,156 @@ function normalizeTimestamps(obj) {
   });
 }
 
+/* ─────────────────────────────────────────────
+   SHARING
+   Each doc can carry:
+     ownerUid, ownerEmail
+     sharedWith: { [uid]: { email, role, addedAt } }
+     sharedUids: [uid, uid, ...]   (mirror of sharedWith's keys, so we
+                                    can query with array-contains)
+   "Shared with Me" is powered by a collectionGroup('docs') query for
+   any doc — across every user's subcollection — whose sharedUids
+   contains our uid. This needs a Firestore *collection group* index
+   on sharedUids; if it's missing, Firestore's console error will
+   include a direct link to create it (one-click, one-time setup).
+───────────────────────────────────────────── */
+let sharedDocsCache = {};
+
+function attachSharedDocsListener() {
+  unsubSharedDocs = db.collectionGroup('docs')
+    .where('sharedUids', 'array-contains', currentUser.uid)
+    .onSnapshot(snap => {
+      const next = {};
+      snap.forEach(docSnap => {
+        const data = docSnap.data();
+        if (data.deleted) return;
+        const ownerUid = docSnap.ref.parent.parent.id;
+        const key = ownerUid + '_' + docSnap.id;
+        const d = { id: docSnap.id, ownerUid, ...data };
+        normalizeTimestamps(d);
+        next[key] = d;
+      });
+      sharedDocsCache = next;
+      updateSharedBadge();
+      if (currentFilter === 'shared') render();
+    }, err => console.warn('shared docs listener error (you may need to create a Firestore composite index — check the console for a link)', err));
+}
+
+function updateSharedBadge() {
+  const el = document.getElementById('badge-shared');
+  if (el) el.textContent = Object.keys(sharedDocsCache).length;
+}
+
+function openShareModal(docId) {
+  const doc = cachedIndex.docs[docId];
+  if (!doc) return;
+  document.getElementById('shareDocId').value = docId;
+  document.getElementById('shareDocTitle').textContent = 'Sharing "' + doc.title + '"';
+  document.getElementById('shareEmailInput').value = '';
+  document.getElementById('shareRoleSelect').value = 'view';
+  document.getElementById('shareMsg').className = 'auth-msg';
+  document.getElementById('shareMsg').textContent = '';
+  renderSharePeopleList(doc);
+  openModal('shareModal');
+  setTimeout(() => document.getElementById('shareEmailInput').focus(), 60);
+}
+
+function renderSharePeopleList(doc) {
+  const el = document.getElementById('sharePeopleList');
+  const shared = doc.sharedWith || {};
+  const uids = Object.keys(shared);
+  if (!uids.length) {
+    el.innerHTML = '<div class="share-empty">Not shared with anyone yet.</div>';
+    return;
+  }
+  el.innerHTML = uids.map(uid => {
+    const p = shared[uid];
+    return `
+      <div class="share-person">
+        <span class="share-person-email">${p.email}<span class="share-role-badge">${p.role === 'edit' ? 'Can edit' : 'Can view'}</span></span>
+        <button class="share-remove-btn" onclick="removeShare('${doc.id}','${uid}')">Remove</button>
+      </div>`;
+  }).join('');
+}
+
+async function confirmShare() {
+  const docId = document.getElementById('shareDocId').value;
+  const email = document.getElementById('shareEmailInput').value.trim().toLowerCase();
+  const role = document.getElementById('shareRoleSelect').value;
+  const msgEl = document.getElementById('shareMsg');
+  if (!email) return;
+  if (email === (currentUser.email || '').toLowerCase()) {
+    msgEl.className = 'auth-msg error';
+    msgEl.textContent = "You can't share a document with yourself.";
+    return;
+  }
+  msgEl.className = 'auth-msg info';
+  msgEl.textContent = 'Looking up user…';
+  try {
+    const lookup = await db.collection('usersByEmail').doc(email).get();
+    if (!lookup.exists) {
+      msgEl.className = 'auth-msg error';
+      msgEl.textContent = 'No Pro Document account found for that email — they need to sign in at least once first.';
+      return;
+    }
+    const targetUid = lookup.data().uid;
+    const docRef = db.collection('users').doc(currentUser.uid).collection('docs').doc(docId);
+    await docRef.update({
+      ownerUid: currentUser.uid,
+      ownerEmail: currentUser.email,
+      ['sharedWith.' + targetUid]: {
+        email: lookup.data().email || email,
+        role: role,
+        addedAt: firebase.firestore.FieldValue.serverTimestamp()
+      },
+      sharedUids: firebase.firestore.FieldValue.arrayUnion(targetUid)
+    });
+    msgEl.className = 'auth-msg success';
+    msgEl.textContent = 'Shared with ' + email + '.';
+    document.getElementById('shareEmailInput').value = '';
+    const fresh = await docRef.get();
+    renderSharePeopleList({ id: docId, ...fresh.data() });
+    setStatus('Document shared.');
+  } catch (e) {
+    console.warn(e);
+    msgEl.className = 'auth-msg error';
+    msgEl.textContent = 'Could not share — try again.';
+  }
+}
+
+async function removeShare(docId, uid) {
+  try {
+    const docRef = db.collection('users').doc(currentUser.uid).collection('docs').doc(docId);
+    await docRef.update({
+      ['sharedWith.' + uid]: firebase.firestore.FieldValue.delete(),
+      sharedUids: firebase.firestore.FieldValue.arrayRemove(uid)
+    });
+    const fresh = await docRef.get();
+    renderSharePeopleList({ id: docId, ...fresh.data() });
+    setStatus('Access removed.');
+  } catch (e) {
+    console.warn(e);
+    setStatus('Could not remove access — try again.');
+  }
+}
+
+/* ─────────────────────────────────────────────
+   LOGOUT
+───────────────────────────────────────────── */
 function doLogout() {
   closeUserDropdown();
   logActivity('logout');
   auth.signOut();
 }
 
+/* ─────────────────────────────────────────────
+   ACTIVITY LOGGING (users/{uid}/sessions)
+───────────────────────────────────────────── */
 function logActivity(action) {
   if (!currentUser) return;
   db.collection('users').doc(currentUser.uid).collection('sessions').add({
-    event: action, sessionId: currentUser.sessionId,
+    event: action,
+    sessionId: currentUser.sessionId,
     ts: firebase.firestore.FieldValue.serverTimestamp(),
     ua: navigator.userAgent.slice(0, 120),
     docCount: Object.values(cachedIndex.docs || {}).filter(d => !d.deleted).length
@@ -1112,38 +1290,45 @@ async function openActivityModal() {
   closeUserDropdown();
   openModal('activityModal');
   const el = document.getElementById('activityContent');
-  el.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:20px;">Loading…</div>';
-  const icons = { login:'🔐', logout:'🚪', heartbeat:'💓', create_doc:'📄', open_doc:'📂' };
+  el.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Loading session history…</div>';
+  const icons = { login:'🔐', logout:'🚪', heartbeat:'💓', page_load:'🖥️', create_doc:'📄', open_doc:'📂' };
   try {
-    const snap = await db.collection('users').doc(currentUser.uid).collection('sessions').orderBy('ts', 'desc').limit(25).get();
+    const snap = await db.collection('users').doc(currentUser.uid)
+      .collection('sessions').orderBy('ts', 'desc').limit(25).get();
     if (snap.empty) {
-      el.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:20px;">No session history.</div>';
+      el.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">No session history yet.</div>';
       return;
     }
     el.innerHTML = snap.docs.map(doc => {
       const s = doc.data();
       const when = s.ts && s.ts.toDate ? s.ts.toDate() : new Date();
-      return `<div style="padding:12px 0;border-bottom:1px solid var(--border);display:flex;gap:12px;">
-        <span style="font-size:18px;flex-shrink:0;">${icons[s.event]||'📌'}</span>
+      return `
+      <div style="padding:10px 0;border-bottom:1px solid #f0f0f0;display:flex;gap:12px;">
+        <span style="font-size:18px;">${icons[s.event]||'📌'}</span>
         <div>
-          <div style="font-weight:600;color:var(--text-primary);">${(s.event||'').replace(/_/g,' ')}</div>
-          <div style="color:var(--text-tertiary);font-size:11px;">${when.toLocaleString()}</div>
-          ${s.docCount ? `<div style="color:var(--accent);font-size:11px;margin-top:2px;">📊 ${s.docCount} docs</div>` : ''}
+          <div style="font-weight:600;color:#333;">${(s.event||'').replace(/_/g,' ')}</div>
+          <div style="color:#999;font-size:11px;">${when.toLocaleString()} · …${(s.sessionId||'').slice(-6)}</div>
+          ${s.docCount ? `<div style="color:#2b579a;font-size:11px;">${s.docCount} docs</div>` : ''}
         </div>
       </div>`;
     }).join('');
   } catch (e) {
     console.warn(e);
-    el.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:20px;">Could not load history.</div>';
+    el.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Could not load session history.</div>';
   }
 }
 
 function openProfileModal() {
   closeUserDropdown();
-  const planLine = currentUser?.isPro ? `Pro (expires ${currentUser?.planExpiresAt ? new Date(currentUser.planExpiresAt).toLocaleDateString() : '—'})` : 'Free';
-  alert(`Profile Details\n\nName: ${currentUser?.name||'—'}\nEmail: ${currentUser?.email||'—'}\nPlan: ${planLine}\nSession ID: ${(currentUser?.sessionId||'').slice(-8)}\nLogged in: ${currentUser?.loginTime ? new Date(currentUser.loginTime).toLocaleString() : '—'}`);
+  const planLine = currentUser?.isPro
+    ? `Pro (expires ${currentUser?.planExpiresAt ? new Date(currentUser.planExpiresAt).toLocaleDateString() : '—'})`
+    : 'Free';
+  alert(`👤 My Profile\n\nName: ${currentUser?.name||'—'}\nEmail: ${currentUser?.email||'—'}\nPlan: ${planLine}\nSession: …${(currentUser?.sessionId||'').slice(-8)}\nLogged in: ${currentUser?.loginTime ? new Date(currentUser.loginTime).toLocaleString() : '—'}`);
 }
 
+/* ─────────────────────────────────────────────
+   USER DROPDOWN
+───────────────────────────────────────────── */
 function toggleUserDropdown() { document.getElementById('userDropdown').classList.toggle('open'); }
 function closeUserDropdown()  { document.getElementById('userDropdown').classList.remove('open'); }
 document.addEventListener('click', e => {
@@ -1151,9 +1336,19 @@ document.addEventListener('click', e => {
 });
 
 /* ─────────────────────────────────────────────
-   CACHE & DATA
-   ───────────────────────────────────────────── */
+   DASHBOARD DATA
+   cachedIndex is a live *read* mirror of Firestore,
+   kept in sync by the onSnapshot listeners above.
+   All writes go straight to Firestore; the
+   listeners then update cachedIndex + re-render.
+───────────────────────────────────────────── */
+let currentFilter = 'all';
+let currentFolder = null;
+let currentView   = 'grid';
+let cachedIndex = { docs: {}, folders: {} };
+
 function readIndex() { return cachedIndex; }
+
 function cacheIndexLocally() {
   try { localStorage.setItem(userKey('index_cache'), JSON.stringify(cachedIndex)); } catch (e) {}
 }
@@ -1162,6 +1357,11 @@ function loadCachedIndexFromLocal() {
   catch (e) { cachedIndex = { docs: {}, folders: {} }; }
 }
 
+function now() { return new Date().toISOString(); }
+
+/* ─────────────────────────────────────────────
+   FREEMIUM PLAN / LIMITS
+───────────────────────────────────────────── */
 function getActiveDocCount() {
   return Object.values(readIndex().docs).filter(d => !d.deleted).length;
 }
@@ -1182,10 +1382,12 @@ function updatePlanPanel() {
   if (isProUser()) {
     tag.textContent = 'PRO'; tag.classList.add('pro');
     if (ddItem) ddItem.style.display = 'none';
-    const exp = currentUser.planExpiresAt ? new Date(currentUser.planExpiresAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : null;
+    const exp = currentUser.planExpiresAt
+      ? new Date(currentUser.planExpiresAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+      : null;
     panel.innerHTML = `
       <div class="plan-panel-title">Plan <span class="plan-pill pro">PRO</span></div>
-      <div class="usage-row"><span>📊 Unlimited documents & folders</span></div>
+      <div class="usage-row"><span>Unlimited documents & folders</span></div>
       ${exp ? `<div class="plan-expiry">Active until ${exp}</div>` : ''}`;
   } else {
     tag.textContent = 'FREE'; tag.classList.remove('pro');
@@ -1193,21 +1395,21 @@ function updatePlanPanel() {
     const docPct    = Math.min(100, (docCount / FREE_MAX_DOCS) * 100);
     const folderPct = Math.min(100, (folderCount / FREE_MAX_FOLDERS) * 100);
     panel.innerHTML = `
-      <div class="plan-panel-title">Plan</div>
-      <div class="usage-row"><span>📄 Documents</span><span>${docCount}/${FREE_MAX_DOCS}</span></div>
+      <div class="plan-panel-title">Plan <span class="plan-pill free">FREE</span></div>
+      <div class="usage-row"><span>Documents</span><span>${docCount}/${FREE_MAX_DOCS}</span></div>
       <div class="usage-bar"><div class="usage-fill ${docCount>=FREE_MAX_DOCS?'full':''}" style="width:${docPct}%"></div></div>
-      <div class="usage-row"><span>📁 Folders</span><span>${folderCount}/${FREE_MAX_FOLDERS}</span></div>
+      <div class="usage-row"><span>Folders</span><span>${folderCount}/${FREE_MAX_FOLDERS}</span></div>
       <div class="usage-bar"><div class="usage-fill ${folderCount>=FREE_MAX_FOLDERS?'full':''}" style="width:${folderPct}%"></div></div>
-      <button class="plan-upgrade-btn" onclick="openUpgradeModal()">✨ Upgrade Now</button>`;
+      <button class="plan-upgrade-btn" onclick="openUpgradeModal()">✨ Upgrade to Pro</button>`;
   }
 }
 
 /* ─────────────────────────────────────────────
    MODALS
-   ───────────────────────────────────────────── */
+───────────────────────────────────────────── */
 function openModal(id) {
   document.getElementById(id).classList.add('open');
-  setTimeout(() => { const inp = document.querySelector('#'+id+' input[type="text"]'); if(inp){inp.value='';inp.focus();} }, 50);
+  setTimeout(() => { const inp = document.querySelector('#'+id+' input[type="text"]'); if(inp && id!=='shareModal'){inp.value='';inp.focus();} }, 50);
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(m => {
@@ -1216,24 +1418,29 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 
 function openCreateDocModal() {
   if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
-    openUpgradeModal(`Upgrade to create more than ${FREE_MAX_DOCS} documents`);
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents.`);
     return;
   }
   openModal('createDocModal');
 }
 function openCreateFolderModal(parent = null) {
   if (!isProUser() && getActiveFolderCount() >= FREE_MAX_FOLDERS) {
-    openUpgradeModal(`Upgrade to create more than ${FREE_MAX_FOLDERS} folder`);
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_FOLDERS} folder.`);
     return;
   }
   window._pendingFolderParent = parent;
   openModal('createFolderModal');
 }
 
+/* ─────────────────────────────────────────────
+   DOC / FOLDER CRUD — straight to Firestore.
+   No manual cache mutation needed: the onSnapshot
+   listeners above pick up every write and re-render.
+───────────────────────────────────────────── */
 async function confirmCreateDoc() {
   if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
     closeModal('createDocModal');
-    openUpgradeModal(`Upgrade to create more than ${FREE_MAX_DOCS} documents`);
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents.`);
     return;
   }
   const title = document.getElementById('docNameInput').value.trim() || 'Untitled Document';
@@ -1246,17 +1453,17 @@ async function confirmCreateDoc() {
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     logActivity('create_doc');
-    setStatus('✓ Document created');
+    setStatus('Document "' + title + '" created.');
   } catch (e) {
     console.warn(e);
-    setStatus('✗ Could not create document');
+    setStatus('Could not create document — try again.');
   }
 }
 
 async function confirmCreateFolder() {
   if (!isProUser() && getActiveFolderCount() >= FREE_MAX_FOLDERS) {
     closeModal('createFolderModal');
-    openUpgradeModal(`Upgrade to create more than ${FREE_MAX_FOLDERS} folder`);
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_FOLDERS} folder.`);
     return;
   }
   const name = document.getElementById('folderNameInput').value.trim();
@@ -1267,10 +1474,10 @@ async function confirmCreateFolder() {
       name, parent: window._pendingFolderParent || currentFolder || null, deleted: false,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    setStatus('✓ Folder created');
+    setStatus('Folder "' + name + '" created.');
   } catch (e) {
     console.warn(e);
-    setStatus('✗ Could not create folder');
+    setStatus('Could not create folder — try again.');
   }
 }
 
@@ -1290,25 +1497,42 @@ async function confirmRename() {
     await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
       title: newName, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    setStatus('✓ Document renamed');
+    setStatus('Document renamed.');
   } catch (e) {
     console.warn(e);
-    setStatus('✗ Rename failed');
+    setStatus('Rename failed — try again.');
   }
 }
 
-function openDoc(id) {
-  const idx = readIndex();
-  if (!idx.docs[id] || idx.docs[id].deleted) return;
-  db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  }).catch(() => {});
+/* ─────────────────────────────────────────────
+   OPEN DOCUMENT
+   ownerUid is only passed when opening a document
+   shared with us (i.e. we are not the owner) — the
+   editor page needs to be updated to read the
+   `owner` query param and load/save against
+   users/{owner}/docs/{id} instead of the signed-in
+   user's own subcollection in that case.
+───────────────────────────────────────────── */
+function openDoc(id, ownerUid) {
+  const owner = ownerUid || currentUser.uid;
+  if (owner === currentUser.uid) {
+    const idx = readIndex();
+    if (!idx.docs[id] || idx.docs[id].deleted) return;
+    db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(() => {});
+  }
   logActivity('open_doc');
+
   sessionStorage.setItem('pd_active_uid', currentUser.uid);
   sessionStorage.setItem('pd_active_user', currentUser.email);
-  window.location.href = 'document-editor.html?id=' + encodeURIComponent(id);
+  const ownerParam = owner !== currentUser.uid ? '&owner=' + encodeURIComponent(owner) : '';
+  window.location.href = 'document-editor.html?id=' + encodeURIComponent(id) + ownerParam;
 }
 
+/* ─────────────────────────────────────────────
+   FOLDERS / FILTER / VIEW
+───────────────────────────────────────────── */
 function renderFolders() {
   const idx = readIndex(), container = document.getElementById('folderTree');
   container.innerHTML = '';
@@ -1340,13 +1564,16 @@ function setView(v) {
   render();
 }
 
+/* ─────────────────────────────────────────────
+   DOC ACTIONS
+───────────────────────────────────────────── */
 async function toggleStar(id) {
   const cur = !!cachedIndex.docs[id]?.starred;
   try {
     await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({ starred: !cur });
   } catch (e) {
     console.warn(e);
-    setStatus('Could not update');
+    setStatus('Could not update star — try again.');
   }
 }
 async function trashDoc(id) {
@@ -1354,42 +1581,42 @@ async function trashDoc(id) {
     await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
       deleted: true, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    setStatus('✓ Moved to Trash');
+    setStatus('Document moved to Trash.');
   } catch (e) {
     console.warn(e);
-    setStatus('✗ Could not delete');
+    setStatus('Could not delete — try again.');
   }
 }
 
 async function restoreDoc(id) {
   if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
-    openUpgradeModal(`Upgrade to restore documents (limit: ${FREE_MAX_DOCS})`);
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents. Upgrade to restore this one.`);
     return;
   }
   try {
     await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
       deleted: false, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    setStatus('✓ Document restored');
+    setStatus('Document restored.');
   } catch (e) {
     console.warn(e);
-    setStatus('✗ Could not restore');
+    setStatus('Could not restore — try again.');
   }
 }
 
 async function deletePermanent(id) {
-  if (!confirm('Permanently delete? This cannot be undone.')) return;
+  if (!confirm('Permanently delete this document? This cannot be undone.')) return;
   try {
     await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).delete();
-    setStatus('✓ Permanently deleted');
+    setStatus('Document permanently deleted.');
   } catch (e) {
     console.warn(e);
-    setStatus('✗ Could not delete');
+    setStatus('Could not delete — try again.');
   }
 }
 
 async function emptyTrash() {
-  if (!confirm('Empty entire Trash? This cannot be undone.')) return;
+  if (!confirm('Empty entire Trash? All deleted documents will be permanently removed.')) return;
   const toDelete = Object.values(cachedIndex.docs).filter(d => d.deleted);
   if (!toDelete.length) return;
   try {
@@ -1397,16 +1624,16 @@ async function emptyTrash() {
     const docsRef = db.collection('users').doc(currentUser.uid).collection('docs');
     toDelete.forEach(d => batch.delete(docsRef.doc(d.id)));
     await batch.commit();
-    setStatus('✓ Trash emptied');
+    setStatus('Trash emptied.');
   } catch (e) {
     console.warn(e);
-    setStatus('✗ Could not empty trash');
+    setStatus('Could not empty trash — try again.');
   }
 }
 async function moveDoc(id) {
   const folders = Object.values(cachedIndex.folders).filter(f => !f.deleted);
-  if (!folders.length) return alert('Create a folder first');
-  const choice = prompt(`Move to:\n${folders.map((f,i)=>`${i+1}. ${f.name}`).join('\n')}\n\nEnter number (0=root):`);
+  if (!folders.length) return alert('No folders exist. Create a folder first.');
+  const choice = prompt(`Move to folder:\n${folders.map((f,i)=>`${i+1}. ${f.name}`).join('\n')}\n\nEnter number, or 0 for root:`);
   if (choice === null) return;
   const num = parseInt(choice);
   let targetFolder = null;
@@ -1417,23 +1644,33 @@ async function moveDoc(id) {
     await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
       folder: targetFolder, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    setStatus('✓ Document moved');
   } catch (e) {
     console.warn(e);
-    setStatus('✗ Could not move');
+    setStatus('Could not move — try again.');
   }
 }
 
+/* ─────────────────────────────────────────────
+   UPGRADE / PAYMENT FLOW
+   Payment submissions land in a top-level
+   `payments` collection for manual/admin review.
+   Approval is done in the Firebase console (or an
+   admin tool) by setting isPro/plan/planExpiresAt
+   on users/{uid} — clients cannot set those
+   fields themselves (see firestore.rules).
+───────────────────────────────────────────── */
 function openUpgradeModal(reason) {
   closeUserDropdown();
   const reasonEl = document.getElementById('upgradeReason');
   if (reason) { reasonEl.textContent = '🔒 ' + reason; reasonEl.style.display = 'block'; }
   else        { reasonEl.style.display = 'none'; }
+
   document.getElementById('upgradeStatus').className = 'up-status';
   document.getElementById('upgradeStatus').textContent = '';
   const payBtn = document.getElementById('upPayBtn');
   payBtn.disabled = false;
   payBtn.textContent = "I've paid via GPay / UPI";
+
   selectUpgradePlan('monthly');
   openModal('upgradeModal');
 }
@@ -1443,6 +1680,7 @@ function selectUpgradePlan(type) {
   document.getElementById('upMonthlyBtn').classList.toggle('active', type==='monthly');
   document.getElementById('upYearlyBtn').classList.toggle('active', type==='yearly');
   document.getElementById('upPrice').textContent = PRO_PLANS[type].label;
+
   const upi = `upi://pay?pa=${encodeURIComponent(UPI_VPA)}&pn=${encodeURIComponent(UPI_PAYEE_NAME)}&am=${PRO_PLANS[type].price}&cu=INR`;
   document.getElementById('upUpiLink').href = upi;
   document.getElementById('upQrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upi)}`;
@@ -1452,76 +1690,108 @@ async function submitUpgradePayment() {
   if (!currentUser) return;
   const statusEl = document.getElementById('upgradeStatus');
   const btn = document.getElementById('upPayBtn');
+
   btn.disabled = true; btn.textContent = 'Submitting…';
   statusEl.className = 'up-status show info';
-  statusEl.textContent = 'Submitting your payment…';
+  statusEl.textContent = 'Submitting your payment for review…';
+
   try {
     await db.collection('payments').add({
-      uid: currentUser.uid, email: currentUser.email, name: currentUser.name || '',
-      plan: 'pro', billing: selectedUpgradeBilling, amount: PRO_PLANS[selectedUpgradeBilling].price,
-      method: 'gpay', status: 'pending',
+      uid: currentUser.uid,
+      email: currentUser.email,
+      name: currentUser.name || '',
+      plan: 'pro',
+      billing: selectedUpgradeBilling,
+      amount: PRO_PLANS[selectedUpgradeBilling].price,
+      method: 'gpay',
+      status: 'pending',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     btn.textContent = 'Payment submitted';
     statusEl.className = 'up-status show success';
-    statusEl.textContent = "✔️ Submitted! You'll get Pro access after approval.";
+    statusEl.textContent = "✔️ Submitted! You'll get Pro access once an admin approves your payment.";
   } catch (e) {
     console.warn(e);
     btn.disabled = false; btn.textContent = "I've paid via GPay / UPI";
     statusEl.className = 'up-status show error';
-    statusEl.textContent = 'Connection failed. Check your internet and try again.';
+    statusEl.textContent = 'Could not reach the server. Please check your connection and try again.';
   }
 }
 
 function checkApprovalStatus() {
   const statusEl = document.getElementById('upgradeStatus');
   statusEl.className = 'up-status show info';
-  statusEl.textContent = 'Checking status…';
+  statusEl.textContent = 'Checking approval status…';
+  // isPro is kept live by the users/{uid} onSnapshot listener, so this
+  // just reads the latest known value instead of polling a server.
   setTimeout(() => {
     if (isProUser()) {
       statusEl.className = 'up-status show success';
-      statusEl.textContent = "🎉 You're now Pro! Closing…";
+      statusEl.textContent = "🎉 You're now on Pro! Closing…";
       setTimeout(() => { closeModal('upgradeModal'); render(); }, 1200);
     } else {
       statusEl.className = 'up-status show info';
-      statusEl.textContent = 'Still pending admin approval. Check back later.';
+      statusEl.textContent = 'Still pending admin approval. Please check back later.';
     }
   }, 400);
 }
 
+/* ─────────────────────────────────────────────
+   STATUS / DATE
+───────────────────────────────────────────── */
 function setStatus(msg) {
   document.getElementById('statusText').textContent=msg;
-  setTimeout(()=>document.getElementById('statusText').textContent='Ready', 3200);
+  setTimeout(()=>document.getElementById('statusText').textContent='Ready', 3000);
 }
 function formatDate(iso) {
   const d=new Date(iso), n=new Date(), diff=n-d;
   if (diff<60000)    return 'Just now';
   if (diff<3600000)  return Math.floor(diff/60000)+'m ago';
   if (diff<86400000) return Math.floor(diff/3600000)+'h ago';
-  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 }
 
+/* ─────────────────────────────────────────────
+   RENDER
+───────────────────────────────────────────── */
 function render() {
   const idx=readIndex(), container=document.getElementById('docContainer');
   const searchQuery=document.getElementById('searchInput').value.toLowerCase();
-  let docs=Object.values(idx.docs);
-  if      (currentFilter==='all')     docs=docs.filter(d=>!d.deleted);
-  else if (currentFilter==='starred') docs=docs.filter(d=>d.starred&&!d.deleted);
-  else if (currentFilter==='recent')  docs=docs.filter(d=>!d.deleted).sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt)).slice(0,20);
-  else if (currentFilter==='trash')   docs=docs.filter(d=>d.deleted);
-  else if (currentFilter==='folder')  docs=docs.filter(d=>d.folder===currentFolder&&!d.deleted);
+  const isSharedView = currentFilter === 'shared';
+  let docs;
+
+  if (isSharedView) {
+    docs = Object.values(sharedDocsCache);
+  } else {
+    docs=Object.values(idx.docs);
+    if      (currentFilter==='all')     docs=docs.filter(d=>!d.deleted);
+    else if (currentFilter==='starred') docs=docs.filter(d=>d.starred&&!d.deleted);
+    else if (currentFilter==='recent')  docs=docs.filter(d=>!d.deleted).sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt)).slice(0,20);
+    else if (currentFilter==='trash')   docs=docs.filter(d=>d.deleted);
+    else if (currentFilter==='folder')  docs=docs.filter(d=>d.folder===currentFolder&&!d.deleted);
+  }
   if (searchQuery) docs=docs.filter(d=>(d.title||'').toLowerCase().includes(searchQuery));
 
-  document.getElementById('sectionTitle').textContent={all:'All Documents',starred:'Starred',recent:'Recent',trash:'Trash',folder:'📁 Folder'}[currentFilter]||'Documents';
+  document.getElementById('sectionTitle').textContent={all:'All Documents',starred:'Starred',recent:'Recent',trash:'Trash',folder:'📁 Folder',shared:'🔗 Shared with Me'}[currentFilter]||'Documents';
   document.getElementById('trashHeader').style.display=currentFilter==='trash'?'flex':'none';
   const all=Object.values(idx.docs);
   document.getElementById('badge-all').textContent     = all.filter(d=>!d.deleted).length;
   document.getElementById('badge-starred').textContent = all.filter(d=>d.starred&&!d.deleted).length;
   document.getElementById('badge-trash').textContent   = all.filter(d=>d.deleted).length;
   document.getElementById('docCount').textContent      = docs.length+' item'+(docs.length!==1?'s':'');
+  updateSharedBadge();
 
   if (!docs.length) {
-    container.innerHTML=`<div class="empty-state"><div class="empty-icon">📄</div><div class="empty-title">${searchQuery?'No results':'Nothing here'}</div><div class="empty-sub">${searchQuery?'Try another search':currentFilter==='trash'?'Trash is empty':'Create a document to start'}</div></div>`;
+    const sub = searchQuery ? 'Try a different search term.'
+      : currentFilter==='trash' ? 'Trash is empty.'
+      : currentFilter==='shared' ? 'No one has shared a document with you yet.'
+      : 'Create a new document to get started.';
+    container.innerHTML=`
+      <div class="empty-state">
+        <div class="empty-icon">${currentFilter==='shared' ? '🔗' : '📄'}</div>
+        <div class="empty-title">${searchQuery?'No results found':'Nothing here'}</div>
+        <div class="empty-sub">${sub}</div>
+      </div>`;
     renderFolders(); updatePlanPanel(); return;
   }
 
@@ -1529,15 +1799,26 @@ function render() {
     container.innerHTML=''; container.className='doc-grid';
     docs.forEach(d=>{
       const el=document.createElement('div'); el.className='doc-card';
+      const myRole = isSharedView ? ((d.sharedWith && d.sharedWith[currentUser.uid] && d.sharedWith[currentUser.uid].role) || 'view') : null;
       el.innerHTML=`
-        <button class="star-btn ${d.starred?'on':''}" onclick="event.stopPropagation();toggleStar('${d.id}')" title="${d.starred?'Unstar':'Star'}">★</button>
-        <div class="doc-card-preview" onclick="openDoc('${d.id}')"><div class="doc-lines"><div class="doc-line"></div><div class="doc-line"></div><div class="doc-line"></div></div></div>
-        <div class="doc-card-body" onclick="openDoc('${d.id}')"><div class="doc-card-title" title="${d.title}">${d.title}</div><div class="doc-card-meta"><span>Modified</span><span>${formatDate(d.updatedAt)}</span></div></div>
+        ${isSharedView ? '' : `<button class="star-btn ${d.starred?'on':''}" onclick="event.stopPropagation();toggleStar('${d.id}')" title="${d.starred?'Unstar':'Star'}">★</button>`}
+        <div class="doc-card-preview" onclick="openDoc('${d.id}'${isSharedView?`,'${d.ownerUid}'`:''})">
+          <div class="doc-lines"><div class="doc-line"></div><div class="doc-line"></div><div class="doc-line"></div></div>
+        </div>
+        <div class="doc-card-body" onclick="openDoc('${d.id}'${isSharedView?`,'${d.ownerUid}'`:''})">
+          <div class="doc-card-title" title="${d.title}">${d.title}${isSharedView?`<span class="shared-badge">${myRole==='edit'?'Can edit':'Can view'}</span>`:''}</div>
+          <div class="doc-card-meta">${isSharedView ? 'Shared by ' + (d.ownerEmail||'—') : 'Modified '+formatDate(d.updatedAt)}</div>
+        </div>
         <div class="doc-card-actions">
-          <button class="doc-action-btn" onclick="openDoc('${d.id}')">Open</button>
-          <button class="doc-action-btn" onclick="openRenameModal('${d.id}')">✏️</button>
-          <button class="doc-action-btn" onclick="moveDoc('${d.id}')">➜</button>
-          ${currentFilter==='trash'?`<button class="doc-action-btn" onclick="restoreDoc('${d.id}')">↩️</button><button class="doc-action-btn danger" onclick="deletePermanent('${d.id}')">✕</button>`:`<button class="doc-action-btn danger" onclick="trashDoc('${d.id}')">🗑️</button>`}
+          <button class="doc-action-btn" onclick="openDoc('${d.id}'${isSharedView?`,'${d.ownerUid}'`:''})">Open</button>
+          ${isSharedView ? '' : `
+          <button class="doc-action-btn" onclick="openRenameModal('${d.id}')">Rename</button>
+          <button class="doc-action-btn" onclick="moveDoc('${d.id}')">Move</button>
+          <button class="doc-action-btn" onclick="openShareModal('${d.id}')">Share</button>
+          ${currentFilter==='trash'
+            ?`<button class="doc-action-btn" onclick="restoreDoc('${d.id}')">Restore</button>
+              <button class="doc-action-btn danger" onclick="deletePermanent('${d.id}')">Delete</button>`
+            :`<button class="doc-action-btn danger" onclick="trashDoc('${d.id}')">Trash</button>`}`}
         </div>`;
       container.appendChild(el);
     });
@@ -1545,15 +1826,24 @@ function render() {
     container.innerHTML=''; container.className='doc-list';
     docs.forEach(d=>{
       const el=document.createElement('div'); el.className='doc-list-item';
+      const myRole = isSharedView ? ((d.sharedWith && d.sharedWith[currentUser.uid] && d.sharedWith[currentUser.uid].role) || 'view') : null;
       el.innerHTML=`
         <div class="doc-list-icon">📄</div>
-        <div class="doc-list-info" onclick="openDoc('${d.id}')"><div class="doc-list-title">${d.title}</div><div class="doc-list-meta">Modified ${formatDate(d.updatedAt)} • Created ${formatDate(d.createdAt)}</div></div>
+        <div class="doc-list-info" onclick="openDoc('${d.id}'${isSharedView?`,'${d.ownerUid}'`:''})">
+          <div class="doc-list-title">${d.title}${isSharedView?`<span class="shared-badge">${myRole==='edit'?'Can edit':'Can view'}</span>`:''}</div>
+          <div class="doc-list-meta">${isSharedView ? 'Shared by ' + (d.ownerEmail||'—') : 'Modified '+formatDate(d.updatedAt)+' · Created '+formatDate(d.createdAt)}</div>
+        </div>
         <div class="doc-list-actions">
-          <button class="doc-action-btn" onclick="event.stopPropagation();toggleStar('${d.id}')" title="Star">${d.starred?'⭐':'☆'}</button>
-          <button class="doc-action-btn" onclick="event.stopPropagation();openDoc('${d.id}')">Open</button>
-          <button class="doc-action-btn" onclick="event.stopPropagation();openRenameModal('${d.id}')">✏️</button>
-          <button class="doc-action-btn" onclick="event.stopPropagation();moveDoc('${d.id}')">➜</button>
-          ${currentFilter==='trash'?`<button class="doc-action-btn" onclick="event.stopPropagation();restoreDoc('${d.id}')">↩️</button><button class="doc-action-btn danger" onclick="event.stopPropagation();deletePermanent('${d.id}')">✕</button>`:`<button class="doc-action-btn danger" onclick="event.stopPropagation();trashDoc('${d.id}')">🗑️</button>`}
+          ${isSharedView ? '' : `<button class="doc-action-btn" onclick="event.stopPropagation();toggleStar('${d.id}')">${d.starred?'⭐':'☆'}</button>`}
+          <button class="doc-action-btn" onclick="event.stopPropagation();openDoc('${d.id}'${isSharedView?`,'${d.ownerUid}'`:''})">Open</button>
+          ${isSharedView ? '' : `
+          <button class="doc-action-btn" onclick="event.stopPropagation();openRenameModal('${d.id}')">Rename</button>
+          <button class="doc-action-btn" onclick="event.stopPropagation();moveDoc('${d.id}')">Move</button>
+          <button class="doc-action-btn" onclick="event.stopPropagation();openShareModal('${d.id}')">Share</button>
+          ${currentFilter==='trash'
+            ?`<button class="doc-action-btn" onclick="event.stopPropagation();restoreDoc('${d.id}')">Restore</button>
+              <button class="doc-action-btn danger" onclick="event.stopPropagation();deletePermanent('${d.id}')">Delete</button>`
+            :`<button class="doc-action-btn danger" onclick="event.stopPropagation();trashDoc('${d.id}')">Trash</button>`}`}
         </div>`;
       container.appendChild(el);
     });
@@ -1562,5 +1852,82 @@ function render() {
   updatePlanPanel();
 }
 </script>
+<script>
+
+if ("serviceWorker" in navigator) {
+
+window.addEventListener("load",()=>{
+
+navigator.serviceWorker.register("sw.js")
+.then(()=>{
+console.log("PWA Ready");
+});
+
+});
+
+}
+
+
+let deferredPrompt;
+
+const installBtn = document.getElementById("installBtn");
+
+
+window.addEventListener("beforeinstallprompt",(e)=>{
+
+e.preventDefault();
+
+deferredPrompt=e;
+
+installBtn.style.display="flex";
+
+
+});
+
+
+installBtn.addEventListener("click",async()=>{
+
+if(!deferredPrompt) return;
+
+
+deferredPrompt.prompt();
+
+
+const result = await deferredPrompt.userChoice;
+
+
+console.log(result.outcome);
+
+
+deferredPrompt=null;
+
+
+installBtn.style.display="none";
+
+
+});
+
+
+</script>
+<script>
+(function removeHTML(){
+
+  const path = window.location.pathname;
+
+  if (path.endsWith(".html")) {
+
+    const cleanPath = path.substring(0, path.length - 5);
+
+    window.history.replaceState(
+      null,
+      document.title,
+      cleanPath
+    );
+
+  }
+
+})();
+</script>
 </body>
+
 </html>
