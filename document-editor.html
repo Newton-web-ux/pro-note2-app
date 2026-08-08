@@ -38,6 +38,21 @@ body {
   overflow: hidden;
 }
 
+/* ── Read-only / shared banner ── */
+#sharedBanner {
+  display: none;
+  background: #fff3cd;
+  color: #7a5d00;
+  border-bottom: 1px solid #f5c518;
+  padding: 6px 16px;
+  font-size: 12px;
+  text-align: center;
+  flex-shrink: 0;
+  font-family: 'Segoe UI', sans-serif;
+}
+#sharedBanner.show { display: block; }
+#sharedBanner.edit-mode { background: #eef4fd; color: #1e3f73; border-bottom-color: #b8d0f5; }
+
 /* ── Title Bar ── */
 .title-bar {
   background: var(--accent);
@@ -81,6 +96,8 @@ body {
 .hdr-btn:hover { background: rgba(255,255,255,0.25); }
 .hdr-btn.primary { background: rgba(255,255,255,0.9); color: var(--accent); font-weight: 600; }
 .hdr-btn.primary:hover { background: white; }
+.hdr-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.hdr-btn:disabled:hover { background: rgba(255,255,255,0.15); }
 
 /* ── Ribbon Tabs ── */
 .ribbon-tabs {
@@ -172,6 +189,8 @@ body {
 .tb-btn .tb-icon.text { font-size: 13px; font-weight: 700; font-family: 'Segoe UI', sans-serif; height: 17px; display: flex; align-items: center; }
 .tb-btn.small { flex-direction: row; gap: 4px; min-width: auto; font-size: 11px; padding: 4px 7px; }
 .tb-btn.small .tb-icon { font-size: 13px; }
+.tb-btn:disabled, .tb-btn.small:disabled { opacity: 0.35; cursor: not-allowed; }
+.tb-btn:disabled:hover, .tb-btn.small:disabled:hover { background: transparent; border-color: transparent; color: var(--text); }
 
 .tb-select {
   padding: 4px 6px;
@@ -186,6 +205,7 @@ body {
 }
 .tb-select:hover { border-color: var(--accent); }
 .tb-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(43,87,154,0.15); }
+.tb-select:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .tb-input {
   padding: 3px 6px;
@@ -198,6 +218,7 @@ body {
   height: 26px;
 }
 .tb-input:focus { outline: none; border-color: var(--accent); }
+.tb-input:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .tb-color {
   width: 28px;
@@ -207,6 +228,7 @@ body {
   cursor: pointer;
   padding: 2px;
 }
+.tb-color:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .tb-divider { width: 1px; height: 32px; background: var(--border); margin: 0 2px; }
 
@@ -340,6 +362,7 @@ body {
 .page td, .page th { border: 1px solid #999; padding: 5px 8px; }
 .page th { background: #f0f4ff; font-weight: 600; }
 img.draggable { position: absolute; cursor: move; max-width: 90%; }
+body.read-only-mode img.draggable { cursor: default; }
 
 /* ── Image resize corner handles (Word-style) ── */
 .img-handle {
@@ -594,6 +617,9 @@ img.draggable.img-selected { outline: 1.5px dashed var(--accent); outline-offset
 </head>
 <body>
 
+<!-- Shared / read-only status banner (shown only when opened via a share link) -->
+<div id="sharedBanner"></div>
+
 <!-- Title Bar -->
 <div class="title-bar">
   <div class="title-bar-left">
@@ -602,11 +628,11 @@ img.draggable.img-selected { outline: 1.5px dashed var(--accent); outline-offset
     <span class="title-bar-doc" id="docTitleDisplay">— Loading...</span>
   </div>
   <div class="title-bar-right">
-    <button class="hdr-btn" onclick="saveVersion()">💾 Save Version</button>
+    <button class="hdr-btn" id="saveVersionBtn" onclick="saveVersion()">💾 Save Version</button>
     <button class="hdr-btn" onclick="exportPDF()">📄 Export PDF</button>
     <button class="hdr-btn" onclick="exportPNG()">🖼 Export PNG</button>
     <button class="hdr-btn" onclick="exportPPT()">📊 Export PPT</button>
-    <button class="hdr-btn primary" onclick="saveDocument()">💾 Save</button>
+    <button class="hdr-btn primary" id="saveDocBtn" onclick="saveDocument()">💾 Save</button>
     <button class="hdr-btn" onclick="goDashboard()">🏠 Dashboard</button>
   </div>
 </div>
@@ -946,9 +972,9 @@ img.draggable.img-selected { outline: 1.5px dashed var(--accent); outline-offset
 <div id="version" class="ribbon-toolbar">
   <div class="ribbon-group">
     <div class="ribbon-group-row">
-      <button class="tb-btn" onclick="saveVersion()"><span class="tb-icon">💾</span> Save Version</button>
+      <button class="tb-btn" id="saveVersionBtn2" onclick="saveVersion()"><span class="tb-icon">💾</span> Save Version</button>
       <button class="tb-btn" onclick="loadVersionFromPanel()"><span class="tb-icon">📂</span> Load Selected</button>
-      <button class="tb-btn" onclick="deleteVersionFromPanel()"><span class="tb-icon">🗑</span> Delete Selected</button>
+      <button class="tb-btn" id="deleteVersionBtn2" onclick="deleteVersionFromPanel()"><span class="tb-icon">🗑</span> Delete Selected</button>
     </div>
     <div class="ribbon-group-label">Version History</div>
   </div>
@@ -979,8 +1005,8 @@ img.draggable.img-selected { outline: 1.5px dashed var(--accent); outline-offset
   <span style="font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap;">Replace:</span>
   <input type="text" id="replaceInput" placeholder="Replace with...">
   <button onclick="findText()">Find</button>
-  <button onclick="replaceText()">Replace</button>
-  <button onclick="replaceAllText()">Replace All</button>
+  <button id="replaceBtn" onclick="replaceText()">Replace</button>
+  <button id="replaceAllBtn" onclick="replaceAllText()">Replace All</button>
   <button class="find-bar-close" onclick="toggleFindBar()">×</button>
 </div>
 
@@ -1136,7 +1162,17 @@ May:55</textarea>
 // ── State ──
 const GAS_URL =
 "https://script.google.com/macros/s/AKfycbzybAi0aMvbLnx55WEFlBSXUJOU-Ej9bv2ZbU44gvW_qczTCxoGBiIWweIyyF6E-eIbBg/exec";
-let docId = new URLSearchParams(window.location.search).get('id') || null;
+
+// ── URL params: which document, and (if opened via a share link) whose
+//    document it actually is and what this visitor is allowed to do. ──
+const urlParams = new URLSearchParams(window.location.search);
+let docId = urlParams.get('id') || null;
+const sharedOwnerUid   = urlParams.get('ownerUid') || null;
+const sharedOwnerEmail = urlParams.get('ownerEmail') || null;
+const sharedRole       = urlParams.get('role') || null;      // 'view' | 'edit' | null (null = own document)
+const isSharedSession  = !!(sharedOwnerUid && sharedOwnerEmail);
+const isReadOnly       = isSharedSession && sharedRole !== 'edit';
+
 let pages = [], currentPage = 0;
 let selectedImage = null;
 let versions = [];
@@ -1153,13 +1189,24 @@ let currentUser = null;
   const email = sessionStorage.getItem('pd_active_user');
   if (uid && email) currentUser = { uid, email };
 })();
-function currentEmail() { return currentUser ? currentUser.email : 'guest'; }
+
+// Content always loads/saves against the OWNER's Drive file — for a
+// document opened via a share link that's sharedOwnerEmail, not the
+// viewer's own email — so User B always sees exactly User A's content,
+// nothing from B's own dashboard/documents ever enters the picture.
+function currentEmail() {
+  if (isSharedSession) return sharedOwnerEmail;
+  return currentUser ? currentUser.email : 'guest';
+}
 
 function dashboardIndexKey() {
   const uid = currentUser ? currentUser.uid : 'guest';
   return 'pd.' + uid + '.index_cache';
 }
 function getDashboardTitle(id) {
+  // Only meaningful for a user's own documents — a shared viewer has no
+  // dashboard cache entry (and shouldn't) for someone else's document.
+  if (isSharedSession) return null;
   try {
     const idx = JSON.parse(localStorage.getItem(dashboardIndexKey()) || '{"docs":{}}');
     return (idx.docs && idx.docs[id] && idx.docs[id].title) ? idx.docs[id].title : null;
@@ -1172,48 +1219,54 @@ function setStatus(msg) {
   setTimeout(() => document.getElementById('statusText').textContent = 'Ready', 3000);
 }
 
-// ── Tabs ──
-function switchTab(tab) {
-  document.querySelectorAll('.ribbon-toolbar').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  const tb = document.getElementById(tab);
-  if (tb) tb.classList.add('active');
-  const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
-  if (btn) btn.classList.add('active');
-  // Leaving the Draw tab while actively drawing finalizes the stroke layer.
-  if (tab !== 'draw' && drawState.active) toggleDrawMode();
-}
-
-// ── Find / Replace ──
-function toggleFindBar() {
-  const bar = document.getElementById('findBar');
-  bar.classList.toggle('open');
-  if (bar.classList.contains('open')) document.getElementById('findInput').focus();
-}
-function findText() {
-  const q = document.getElementById('findInput').value;
-  if (!q) return;
-  window.find(q);
-}
-function replaceText() {
-  const q = document.getElementById('findInput').value;
-  const r = document.getElementById('replaceInput').value;
-  if (!q) return;
-  const sel = window.getSelection();
-  if (sel && sel.toString() === q) {
-    document.execCommand('insertText', false, r);
+/* ─────────────────────────────────────────────
+   READ-ONLY / SHARED MODE
+   Applied once, at startup, before loadDocument()
+   runs. Locks page editing and every write-capable
+   action (save, versions, page/image edits, etc.)
+   when the visitor only has "view" access; shows a
+   banner either way so it's clear this document
+   belongs to someone else.
+───────────────────────────────────────────── */
+function applySharedModeUI() {
+  if (!isSharedSession) return;
+  const banner = document.getElementById('sharedBanner');
+  banner.classList.add('show');
+  if (isReadOnly) {
+    document.body.classList.add('read-only-mode');
+    banner.textContent = '👁 Viewing a shared document from ' + sharedOwnerEmail + ' — view only, changes cannot be saved.';
   } else {
-    window.find(q);
+    banner.classList.add('edit-mode');
+    banner.textContent = '✏️ Editing a document shared by ' + sharedOwnerEmail + ' — your changes will be saved to their document.';
   }
 }
-function replaceAllText() {
-  const q = document.getElementById('findInput').value;
-  const r = document.getElementById('replaceInput').value;
-  if (!q) return;
-  pages.forEach(p => {
-    p.innerHTML = p.innerHTML.split(q).join(r);
-  });
-  setStatus('Replaced all instances.');
+
+function lockEditingForReadOnly() {
+  if (!isReadOnly) return;
+
+  // Disable every control that would mutate the document.
+  const disableIds = [
+    'saveDocBtn','saveVersionBtn','saveVersionBtn2','deleteVersionBtn2',
+    'replaceBtn','replaceAllBtn'
+  ];
+  disableIds.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
+
+  document.querySelectorAll(
+    '#insert button, #draw button, #draw input, #draw select, ' +
+    '#design select, #design input'
+  ).forEach(el => { if (el.tagName === 'BUTTON' || el.tagName === 'INPUT' || el.tagName === 'SELECT') el.disabled = true; });
+
+  // No-op the underlying write functions too, in case something calls
+  // them programmatically (keyboard shortcuts, etc.) rather than via a
+  // now-disabled button.
+  const blocked = () => setStatus('This document is view-only — ask the owner for edit access to make changes.');
+  window.saveDocument   = blocked;
+  window.saveVersion    = blocked;
+  window.restoreVersion = blocked;
+  window.deleteVersion  = blocked;
+  window.insertImage    = blocked;
+  window.insertTable    = blocked;
+  window.deletePage     = blocked;
 }
 
 /* ─────────────────────────────────────────────
@@ -1221,6 +1274,11 @@ function replaceAllText() {
    tables, math/LaTeX, links, graphs-as-images,
    draggable images + their position, and version
    history) back out of Google Drive.
+
+   currentEmail() resolves to the OWNER's email
+   whenever this is a shared session, so this call
+   always reads User A's actual file — never
+   anything from the viewer's own dashboard/account.
 ───────────────────────────────────────────── */
 function loadDocument() {
   if (!docId) {
@@ -1231,7 +1289,7 @@ function loadDocument() {
   // Document" modal) right away, instead of a generic placeholder, while
   // we check whether a saved copy already exists in Drive.
   const dashboardTitle = getDashboardTitle(docId);
-  document.getElementById('docTitleDisplay').textContent = '— ' + (dashboardTitle || 'New Document');
+  document.getElementById('docTitleDisplay').textContent = '— ' + (dashboardTitle || (isSharedSession ? 'Shared Document' : 'New Document'));
 
   fetch(GAS_URL, {
     method: "POST",
@@ -1265,17 +1323,36 @@ function loadDocument() {
       updateVersionPanel();
       updateWordCount();
       if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
-      setStatus("Complete document loaded ☁️");
+      setStatus(isSharedSession ? "Shared document loaded ☁️" : "Complete document loaded ☁️");
     } else {
+      if (isSharedSession) {
+        // A share link pointed at a document that doesn't actually exist
+        // in the owner's Drive (deleted, or never saved) — don't silently
+        // start a blank "New Document" as if it were editable content.
+        document.getElementById('docTitleDisplay').textContent = '— Document unavailable';
+        setStatus('This shared document could not be found.');
+        return;
+      }
       document.getElementById('docTitleDisplay').textContent = '— ' + (dashboardTitle || 'New Document');
       addPage();
     }
+    finalizeSharedModeAfterLoad();
   })
   .catch(() => {
     setStatus("Could not reach Google Drive — starting blank.");
     document.getElementById('docTitleDisplay').textContent = '— ' + (dashboardTitle || 'New Document');
-    addPage();
+    if (!isSharedSession) addPage();
+    finalizeSharedModeAfterLoad();
   });
+}
+
+// Re-apply the read-only page lock after pages are (re)built from the
+// loaded document, since addPage() sets contentEditable per-page.
+function finalizeSharedModeAfterLoad() {
+  if (!isSharedSession) return;
+  if (isReadOnly) {
+    pages.forEach(p => { p.contentEditable = 'false'; });
+  }
 }
 
 /* ─────────────────────────────────────────────
@@ -1286,8 +1363,14 @@ function loadDocument() {
    draggable images (saved separately, with their
    drag position, so they stay movable on reload —
    and aren't duplicated in the page HTML).
+
+   currentEmail() again resolves to the owner's
+   email in a shared "can edit" session, so B's
+   edits land in A's own file — there is only ever
+   one copy of the content.
 ───────────────────────────────────────────── */
 function saveDocument() {
+  if (isReadOnly) return setStatus('This document is view-only.');
   if (!docId) return alert("No document ID.");
 
   let documentData = {
@@ -1340,11 +1423,57 @@ function saveDocument() {
   .catch(() => setStatus("Could not reach Google Drive."));
 }
 
+// ── Tabs ──
+function switchTab(tab) {
+  document.querySelectorAll('.ribbon-toolbar').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const tb = document.getElementById(tab);
+  if (tb) tb.classList.add('active');
+  const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+  if (btn) btn.classList.add('active');
+  // Leaving the Draw tab while actively drawing finalizes the stroke layer.
+  if (tab !== 'draw' && drawState.active) toggleDrawMode();
+}
+
+// ── Find / Replace ──
+function toggleFindBar() {
+  const bar = document.getElementById('findBar');
+  bar.classList.toggle('open');
+  if (bar.classList.contains('open')) document.getElementById('findInput').focus();
+}
+function findText() {
+  const q = document.getElementById('findInput').value;
+  if (!q) return;
+  window.find(q);
+}
+function replaceText() {
+  if (isReadOnly) return setStatus('This document is view-only.');
+  const q = document.getElementById('findInput').value;
+  const r = document.getElementById('replaceInput').value;
+  if (!q) return;
+  const sel = window.getSelection();
+  if (sel && sel.toString() === q) {
+    document.execCommand('insertText', false, r);
+  } else {
+    window.find(q);
+  }
+}
+function replaceAllText() {
+  if (isReadOnly) return setStatus('This document is view-only.');
+  const q = document.getElementById('findInput').value;
+  const r = document.getElementById('replaceInput').value;
+  if (!q) return;
+  pages.forEach(p => {
+    p.innerHTML = p.innerHTML.split(q).join(r);
+  });
+  setStatus('Replaced all instances.');
+}
+
 // ── Pages ──
 function addPage(html = '') {
   const page = document.createElement('div');
   page.className = 'page';
-  page.contentEditable = 'true';
+  page.contentEditable = isReadOnly ? 'false' : 'true';
   page.setAttribute('data-page-num', pages.length + 1);
   page.innerHTML = html || '<p>Start typing here...</p>';
   page.addEventListener('input', updateWordCount);
@@ -1359,9 +1488,11 @@ function addPage(html = '') {
   updateThumbnails();
   switchPage(pages.length - 1);
   updatePageInfo();
+  return page;
 }
 
 function deletePage() {
+  if (isReadOnly) return setStatus('This document is view-only.');
   if (pages.length <= 1) return setStatus('Cannot delete the only page.');
   if (!confirm('Delete this page?')) return;
   pages[currentPage].remove();
@@ -1412,12 +1543,15 @@ function updateWordCount() {
 
 // ── Formatting ──
 function formatText(cmd, value = null) {
+  if (isReadOnly) return;
   document.execCommand(cmd, false, value);
 }
 function applyFont(font) {
+  if (isReadOnly) return;
   document.execCommand('fontName', false, font);
 }
 function applyFontSize(size) {
+  if (isReadOnly) return;
   // Use px-based span approach
   const sel = window.getSelection();
   if (!sel.rangeCount) return;
@@ -1431,19 +1565,24 @@ function applyFontSize(size) {
   }
 }
 function applyLineSpacing(val) {
+  if (isReadOnly) return;
   pages[currentPage].style.lineHeight = val;
 }
 function highlightText() {
+  if (isReadOnly) return;
   const color = document.getElementById("highlightColorPicker").value;
   document.execCommand("backColor", false, color);
 }
 function clearFormatting() {
+  if (isReadOnly) return;
   document.execCommand("removeFormat", false, null);
 }
 function insertHR() {
+  if (isReadOnly) return;
   document.execCommand('insertHTML', false, '<hr style="border:1px solid #ccc;margin:12px 0;">');
 }
 function insertLink() {
+  if (isReadOnly) return;
   const url = document.getElementById('linkUrl').value.trim();
   if (!url) return alert('Enter a URL first.');
   const text = window.getSelection().toString() || url;
@@ -1452,6 +1591,7 @@ function insertLink() {
 
 // ── Table ──
 function insertTable() {
+  if (isReadOnly) return setStatus('This document is view-only.');
   const rows = parseInt(prompt("Number of rows:", "3")) || 3;
   const cols = parseInt(prompt("Number of columns:", "3")) || 3;
   let html = '<table style="border-collapse:collapse;width:100%;margin:8px 0;">';
@@ -1472,6 +1612,7 @@ function insertTable() {
 
 // ── Image ──
 function insertImage() {
+  if (isReadOnly) return setStatus('This document is view-only.');
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
@@ -1494,6 +1635,7 @@ function insertImage() {
   input.click();
 }
 function deleteSelectedImage() {
+  if (isReadOnly) return setStatus('This document is view-only.');
   if (selectedImage && selectedImage.parentNode) {
     selectedImage.parentNode.removeChild(selectedImage);
     selectedImage = null;
@@ -1505,6 +1647,11 @@ function deleteSelectedImage() {
 /* ── Drag (interact.js) + Word-style corner-handle resize ── */
 function makeDraggableResizable(el) {
   el.style.height = el.style.height || (el.offsetHeight ? el.offsetHeight + 'px' : 'auto');
+  if (isReadOnly) {
+    // Still selectable (for visual focus) but not draggable/resizable.
+    el.addEventListener('click', e => { e.stopPropagation(); selectImage(el); });
+    return;
+  }
   interact(el).draggable({
     modifiers: [interact.modifiers.restrictRect({ restriction: 'parent' })],
     listeners: { move: dragMoveListener }
@@ -1514,6 +1661,7 @@ function makeDraggableResizable(el) {
   });
 }
 function dragMoveListener(event) {
+  if (isReadOnly) return;
   const t = event.target;
   const x = (parseFloat(t.getAttribute('data-x')) || 0) + event.dx;
   const y = (parseFloat(t.getAttribute('data-y')) || 0) + event.dy;
@@ -1527,7 +1675,7 @@ function selectImage(img) {
   selectedImage = img;
   document.querySelectorAll('img.draggable').forEach(i => i.classList.remove('img-selected'));
   img.classList.add('img-selected');
-  showHandlesFor(img);
+  if (!isReadOnly) showHandlesFor(img);
 }
 function clearImageHandles() {
   activeHandles.forEach(h => h.remove());
@@ -1535,6 +1683,7 @@ function clearImageHandles() {
   document.querySelectorAll('img.draggable').forEach(i => i.classList.remove('img-selected'));
 }
 function showHandlesFor(img) {
+  if (isReadOnly) return;
   clearImageHandles();
   img.classList.add('img-selected');
   ['nw', 'ne', 'sw', 'se'].forEach(corner => {
@@ -1564,6 +1713,7 @@ function positionAllHandles() {
   });
 }
 function startCornerResize(e, img, corner) {
+  if (isReadOnly) return;
   e.preventDefault();
   e.stopPropagation();
   const startX = e.clientX, startY = e.clientY;
@@ -1609,6 +1759,7 @@ window.addEventListener('scroll', () => { if (selectedImage) positionAllHandles(
 // same plumbing that powers manual image inserts (and therefore the same
 // save/load handling).
 function insertDraggableImage(dataUrl, width = 220) {
+  if (isReadOnly) { setStatus('This document is view-only.'); return null; }
   const img = document.createElement('img');
   img.src = dataUrl;
   img.className = 'draggable';
@@ -1635,6 +1786,7 @@ function togglePagePanel() {
 
 // ── Versions ──
 function saveVersion() {
+  if (isReadOnly) return setStatus('This document is view-only.');
   const snapshot = pages.map(p => p.innerHTML);
   const timestamp = new Date().toLocaleString();
   versions.push({ timestamp, snapshot });
@@ -1652,26 +1804,29 @@ function updateVersionPanel() {
   versions.forEach((v, i) => {
     const div = document.createElement('div');
     div.className = 'version-item';
-    div.innerHTML = `<div class="version-time">${v.timestamp}</div>
-      <div class="version-actions">
-        <button onclick="restoreVersion(${i})">Restore</button>
-        <button onclick="deleteVersion(${i})">Delete</button>
-      </div>`;
+    const actions = isReadOnly
+      ? `<div class="version-actions"><span style="color:var(--muted);">View only</span></div>`
+      : `<div class="version-actions">
+          <button onclick="restoreVersion(${i})">Restore</button>
+          <button onclick="deleteVersion(${i})">Delete</button>
+        </div>`;
+    div.innerHTML = `<div class="version-time">${v.timestamp}</div>${actions}`;
     panel.appendChild(div);
   });
 }
 function restoreVersion(index) {
+  if (isReadOnly) return setStatus('This document is view-only.');
   if (!confirm('Restore this version? Current content will be replaced.')) return;
   const ver = versions[index];
   if (!ver) return;
   // Clear & rebuild
-  const area = document.getElementById('contentArea');
   pages.forEach(p => p.remove());
   pages = [];
   ver.snapshot.forEach(html => addPage(html));
   setStatus('Version restored.');
 }
 function deleteVersion(index) {
+  if (isReadOnly) return setStatus('This document is view-only.');
   versions.splice(index, 1);
   updateVersionPanel();
   saveDocument();
@@ -1681,12 +1836,14 @@ function loadVersionFromPanel() { setStatus('Click "Restore" next to a version i
 function deleteVersionFromPanel() { setStatus('Click "Delete" next to a version in the sidebar.'); }
 
 // ── Design ──
-function changeBackgroundColor(color) { pages[currentPage].style.background = color; }
+function changeBackgroundColor(color) { if (isReadOnly) return; pages[currentPage].style.background = color; }
 function applyGradient(gradient) {
+  if (isReadOnly) return;
   if (!gradient) { pages[currentPage].style.background = '#ffffff'; return; }
   pages[currentPage].style.background = gradient;
 }
 function applyPattern(pattern) {
+  if (isReadOnly) return;
   const page = pages[currentPage];
   page.style.background = '#fff';
   page.style.backgroundImage = 'none';
@@ -1695,6 +1852,7 @@ function applyPattern(pattern) {
   else if (pattern === 'lines') { page.style.backgroundImage = 'linear-gradient(#ddd 1px, transparent 1px)'; page.style.backgroundSize = '100% 28px'; }
 }
 function applyTemplate(template) {
+  if (isReadOnly) return;
   if (!template) return;
   const page = pages[currentPage];
   const templates = {
@@ -1719,6 +1877,7 @@ function applyTemplate(template) {
 
 // ── Page Setup: Orientation, Margins & Padding ──
 function applyOrientation(val) {
+  if (isReadOnly) return;
   const page = pages[currentPage];
   let w = parseFloat(page.style.width) || 816;
   let h = parseFloat(page.style.minHeight) || 1056;
@@ -1727,6 +1886,7 @@ function applyOrientation(val) {
   setStatus('Orientation set to ' + val + '.');
 }
 function applyMarginPreset(val) {
+  if (isReadOnly) return;
   const customRow = document.getElementById('customMarginRow');
   if (val === 'custom') { customRow.style.display = 'flex'; return; }
   customRow.style.display = 'none';
@@ -1736,6 +1896,7 @@ function applyMarginPreset(val) {
   setStatus('Margins set: ' + val + '.');
 }
 function applyCustomMargins() {
+  if (isReadOnly) return;
   const t = document.getElementById('marginTop').value || 96;
   const r = document.getElementById('marginRight').value || 96;
   const b = document.getElementById('marginBottom').value || 80;
@@ -1744,7 +1905,7 @@ function applyCustomMargins() {
   setStatus('Custom margins applied.');
 }
 
-// ── Export ──
+// ── Export (always allowed — exporting a copy doesn't touch the shared source) ──
 async function exportPDF() {
   setStatus('Generating PDF...');
   const { jsPDF } = window.jspdf;
@@ -1814,13 +1975,18 @@ async function exportPPT() {
 
 // ── Dashboard ──
 function goDashboard() {
+  if (isReadOnly) {
+    // Nothing to save — go straight back.
+    location.href = "dashboard.html";
+    return;
+  }
   if (confirm("Return to Dashboard? Document will be saved automatically.")) {
     saveDocument();
     location.href = "dashboard.html";
   }
 }
 
-// ── Slideshow ──
+// ── Slideshow (view-only visitors can still present the document) ──
 function startFromBeginning() { slideshowIndex = 0; launchSlideshow(); }
 function startFromCurrent() { slideshowIndex = currentPage; launchSlideshow(); }
 function launchSlideshow() {
@@ -1882,6 +2048,7 @@ document.addEventListener('keydown', e => {
 
 // ── Math ──
 function insertSelectedMathSymbol() {
+  if (isReadOnly) return;
   const dropdown = document.getElementById("mathDropdown");
   const symbol = dropdown.value;
   if (!symbol) return;
@@ -1898,6 +2065,7 @@ function insertSelectedMathSymbol() {
   dropdown.selectedIndex = 0;
 }
 function insertLatex() {
+  if (isReadOnly) return;
   const code = document.getElementById("latexInput").value.trim();
   if (!code) return;
   const span = document.createElement("span");
@@ -1907,6 +2075,7 @@ function insertLatex() {
   document.getElementById("latexInput").value = "";
 }
 function insertAtCursor(node) {
+  if (isReadOnly) return;
   const sel = window.getSelection();
   if (!sel.rangeCount) return;
   const range = sel.getRangeAt(0);
@@ -1967,6 +2136,7 @@ function clearAllFunctions() { graphFunctions = []; plotFunctions(); }
 function zoomGraphIn() { graphScale *= 1.2; plotFunctions(); }
 function zoomGraphOut() { graphScale /= 1.2; plotFunctions(); }
 function insertGraphToEditor() {
+  if (isReadOnly) return setStatus('This document is view-only.');
   const canvas = document.getElementById('graphCanvas');
   const img = document.createElement('img');
   img.src = canvas.toDataURL('image/png');
@@ -1992,6 +2162,7 @@ function closeGraphPanel() { document.getElementById('floatingPanel').style.disp
 let drawState = { active: false, tool: 'pen', color: '#e63946', size: 3, canvas: null, ctx: null, drawing: false };
 
 function toggleDrawMode() {
+  if (isReadOnly) return setStatus('This document is view-only.');
   if (drawState.active) {
     finishDrawing();
   } else {
@@ -2097,9 +2268,9 @@ function isCanvasBlank(canvas) {
 }
 function finishDrawing() {
   const page = pages[currentPage];
-  page.contentEditable = 'true';
+  page.contentEditable = isReadOnly ? 'false' : 'true';
   if (drawState.canvas) {
-    if (!isCanvasBlank(drawState.canvas)) {
+    if (!isCanvasBlank(drawState.canvas) && !isReadOnly) {
       const dataUrl = drawState.canvas.toDataURL('image/png');
       const w = drawState.canvas.width, h = drawState.canvas.height;
       const img = document.createElement('img');
@@ -2130,6 +2301,7 @@ setDrawTool('pen');
 
 // ── Panel open / close / tab switching ──
 function openStudioPanel(tab) {
+  if (isReadOnly) return setStatus('This document is view-only.');
   document.getElementById('studioPanel').style.display = 'block';
   switchStudioTab(tab || 'shapes2d');
 }
@@ -2213,6 +2385,7 @@ function renderShape2DGrid() {
   });
 }
 function insertShape2D(type) {
+  if (isReadOnly) return setStatus('This document is view-only.');
   const color = document.getElementById('shapeColorPicker').value;
   const size = parseInt(document.getElementById('shapeSizePicker').value) || 140;
   const svg = getShapeSVG(type, color);
@@ -2252,6 +2425,7 @@ function renderIconGrid() {
   });
 }
 function insertIconGlyph(glyph) {
+  if (isReadOnly) return setStatus('This document is view-only.');
   const size = document.getElementById('iconSizePicker').value || 28;
   const color = document.getElementById('iconColorPicker').value;
   const span = document.createElement('span');
@@ -2355,6 +2529,7 @@ function drawPieChart(ctx, data, w, h, doughnut) {
   });
 }
 function insertChartToEditor() {
+  if (isReadOnly) return setStatus('This document is view-only.');
   drawChart();
   const canvas = document.getElementById('chartCanvas');
   insertDraggableImage(canvas.toDataURL('image/png'), 320);
@@ -2437,6 +2612,7 @@ function animateThree3D() {
 }
 function resetModel3DRotation() { three3d.rotX = 0.4; three3d.rotY = 0.6; three3d.autoRotate = true; }
 function insert3DModel() {
+  if (isReadOnly) return setStatus('This document is view-only.');
   if (!three3d.renderer) return;
   three3d.renderer.render(three3d.scene, three3d.camera);
   const dataUrl = three3d.renderer.domElement.toDataURL('image/png');
@@ -2466,6 +2642,7 @@ renderIconGrid();
 
 // ── Page size ──
 function changePageSize(size) {
+  if (isReadOnly) return;
   let page = pages[currentPage];
   let sizes = {
     A3: ["1123px", "1587px"],
@@ -2481,7 +2658,12 @@ function changePageSize(size) {
 }
 
 // ── Init ──
+applySharedModeUI();
 loadDocument();
+// Lock write-capable UI immediately for view-only shared sessions (don't
+// wait on the async loadDocument() fetch — buttons should be disabled
+// from the first paint).
+if (isReadOnly) lockEditingForReadOnly();
 </script>
 <script>
 if (location.pathname.endsWith(".html")) {
