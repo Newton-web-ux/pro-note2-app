@@ -817,6 +817,23 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script>
 /* ─────────────────────────────────────────────
+   INCOMING SHARE LINK — captured FIRST, before
+   any other script on this page can touch the
+   URL (see the removeHTML() cleanup script at the
+   bottom of <body>, which strips the query string
+   from the address bar via history.replaceState
+   as soon as it runs). If we wait and re-parse
+   window.location.search later — e.g. inside the
+   async onAuthStateChanged callback, as this file
+   used to — that string is already gone by the
+   time we look, so every ?share=<id> link quietly
+   turns into "just open the normal dashboard".
+   Reading it into a plain variable right here, at
+   parse time, is what actually fixes that race.
+───────────────────────────────────────────── */
+let pendingShareId = new URLSearchParams(window.location.search).get('share');
+
+/* ─────────────────────────────────────────────
    FIREBASE INIT
 ───────────────────────────────────────────── */
 const firebaseConfig = {
@@ -1666,11 +1683,18 @@ async function removeSharedDoc(id) {
 
 /* Handles ?share=<docId> links. If it's the owner's own link, just opens
    the doc normally; otherwise records a pointer in sharedWithMe and jumps
-   straight into the shared editor view. */
+   straight into the shared editor view.
+
+   Reads the id captured into pendingShareId at the very top of this
+   script — NOT window.location.search — because by the time this
+   function actually runs (after Firebase auth resolves), the removeHTML()
+   cleanup script at the bottom of <body> has already stripped the query
+   string from the address bar. Re-parsing location.search here would
+   always come up empty. */
 async function handleIncomingShareLink() {
-  const params = new URLSearchParams(window.location.search);
-  const shareId = params.get('share');
+  const shareId = pendingShareId;
   if (!shareId) return;
+  pendingShareId = null; // consume once, so this can't accidentally re-fire
   window.history.replaceState(null, document.title, window.location.origin + window.location.pathname);
 
   setStatus('Opening shared document…');
