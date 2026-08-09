@@ -815,10 +815,6 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
-<!-- EmailJS — sends transactional email straight from the browser, no
-     backend/Cloud Function needed. Fill in EMAILJS_CONFIG below with the
-     values from your EmailJS dashboard (emailjs.com). -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
 /* ─────────────────────────────────────────────
    INCOMING SHARE LINK — captured FIRST, before
@@ -869,82 +865,6 @@ const PRO_PLANS = {
   yearly:  { price: 1999, label: '₹1999 / year (2 months free)' }
 };
 let selectedUpgradeBilling = 'monthly';
-
-/* ─────────────────────────────────────────────
-   EMAILJS — email notifications
-   Fill these three in from your EmailJS account:
-     PUBLIC_KEY   → Account → General
-     SERVICE_ID   → Email Services → your connected service (e.g. Gmail)
-     TEMPLATE_*   → Email Templates → create one template per notification
-   Each template just needs a body with {{to_name}}, {{to_email}},
-   {{app_name}} and {{message}} placeholders — EmailJS reads the
-   recipient from the "To email" field you set on the template itself
-   (point it at {{to_email}}).
-───────────────────────────────────────────── */
-const EMAILJS_CONFIG = {
-  PUBLIC_KEY: ' Arcw7ck_A_c_uQi6W',
-  SERVICE_ID: 'service_2o9c8pq',
-  TEMPLATE_SIGNIN: 'template_tjmlol4',
-  TEMPLATE_WELCOME: 'template_xfrrxlt'
-};
-let emailjsReady = false;
-try {
-  if (window.emailjs && EMAILJS_CONFIG.PUBLIC_KEY && !EMAILJS_CONFIG.PUBLIC_KEY.startsWith('YOUR_')) {
-    emailjs.init({ publicKey: EMAILJS_CONFIG.PUBLIC_KEY });
-    emailjsReady = true;
-  }
-} catch (e) { console.warn('EmailJS init failed', e); }
-
-function sendNotificationEmail(templateId, params) {
-  if (!emailjsReady) { console.info('EmailJS not configured — skipping email:', templateId, params); return; }
-  emailjs.send(EMAILJS_CONFIG.SERVICE_ID, templateId, params)
-    .catch(e => console.warn('Email send failed', templateId, e));
-}
-
-/* Sign-in notification — fires every time a user's auth state resolves
-   to "signed in" (see handleAuthState), sent to that user's own email. */
-function sendSignInEmail(isNewUser) {
-  if (!currentUser || !currentUser.email) return;
-  sendNotificationEmail(EMAILJS_CONFIG.TEMPLATE_SIGNIN, {
-    to_email: currentUser.email,
-    to_name: currentUser.name || currentUser.email,
-    app_name: 'Pro Document',
-    message: isNewUser
-      ? 'Your Pro Document account was just created and you are now signed in.'
-      : 'You just signed in to Pro Document from a new session.',
-    signin_time: new Date().toLocaleString()
-  });
-}
-
-/* First-document welcome email — fires once, right after a user creates
-   their very first document (see confirmCreateDoc). Guarded by
-   welcomeEmailSent on users/{uid} so it can never fire twice, even
-   across tabs/devices. */
-async function sendFirstDocumentWelcomeEmail(docTitle) {
-  if (!currentUser || !currentUser.email) return;
-  const ref = db.collection('users').doc(currentUser.uid);
-  try {
-    // Atomically claim the "send welcome email" slot so a second tab
-    // creating a doc at the same time can't send a duplicate.
-    const claimed = await db.runTransaction(async tx => {
-      const snap = await tx.get(ref);
-      if (snap.exists && snap.data().welcomeEmailSent) return false;
-      tx.set(ref, { welcomeEmailSent: true }, { merge: true });
-      return true;
-    });
-    if (!claimed) return;
-  } catch (e) {
-    console.warn('welcomeEmailSent claim failed', e);
-    return;
-  }
-  sendNotificationEmail(EMAILJS_CONFIG.TEMPLATE_WELCOME, {
-    to_email: currentUser.email,
-    to_name: currentUser.name || currentUser.email,
-    app_name: 'Pro Document',
-    message: `Welcome to Pro Document! You just created your first document, "${docTitle}". Here's to getting things written.`,
-    doc_title: docTitle
-  });
-}
 
 /* ─────────────────────────────────────────────
    LOADING SCREEN
@@ -1024,12 +944,10 @@ async function handleAuthState(user) {
       isPro: false, plan: 'free', planExpiresAt: null
     };
     document.getElementById('authModal').classList.remove('open');
-    let isNewUser = false;
-    try { isNewUser = await ensureUserProfile(); } catch (e) { console.warn('profile upsert failed', e); }
+    try { await ensureUserProfile(); } catch (e) { console.warn('profile upsert failed', e); }
     launchDashboard();
     attachRealtimeListeners();
     logActivity('login');
-    sendSignInEmail(isNewUser);
     handleIncomingShareLink();
   } else {
     detachRealtimeListeners();
@@ -1127,8 +1045,6 @@ function showAuthMsg(id, type, text) {
    admin-controlled isPro/plan/planExpiresAt
    fields (see firestore.rules — clients cannot
    write those three fields themselves).
-   Returns true if this is a brand-new profile
-   (first sign-in ever) so callers can react to it.
 ───────────────────────────────────────────── */
 async function ensureUserProfile() {
   const ref = db.collection('users').doc(currentUser.uid);
@@ -1139,16 +1055,13 @@ async function ensureUserProfile() {
     picture: currentUser.picture,
     lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
   };
-  const isNewUser = !snap.exists;
-  if (isNewUser) {
+  if (!snap.exists) {
     patch.createdAt = firebase.firestore.FieldValue.serverTimestamp();
     patch.isPro = false;
     patch.plan = 'free';
     patch.planExpiresAt = null;
-    patch.welcomeEmailSent = false;
   }
   await ref.set(patch, { merge: true });
-  return isNewUser;
 }
 
 /* ─────────────────────────────────────────────
@@ -1416,7 +1329,6 @@ async function confirmCreateDoc() {
     return;
   }
   const title = document.getElementById('docNameInput').value.trim() || 'Untitled Document';
-  const wasFirstDoc = getActiveDocCount() === 0;
   closeModal('createDocModal');
   setStatus('Creating document…');
   try {
@@ -1427,7 +1339,6 @@ async function confirmCreateDoc() {
     });
     logActivity('create_doc');
     setStatus('Document "' + title + '" created.');
-    if (wasFirstDoc) sendFirstDocumentWelcomeEmail(title);
   } catch (e) {
     console.warn(e);
     setStatus('Could not create document — try again.');
