@@ -164,16 +164,32 @@
   border-radius:50%; animation:spinA 0.7s linear infinite;
   vertical-align:middle; margin-right:6px;
 }
-.gsi-wrap { display:flex; justify-content:center; margin-top:4px; min-height:44px; }
-.google-btn {
-  display:flex; align-items:center; justify-content:center; gap:10px;
-  width:100%; padding:11px 16px; border-radius:24px; border:1px solid #dadce0;
-  background:#fff; color:#3c4043; font-family:'Space Grotesk',sans-serif;
-  font-size:14px; font-weight:600; cursor:pointer; transition:box-shadow 0.15s,background 0.15s;
+.auth-tabs { display:flex; border-radius:8px; overflow:hidden; border:1px solid var(--border); margin-bottom:20px; }
+.auth-tab {
+  flex:1; padding:10px; border:none; cursor:pointer; font-size:13px; font-weight:600;
+  background:#fff; color:var(--muted); font-family:'Space Grotesk',sans-serif; transition:all 0.15s;
 }
-.google-btn:hover { background:#f8f9fa; box-shadow:0 1px 4px rgba(0,0,0,0.15); }
-.google-btn:disabled { opacity:0.6; cursor:not-allowed; }
-.google-btn img { width:18px; height:18px; }
+.auth-tab.active { background:var(--accent); color:#fff; }
+.auth-field { margin-bottom:14px; }
+.auth-field label {
+  font-size:11px; font-weight:600; display:block; margin-bottom:6px; color:var(--muted);
+  text-transform:uppercase; letter-spacing:0.5px; font-family:'Space Grotesk',sans-serif;
+}
+.auth-field input {
+  width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:6px;
+  font-size:14px; font-family:'Space Grotesk',sans-serif; outline:none; transition:border-color 0.15s;
+}
+.auth-field input:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(43,87,154,0.15); }
+.auth-submit-btn {
+  width:100%; padding:11px; border:none; border-radius:6px; background:var(--accent);
+  color:#fff; font-size:14px; font-weight:600; cursor:pointer; font-family:'Outfit',sans-serif;
+  margin-top:4px; transition:background 0.15s;
+}
+.auth-submit-btn:hover { background:#1e3f73; }
+.auth-submit-btn:disabled { opacity:0.6; cursor:not-allowed; }
+.auth-switch-note { text-align:center; font-size:12px; color:var(--muted); margin-top:14px; font-family:'Space Grotesk',sans-serif; }
+.auth-switch-note a { color:var(--accent); font-weight:600; cursor:pointer; text-decoration:none; }
+.auth-switch-note a:hover { text-decoration:underline; }
 .auth-trust-note {
   margin-top:18px; text-align:center; font-family:'Space Grotesk',sans-serif;
   font-size:11px; color:#999; line-height:1.5;
@@ -537,15 +553,40 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
       <div class="auth-sub">Your intelligent workspace</div>
     </div>
     <div class="auth-body">
-      <div class="gsi-wrap" id="gsiButtonContainer">
-        <button type="button" class="google-btn" id="googleSignInBtn" onclick="signInWithGoogle()">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">
-          Sign in with Google
-        </button>
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" id="tabSignIn" onclick="switchAuthMode('signin')">Sign In</button>
+        <button type="button" class="auth-tab" id="tabSignUp" onclick="switchAuthMode('signup')">Sign Up</button>
       </div>
+
+      <form id="authForm" onsubmit="return false;" autocomplete="on">
+        <div class="auth-field" id="fieldName" style="display:none;">
+          <label>Full Name</label>
+          <input type="text" id="authName" placeholder="Jane Doe" autocomplete="name">
+        </div>
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')handleAuthSubmit()">
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')handleAuthSubmit()">
+        </div>
+        <div class="auth-field" id="fieldConfirm" style="display:none;">
+          <label>Confirm Password</label>
+          <input type="password" id="authConfirmPassword" placeholder="••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')handleAuthSubmit()">
+        </div>
+
+        <button type="button" class="auth-submit-btn" id="authSubmitBtn" onclick="handleAuthSubmit()">Sign In</button>
+      </form>
+
       <div class="auth-msg" id="authMsg"></div>
+
+      <div class="auth-switch-note" id="authSwitchNote">
+        Don't have an account? <a onclick="switchAuthMode('signup')">Sign up</a>
+      </div>
+
       <div class="auth-trust-note">
-        We use <b>Google Sign-In</b> via Firebase Authentication, so every account is tied to a real,<br>verified email address. No passwords to remember.
+        Secured with <b>Firebase Authentication</b>. Account activity is also recorded to our records for support purposes.
       </div>
     </div>
   </div>
@@ -815,10 +856,6 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
-<!-- EmailJS — sends transactional email straight from the browser, no
-     backend/Cloud Function needed. Fill in EMAILJS_CONFIG below with the
-     values from your EmailJS dashboard (emailjs.com). -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
 /* ─────────────────────────────────────────────
    INCOMING SHARE LINK — captured FIRST, before
@@ -851,7 +888,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-const googleProvider = new firebase.auth.GoogleAuthProvider();
 // Keep users signed in across visits/tabs (default is already 'local', set explicitly for clarity)
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
 
@@ -871,79 +907,36 @@ const PRO_PLANS = {
 let selectedUpgradeBilling = 'monthly';
 
 /* ─────────────────────────────────────────────
-   EMAILJS — email notifications
-   Fill these three in from your EmailJS account:
-     PUBLIC_KEY   → Account → General
-     SERVICE_ID   → Email Services → your connected service (e.g. Gmail)
-     TEMPLATE_*   → Email Templates → create one template per notification
-   Each template just needs a body with {{to_name}}, {{to_email}},
-   {{app_name}} and {{message}} placeholders — EmailJS reads the
-   recipient from the "To email" field you set on the template itself
-   (point it at {{to_email}}).
+   GOOGLE APPS SCRIPT + SHEET — sign-up/sign-in log
+   Firebase Authentication is what actually secures
+   accounts (password hashing, sessions, Firestore
+   rules). This just mirrors every signup/login as a
+   row in a Google Sheet via a deployed Apps Script
+   Web App, for an admin-readable record outside the
+   Firebase console — see gas-users-log.gs.
+
+   Paste your deployed Web App's /exec URL below.
+   Fire-and-forget: uses mode:'no-cors' because Apps
+   Script Web Apps don't send back CORS headers fetch()
+   can read, so the response is intentionally never
+   inspected — a failed log never blocks sign-in.
 ───────────────────────────────────────────── */
-const EMAILJS_CONFIG = {
-  PUBLIC_KEY: 'Arcw7ck_A_c_uQi6W',
-  SERVICE_ID: 'service_2o9c8pq',
-  TEMPLATE_SIGNIN: 'template_tjmlol4',
-  TEMPLATE_WELCOME: 'template_xfrrxlt'
-};
-let emailjsReady = false;
-try {
-  if (window.emailjs && EMAILJS_CONFIG.PUBLIC_KEY && !EMAILJS_CONFIG.PUBLIC_KEY.startsWith('YOUR_')) {
-    emailjs.init({ publicKey: EMAILJS_CONFIG.PUBLIC_KEY });
-    emailjsReady = true;
-  }
-} catch (e) { console.warn('EmailJS init failed', e); }
+const GAS_LOG_URL = 'https://script.google.com/macros/s/AKfycbyhvegPltJVQAb2_bAPGGl5KtK0y0e8oSOvvyqbWg-ppsGho5vZB8_iWbnZlH80OQHf/exec';
 
-function sendNotificationEmail(templateId, params) {
-  if (!emailjsReady) { console.info('EmailJS not configured — skipping email:', templateId, params); return; }
-  emailjs.send(EMAILJS_CONFIG.SERVICE_ID, templateId, params)
-    .catch(e => console.warn('Email send failed', templateId, e));
-}
-
-/* Sign-in notification — fires every time a user's auth state resolves
-   to "signed in" (see handleAuthState), sent to that user's own email. */
-function sendSignInEmail(isNewUser) {
-  if (!currentUser || !currentUser.email) return;
-  sendNotificationEmail(EMAILJS_CONFIG.TEMPLATE_SIGNIN, {
-    to_email: currentUser.email,
-    to_name: currentUser.name || currentUser.email,
-    app_name: 'Pro Document',
-    message: isNewUser
-      ? 'Your Pro Document account was just created and you are now signed in.'
-      : 'You just signed in to Pro Document from a new session.',
-    signin_time: new Date().toLocaleString()
-  });
-}
-
-/* First-document welcome email — fires once, right after a user creates
-   their very first document (see confirmCreateDoc). Guarded by
-   welcomeEmailSent on users/{uid} so it can never fire twice, even
-   across tabs/devices. */
-async function sendFirstDocumentWelcomeEmail(docTitle) {
-  if (!currentUser || !currentUser.email) return;
-  const ref = db.collection('users').doc(currentUser.uid);
-  try {
-    // Atomically claim the "send welcome email" slot so a second tab
-    // creating a doc at the same time can't send a duplicate.
-    const claimed = await db.runTransaction(async tx => {
-      const snap = await tx.get(ref);
-      if (snap.exists && snap.data().welcomeEmailSent) return false;
-      tx.set(ref, { welcomeEmailSent: true }, { merge: true });
-      return true;
-    });
-    if (!claimed) return;
-  } catch (e) {
-    console.warn('welcomeEmailSent claim failed', e);
-    return;
-  }
-  sendNotificationEmail(EMAILJS_CONFIG.TEMPLATE_WELCOME, {
-    to_email: currentUser.email,
-    to_name: currentUser.name || currentUser.email,
-    app_name: 'Pro Document',
-    message: `Welcome to Pro Document! You just created your first document, "${docTitle}". Here's to getting things written.`,
-    doc_title: docTitle
-  });
+function logToSheet(action) {
+  if (!currentUser || !GAS_LOG_URL || GAS_LOG_URL.startsWith('YOUR_')) return;
+  fetch(GAS_LOG_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({
+      action, // 'signup' | 'login'
+      uid: currentUser.uid,
+      name: currentUser.name || '',
+      email: currentUser.email || '',
+      time: new Date().toISOString()
+    })
+  }).catch(e => console.warn('Sheet log failed', e));
 }
 
 /* ─────────────────────────────────────────────
@@ -1029,7 +1022,7 @@ async function handleAuthState(user) {
     launchDashboard();
     attachRealtimeListeners();
     logActivity('login');
-    sendSignInEmail(isNewUser);
+    logToSheet(isNewUser ? 'signup' : 'login');
     handleIncomingShareLink();
   } else {
     detachRealtimeListeners();
@@ -1039,7 +1032,7 @@ async function handleAuthState(user) {
     shell.style.display = 'none';
     document.getElementById('authMsg').className = 'auth-msg';
     document.getElementById('authModal').classList.add('open');
-    setGoogleBtnBusy(false);
+    setAuthBtnBusy(false, authMode === 'signup' ? 'Create Account' : 'Sign In');
   }
 }
 
@@ -1088,30 +1081,80 @@ function updateUserUI() {
 }
 
 /* ─────────────────────────────────────────────
-   GOOGLE SIGN-IN (Firebase Auth popup)
+   EMAIL / PASSWORD SIGN-IN & SIGN-UP (Firebase Auth)
 ───────────────────────────────────────────── */
-function setGoogleBtnBusy(busy) {
-  const btn = document.getElementById('googleSignInBtn');
-  if (!btn) return;
-  btn.disabled = busy;
-  btn.innerHTML = busy
-    ? '<span class="auth-spinner" style="border-color:rgba(43,87,154,0.3);border-top-color:#2b579a;"></span> Signing in…'
-    : '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt=""> Sign in with Google';
+let authMode = 'signin';
+
+function switchAuthMode(mode) {
+  authMode = mode;
+  document.getElementById('tabSignIn').classList.toggle('active', mode === 'signin');
+  document.getElementById('tabSignUp').classList.toggle('active', mode === 'signup');
+  document.getElementById('fieldName').style.display = mode === 'signup' ? 'block' : 'none';
+  document.getElementById('fieldConfirm').style.display = mode === 'signup' ? 'block' : 'none';
+  document.getElementById('authPassword').setAttribute('autocomplete', mode === 'signup' ? 'new-password' : 'current-password');
+  setAuthBtnBusy(false, mode === 'signup' ? 'Create Account' : 'Sign In');
+  document.getElementById('authSwitchNote').innerHTML = mode === 'signup'
+    ? `Already have an account? <a onclick="switchAuthMode('signin')">Sign in</a>`
+    : `Don't have an account? <a onclick="switchAuthMode('signup')">Sign up</a>`;
+  document.getElementById('authMsg').className = 'auth-msg';
 }
 
-async function signInWithGoogle() {
-  setGoogleBtnBusy(true);
-  showAuthMsg('authMsg', 'info', 'Opening Google sign-in…');
-  try {
-    await auth.signInWithPopup(googleProvider);
-    // onAuthStateChanged -> handleAuthState() takes it from here
-  } catch (e) {
-    console.error(e);
-    setGoogleBtnBusy(false);
-    if (e.code === 'auth/popup-closed-by-user') {
-      document.getElementById('authMsg').className = 'auth-msg';
-    } else {
-      showAuthMsg('authMsg', 'error', 'Sign-in failed. Please try again.');
+function setAuthBtnBusy(busy, label) {
+  const btn = document.getElementById('authSubmitBtn');
+  if (!btn) return;
+  btn.disabled = busy;
+  btn.textContent = busy ? 'Please wait…' : label;
+}
+
+function authErrorMessage(e) {
+  const map = {
+    'auth/email-already-in-use': 'An account with this email already exists — try signing in instead.',
+    'auth/invalid-email': 'That email address looks invalid.',
+    'auth/weak-password': 'Password is too weak — use at least 6 characters.',
+    'auth/user-not-found': 'No account found with that email.',
+    'auth/wrong-password': 'Incorrect password.',
+    'auth/invalid-credential': 'Incorrect email or password.',
+    'auth/too-many-requests': 'Too many attempts — please wait a moment and try again.'
+  };
+  return map[e.code] || 'Something went wrong. Please try again.';
+}
+
+async function handleAuthSubmit() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  document.getElementById('authMsg').className = 'auth-msg';
+
+  if (!email || !password) {
+    showAuthMsg('authMsg', 'error', 'Please fill in your email and password.');
+    return;
+  }
+
+  if (authMode === 'signup') {
+    const name = document.getElementById('authName').value.trim();
+    const confirmPassword = document.getElementById('authConfirmPassword').value;
+    if (!name) { showAuthMsg('authMsg', 'error', 'Please enter your name.'); return; }
+    if (password.length < 6) { showAuthMsg('authMsg', 'error', 'Password must be at least 6 characters.'); return; }
+    if (password !== confirmPassword) { showAuthMsg('authMsg', 'error', 'Passwords do not match.'); return; }
+
+    setAuthBtnBusy(true, 'Create Account');
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(email, password);
+      await cred.user.updateProfile({ displayName: name });
+      // onAuthStateChanged -> handleAuthState() takes it from here
+    } catch (e) {
+      console.error(e);
+      setAuthBtnBusy(false, 'Create Account');
+      showAuthMsg('authMsg', 'error', authErrorMessage(e));
+    }
+  } else {
+    setAuthBtnBusy(true, 'Sign In');
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+      // onAuthStateChanged -> handleAuthState() takes it from here
+    } catch (e) {
+      console.error(e);
+      setAuthBtnBusy(false, 'Sign In');
+      showAuthMsg('authMsg', 'error', authErrorMessage(e));
     }
   }
 }
@@ -1145,7 +1188,6 @@ async function ensureUserProfile() {
     patch.isPro = false;
     patch.plan = 'free';
     patch.planExpiresAt = null;
-    patch.welcomeEmailSent = false;
   }
   await ref.set(patch, { merge: true });
   return isNewUser;
@@ -1416,7 +1458,6 @@ async function confirmCreateDoc() {
     return;
   }
   const title = document.getElementById('docNameInput').value.trim() || 'Untitled Document';
-  const wasFirstDoc = getActiveDocCount() === 0;
   closeModal('createDocModal');
   setStatus('Creating document…');
   try {
@@ -1427,7 +1468,6 @@ async function confirmCreateDoc() {
     });
     logActivity('create_doc');
     setStatus('Document "' + title + '" created.');
-    if (wasFirstDoc) sendFirstDocumentWelcomeEmail(title);
   } catch (e) {
     console.warn(e);
     setStatus('Could not create document — try again.');
