@@ -180,6 +180,37 @@
 }
 .auth-trust-note b { color:#555; }
 
+/* ── AUTH DIVIDER + EMAIL FORM ── */
+.auth-divider { display:flex; align-items:center; gap:10px; margin:18px 0; }
+.auth-divider::before, .auth-divider::after { content:''; flex:1; height:1px; background:#e4e4e4; }
+.auth-divider span { font-family:'Space Grotesk',sans-serif; font-size:11px; color:#aaa; text-transform:uppercase; letter-spacing:0.6px; }
+.auth-field { margin-bottom:12px; }
+.auth-field label {
+  display:block; font-family:'Space Grotesk',sans-serif; font-size:11px; font-weight:600;
+  color:#777; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:5px;
+}
+.auth-field input {
+  width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:6px;
+  font-size:13px; font-family:'Space Grotesk',sans-serif; outline:none; transition:border-color 0.15s,box-shadow 0.15s;
+}
+.auth-field input:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(43,87,154,0.15); }
+.auth-submit-btn {
+  width:100%; padding:11px; border:none; border-radius:6px; background:var(--accent);
+  color:#fff; font-size:13px; font-weight:600; cursor:pointer; font-family:'Space Grotesk',sans-serif;
+  transition:background 0.15s; margin-top:2px;
+}
+.auth-submit-btn:hover { background:#1e3f73; }
+.auth-submit-btn:disabled { opacity:0.6; cursor:not-allowed; }
+.auth-switch-row {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-top:14px; font-family:'Space Grotesk',sans-serif; font-size:12px; color:#777;
+}
+.auth-link-btn {
+  background:none; border:none; color:var(--accent); font-weight:600; cursor:pointer;
+  font-family:'Space Grotesk',sans-serif; font-size:12px; padding:0;
+}
+.auth-link-btn:hover { text-decoration:underline; }
+
 /* ── USER BADGE ── */
 .user-badge {
   display:flex; align-items:center; gap:8px; cursor:pointer;
@@ -543,9 +574,30 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
           Sign in with Google
         </button>
       </div>
+
+      <div class="auth-divider"><span>or</span></div>
+
+      <form id="emailAuthForm" onsubmit="event.preventDefault(); onEmailAuthSubmit();">
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="authEmailInput" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="authPasswordInput" placeholder="••••••••" autocomplete="current-password" required minlength="6">
+        </div>
+        <button type="submit" class="auth-submit-btn" id="emailAuthSubmitBtn">Sign In</button>
+      </form>
+
+      <div class="auth-switch-row">
+        <span id="authSwitchPrompt">Don't have an account?</span>
+        <button type="button" class="auth-link-btn" id="authSwitchModeBtn" onclick="toggleAuthMode()">Sign up</button>
+        <button type="button" class="auth-link-btn" id="authForgotBtn" onclick="onForgotPassword()">Forgot password?</button>
+      </div>
+
       <div class="auth-msg" id="authMsg"></div>
       <div class="auth-trust-note">
-        We use <b>Google Sign-In</b> via Firebase Authentication, so every account is tied to a real,<br>verified email address. No passwords to remember.
+        Sign in with <b>Google</b> or your <b>email & password</b>, powered by Firebase Authentication.
       </div>
     </div>
   </div>
@@ -958,6 +1010,7 @@ async function handleAuthState(user) {
     document.getElementById('authMsg').className = 'auth-msg';
     document.getElementById('authModal').classList.add('open');
     setGoogleBtnBusy(false);
+    setEmailAuthBusy(false);
   }
 }
 
@@ -1037,6 +1090,96 @@ async function signInWithGoogle() {
 function showAuthMsg(id, type, text) {
   const el = document.getElementById(id);
   el.textContent = text; el.className = 'auth-msg ' + type;
+}
+
+/* ─────────────────────────────────────────────
+   EMAIL / PASSWORD SIGN-IN (Firebase Auth)
+   Same onAuthStateChanged listener above handles
+   both providers identically once a session
+   exists — no separate code path is needed past
+   this point.
+───────────────────────────────────────────── */
+let authMode = 'signin'; // 'signin' | 'signup'
+
+function toggleAuthMode() {
+  authMode = authMode === 'signin' ? 'signup' : 'signin';
+  const submitBtn = document.getElementById('emailAuthSubmitBtn');
+  const prompt = document.getElementById('authSwitchPrompt');
+  const switchBtn = document.getElementById('authSwitchModeBtn');
+  const forgotBtn = document.getElementById('authForgotBtn');
+  if (authMode === 'signup') {
+    submitBtn.textContent = 'Create Account';
+    prompt.textContent = 'Already have an account?';
+    switchBtn.textContent = 'Sign in';
+    forgotBtn.style.display = 'none';
+  } else {
+    submitBtn.textContent = 'Sign In';
+    prompt.textContent = "Don't have an account?";
+    switchBtn.textContent = 'Sign up';
+    forgotBtn.style.display = 'inline-block';
+  }
+  document.getElementById('authMsg').className = 'auth-msg';
+}
+
+function setEmailAuthBusy(busy) {
+  const btn = document.getElementById('emailAuthSubmitBtn');
+  if (!btn) return;
+  btn.disabled = busy;
+  if (busy) {
+    btn.dataset.label = btn.textContent;
+    btn.innerHTML = '<span class="auth-spinner"></span> ' + (authMode === 'signup' ? 'Creating account…' : 'Signing in…');
+  } else if (btn.dataset.label) {
+    btn.textContent = btn.dataset.label;
+  }
+}
+
+function friendlyAuthError(e) {
+  switch (e.code) {
+    case 'auth/invalid-email':        return 'That email address looks invalid.';
+    case 'auth/user-not-found':
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':   return 'Incorrect email or password.';
+    case 'auth/email-already-in-use': return 'An account with that email already exists — try signing in instead.';
+    case 'auth/weak-password':        return 'Please choose a password with at least 6 characters.';
+    case 'auth/too-many-requests':    return 'Too many attempts. Please wait a moment and try again.';
+    default:                          return 'Something went wrong. Please try again.';
+  }
+}
+
+async function onEmailAuthSubmit() {
+  const email = document.getElementById('authEmailInput').value.trim();
+  const password = document.getElementById('authPasswordInput').value;
+  if (!email || !password) return;
+
+  setEmailAuthBusy(true);
+  showAuthMsg('authMsg', 'info', authMode === 'signup' ? 'Creating your account…' : 'Signing in…');
+  try {
+    if (authMode === 'signup') {
+      await auth.createUserWithEmailAndPassword(email, password);
+    } else {
+      await auth.signInWithEmailAndPassword(email, password);
+    }
+    // onAuthStateChanged -> handleAuthState() takes it from here
+  } catch (e) {
+    console.error(e);
+    setEmailAuthBusy(false);
+    showAuthMsg('authMsg', 'error', friendlyAuthError(e));
+  }
+}
+
+async function onForgotPassword() {
+  const email = document.getElementById('authEmailInput').value.trim();
+  if (!email) {
+    showAuthMsg('authMsg', 'error', 'Enter your email above first, then tap "Forgot password?".');
+    return;
+  }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    showAuthMsg('authMsg', 'success', 'Password reset email sent — check your inbox.');
+  } catch (e) {
+    console.error(e);
+    showAuthMsg('authMsg', 'error', friendlyAuthError(e));
+  }
 }
 
 /* ─────────────────────────────────────────────
