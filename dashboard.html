@@ -1,0 +1,2167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+
+<title>Pro Document — Dashboard</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#2b579a">
+
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+</head>
+<style>
+:root {
+  --bg: #f3f3f3;
+  --white: #ffffff;
+  --sidebar-bg: #2b579a;
+  --sidebar-text: #ffffff;
+  --sidebar-hover: #1e3f73;
+  --sidebar-active: #16305a;
+  --accent: #2b579a;
+  --accent-light: #dce6f7;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #d0d0d0;
+  --danger: #c0392b;
+  --toolbar-bg: #f8f8f8;
+  --card-hover: #eaf0fb;
+  --shadow: 0 1px 4px rgba(0,0,0,0.12);
+  --shadow-hover: 0 4px 16px rgba(0,0,0,0.16);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── LOADING SCREEN ── */
+#loadingScreen {
+  position: fixed; inset: 0;
+  background: #0a1628;
+  z-index: 9999;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  overflow: hidden;
+}
+#loadingScreen::before {
+  content: ''; position: absolute; inset: -50%;
+  background-image:
+    linear-gradient(rgba(43,87,154,0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(43,87,154,0.15) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: gridPan 12s linear infinite;
+}
+@keyframes gridPan { 0%{transform:translate(0,0)} 100%{transform:translate(60px,60px)} }
+#loadingScreen::after {
+  content: ''; position: absolute;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(43,87,154,0.25) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: bgPulse 3s ease-in-out infinite;
+}
+@keyframes bgPulse { 0%,100%{transform:scale(1);opacity:0.7} 50%{transform:scale(1.15);opacity:1} }
+.loader-content { position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; }
+.loader-ring { position:relative; width:130px; height:130px; margin-bottom:36px; }
+.loader-ring-outer {
+  position:absolute; inset:0; border-radius:50%;
+  border:2px solid rgba(43,87,154,0.3);
+  border-top-color:#4a90d9; border-right-color:rgba(74,144,217,0.6);
+  animation:spinA 1.4s linear infinite;
+}
+.loader-ring-inner {
+  position:absolute; inset:14px; border-radius:50%;
+  border:2px solid rgba(43,87,154,0.2);
+  border-bottom-color:#2b579a; border-left-color:rgba(43,87,154,0.5);
+  animation:spinA 0.9s linear infinite reverse;
+}
+.loader-ring-dot {
+  position:absolute; inset:28px; border-radius:50%;
+  background:radial-gradient(circle at 40% 40%, #4a90d9, #2b579a);
+  box-shadow:0 0 30px rgba(74,144,217,0.6),0 0 60px rgba(43,87,154,0.3);
+  display:flex; align-items:center; justify-content:center; font-size:26px;
+  animation:logoPop 0.6s ease-out 0.3s both;
+}
+@keyframes logoPop { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+@keyframes spinA { to{transform:rotate(360deg)} }
+.loader-brand {
+  font-family:'Outfit',sans-serif; font-size:32px; font-weight:800;
+  color:#fff; letter-spacing:-0.5px;
+  animation:fadeUp 0.7s ease-out 0.5s both;
+}
+.loader-brand span { color:#4a90d9; }
+.loader-tagline {
+  font-family:'Space Grotesk',sans-serif; font-size:12px; font-weight:500;
+  color:rgba(255,255,255,0.45); letter-spacing:3px; text-transform:uppercase; margin-top:6px;
+  animation:fadeUp 0.7s ease-out 0.7s both;
+}
+.loader-progress-wrap { margin-top:48px; width:280px; animation:fadeUp 0.7s ease-out 0.9s both; }
+.loader-progress-label {
+  display:flex; justify-content:space-between;
+  font-family:'Space Grotesk',sans-serif; font-size:11px;
+  color:rgba(255,255,255,0.4); margin-bottom:8px;
+}
+.loader-progress-bar { height:3px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden; }
+.loader-progress-fill {
+  height:100%; background:linear-gradient(90deg,#2b579a,#4a90d9,#7bb8f0);
+  border-radius:2px; width:0%; transition:width 0.4s ease;
+  box-shadow:0 0 12px rgba(74,144,217,0.8);
+}
+.loader-status { font-family:'Space Grotesk',sans-serif; font-size:11px; color:rgba(255,255,255,0.35); text-align:center; margin-top:10px; min-height:16px; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.loader-particles { position:absolute; inset:0; pointer-events:none; }
+.particle {
+  position:absolute; width:2px; height:2px;
+  background:rgba(74,144,217,0.6); border-radius:50%;
+  animation:floatUp var(--dur) linear infinite;
+  animation-delay:var(--delay); left:var(--x); bottom:-10px;
+}
+@keyframes floatUp { 0%{transform:translateY(0) scale(1);opacity:0.8} 100%{transform:translateY(-100vh) scale(0);opacity:0} }
+#loadingScreen.fade-out { animation:screenFadeOut 0.8s ease forwards; }
+@keyframes screenFadeOut { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(1.04);pointer-events:none} }
+
+/* ── AUTH MODAL ── */
+#authModal {
+  display:none; position:fixed; inset:0;
+  background:rgba(10,22,40,0.92); backdrop-filter:blur(8px);
+  z-index:8888; align-items:center; justify-content:center;
+}
+#authModal.open { display:flex; }
+.auth-card {
+  background:#fff; border-radius:12px; width:420px; overflow:hidden;
+  box-shadow:0 24px 80px rgba(0,0,0,0.5);
+  animation:authPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes authPop { from{opacity:0;transform:scale(0.85) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.auth-header {
+  background:linear-gradient(135deg,#1a3a6b 0%,#2b579a 60%,#3b6fbf 100%);
+  padding:32px 32px 28px; text-align:center; position:relative; overflow:hidden;
+}
+.auth-header::before {
+  content:''; position:absolute; width:200px; height:200px;
+  background:rgba(255,255,255,0.05); border-radius:50%; top:-60px; right:-40px;
+}
+.auth-logo-circle {
+  width:64px; height:64px; background:rgba(255,255,255,0.15); border-radius:50%;
+  display:flex; align-items:center; justify-content:center; font-size:28px;
+  margin:0 auto 16px; border:2px solid rgba(255,255,255,0.3);
+}
+.auth-title { font-family:'Outfit',sans-serif; font-size:22px; font-weight:700; color:#fff; margin-bottom:4px; }
+.auth-sub { font-family:'Space Grotesk',sans-serif; font-size:12px; color:rgba(255,255,255,0.6); letter-spacing:0.5px; }
+.auth-body { padding:32px; }
+.auth-msg { margin-top:16px; padding:10px 14px; border-radius:7px; font-family:'Space Grotesk',sans-serif; font-size:12px; text-align:center; display:none; }
+.auth-msg.error  { background:#fef0f0; color:#c0392b; border:1px solid #f5c6c6; display:block; }
+.auth-msg.success{ background:#edfaf1; color:#27ae60; border:1px solid #a9e5c3; display:block; }
+.auth-msg.info   { background:#eef4fd; color:#2b579a; border:1px solid #b8d0f5; display:block; }
+.auth-spinner {
+  display:inline-block; width:14px; height:14px;
+  border:2px solid rgba(255,255,255,0.4); border-top-color:white;
+  border-radius:50%; animation:spinA 0.7s linear infinite;
+  vertical-align:middle; margin-right:6px;
+}
+.gsi-wrap { display:flex; justify-content:center; margin-top:4px; min-height:44px; }
+.google-btn {
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; padding:11px 16px; border-radius:24px; border:1px solid #dadce0;
+  background:#fff; color:#3c4043; font-family:'Space Grotesk',sans-serif;
+  font-size:14px; font-weight:600; cursor:pointer; transition:box-shadow 0.15s,background 0.15s;
+}
+.google-btn:hover { background:#f8f9fa; box-shadow:0 1px 4px rgba(0,0,0,0.15); }
+.google-btn:disabled { opacity:0.6; cursor:not-allowed; }
+.google-btn img { width:18px; height:18px; }
+.auth-trust-note {
+  margin-top:18px; text-align:center; font-family:'Space Grotesk',sans-serif;
+  font-size:11px; color:#999; line-height:1.5;
+}
+.auth-trust-note b { color:#555; }
+
+/* ── AUTH DIVIDER + EMAIL FORM ── */
+.auth-divider { display:flex; align-items:center; gap:10px; margin:18px 0; }
+.auth-divider::before, .auth-divider::after { content:''; flex:1; height:1px; background:#e4e4e4; }
+.auth-divider span { font-family:'Space Grotesk',sans-serif; font-size:11px; color:#aaa; text-transform:uppercase; letter-spacing:0.6px; }
+.auth-field { margin-bottom:12px; }
+.auth-field label {
+  display:block; font-family:'Space Grotesk',sans-serif; font-size:11px; font-weight:600;
+  color:#777; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:5px;
+}
+.auth-field input {
+  width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:6px;
+  font-size:13px; font-family:'Space Grotesk',sans-serif; outline:none; transition:border-color 0.15s,box-shadow 0.15s;
+}
+.auth-field input:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(43,87,154,0.15); }
+.auth-submit-btn {
+  width:100%; padding:11px; border:none; border-radius:6px; background:var(--accent);
+  color:#fff; font-size:13px; font-weight:600; cursor:pointer; font-family:'Space Grotesk',sans-serif;
+  transition:background 0.15s; margin-top:2px;
+}
+.auth-submit-btn:hover { background:#1e3f73; }
+.auth-submit-btn:disabled { opacity:0.6; cursor:not-allowed; }
+.auth-switch-row {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-top:14px; font-family:'Space Grotesk',sans-serif; font-size:12px; color:#777;
+}
+.auth-link-btn {
+  background:none; border:none; color:var(--accent); font-weight:600; cursor:pointer;
+  font-family:'Space Grotesk',sans-serif; font-size:12px; padding:0;
+}
+.auth-link-btn:hover { text-decoration:underline; }
+
+/* ── USER BADGE ── */
+.user-badge {
+  display:flex; align-items:center; gap:8px; cursor:pointer;
+  padding:3px 8px 3px 4px; border-radius:20px; transition:background 0.15s; position:relative;
+}
+.user-badge:hover { background:rgba(255,255,255,0.15); }
+.user-avatar {
+  width:26px; height:26px; background:rgba(255,255,255,0.25); border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; font-family:'Outfit',sans-serif; color:white;
+  border:1.5px solid rgba(255,255,255,0.4); flex-shrink:0; overflow:hidden;
+}
+.user-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.user-name-display {
+  font-family:'Space Grotesk',sans-serif; font-size:12px; font-weight:500;
+  color:rgba(255,255,255,0.9); max-width:120px; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis;
+}
+.user-dropdown {
+  position:absolute; top:calc(100% + 8px); right:0; background:white;
+  border-radius:8px; box-shadow:0 8px 32px rgba(0,0,0,0.2);
+  border:1px solid #e0e6ef; min-width:210px; z-index:1000;
+  display:none; overflow:hidden; animation:dropIn 0.2s ease;
+}
+@keyframes dropIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+.user-dropdown.open { display:block; }
+.user-dropdown-header { padding:14px 16px; background:#f8fafd; border-bottom:1px solid #e8ecf0; }
+.user-dropdown-name { font-family:'Outfit',sans-serif; font-size:14px; font-weight:600; color:#1a1a1a; }
+.user-dropdown-email { font-family:'Space Grotesk',sans-serif; font-size:11px; color:#999; margin-top:2px; }
+.user-dropdown-item {
+  display:flex; align-items:center; gap:10px; padding:10px 16px;
+  font-family:'Space Grotesk',sans-serif; font-size:12px; color:#444;
+  cursor:pointer; transition:background 0.15s; border:none; background:none; width:100%; text-align:left;
+}
+.user-dropdown-item:hover { background:#f0f4fa; }
+.user-dropdown-item.danger { color:#c0392b; }
+.user-dropdown-item.upgrade { color:#9a7a00; }
+.user-dropdown-item .item-icon { font-size:14px; width:18px; }
+.user-dropdown-divider { height:1px; background:#f0f0f0; margin:4px 0; }
+
+/* ── PLAN TAG (title bar) ── */
+.plan-tag {
+  font-size:9px; font-weight:700; padding:2px 7px; border-radius:8px;
+  background:rgba(255,255,255,0.2); letter-spacing:0.5px; margin-left:2px;
+  font-family:'Space Grotesk',sans-serif;
+}
+.plan-tag.pro { background:#f5c518; color:#3a2c00; }
+
+/* ── BODY / SHELL ── */
+body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); color:var(--text); font-size:13px; margin:0; padding:0; }
+#appShell {
+  display:none; flex-direction:column; height:100vh; overflow:hidden;
+  opacity:0; transition:opacity 0.5s ease;
+}
+#appShell.visible { display:flex; opacity:1; }
+
+/* ── TITLE BAR ── */
+.title-bar {
+  background:var(--sidebar-bg); color:white; padding:8px 16px;
+  display:flex; align-items:center; gap:12px; font-size:12px;
+  user-select:none; flex-shrink:0;
+}
+.title-bar .app-name { font-family:'Outfit',sans-serif; font-weight:700; font-size:14px; letter-spacing:0.3px; }
+.title-bar .doc-name { opacity:0.6; font-size:12px; }
+.title-bar-spacer { flex:1; }
+
+/* ── RIBBON ── */
+.ribbon {
+  background:var(--toolbar-bg); border-bottom:1px solid var(--border);
+  padding:0 16px; display:flex; align-items:center; justify-content:space-between;
+  gap:8px; min-height:44px; flex-shrink:0;
+}
+.ribbon-left { display:flex; align-items:center; gap:8px; }
+.ribbon-logo {
+  display:flex; align-items:center; gap:8px;
+  font-family:'Outfit',sans-serif; font-weight:700; font-size:15px;
+  color:var(--accent); padding-right:12px; border-right:1px solid var(--border);
+}
+.ribbon-logo .logo-icon {
+  background:var(--accent); color:white; width:28px; height:28px;
+  border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:16px;
+}
+.ribbon-btn {
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  padding:6px 10px; border:none; background:transparent; border-radius:4px;
+  cursor:pointer; color:var(--text); font-size:11px; font-family:'Space Grotesk',sans-serif;
+  transition:background 0.15s; min-width:52px;
+}
+.ribbon-btn:hover { background:var(--accent-light); color:var(--accent); }
+.ribbon-btn .icon { font-size:18px; line-height:1; }
+.ribbon-btn.primary { background:var(--accent); color:white; }
+.ribbon-btn.primary:hover { background:#1e3f73; }
+.ribbon-btn.gold { background:#f5c518; color:#3a2c00; }
+.ribbon-btn.gold:hover { background:#e0b400; }
+.ribbon-sep { width:1px; height:36px; background:var(--border); margin:0 4px; }
+.search-bar {
+  display:flex; align-items:center; gap:6px; background:white;
+  border:1px solid var(--border); border-radius:4px; padding:5px 10px; width:260px;
+}
+.search-bar input { border:none; outline:none; font-size:13px; width:100%; font-family:'Space Grotesk',sans-serif; color:var(--text); }
+.search-bar .search-icon { color:var(--muted); font-size:14px; }
+
+/* ── LAYOUT ── */
+.layout { display:flex; flex:1; overflow:hidden; }
+.sidebar {
+  width:220px; background:var(--sidebar-bg); color:var(--sidebar-text);
+  display:flex; flex-direction:column; overflow:hidden; flex-shrink:0;
+}
+.sidebar-section { padding:8px; }
+.sidebar-label {
+  font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.8px;
+  opacity:0.6; padding:8px 8px 4px; font-family:'Space Grotesk',sans-serif;
+}
+.nav-item {
+  display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:4px;
+  cursor:pointer; transition:background 0.15s; font-size:13px; user-select:none;
+}
+.nav-item:hover { background:var(--sidebar-hover); }
+.nav-item.active { background:var(--sidebar-active); font-weight:600; }
+.nav-item .nav-icon { font-size:15px; width:18px; text-align:center; }
+.nav-item .nav-badge {
+  margin-left:auto; background:rgba(255,255,255,0.2); color:white;
+  font-size:10px; padding:1px 6px; border-radius:10px; min-width:20px; text-align:center;
+}
+.sidebar-divider { height:1px; background:rgba(255,255,255,0.15); margin:4px 12px; }
+.folder-section { flex:1; overflow-y:auto; padding:0 8px 8px; }
+.folder-section::-webkit-scrollbar { width:4px; }
+.folder-section::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.2); border-radius:2px; }
+.folder-item {
+  display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:4px;
+  cursor:pointer; font-size:12px; color:rgba(255,255,255,0.85); transition:background 0.15s; user-select:none;
+}
+.folder-item:hover { background:var(--sidebar-hover); }
+.folder-item.active { background:var(--sidebar-active); }
+.folder-children { padding-left:16px; }
+
+/* ── PLAN PANEL (sidebar, bottom) ── */
+.plan-panel { margin:8px; padding:12px; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); flex-shrink:0; }
+.plan-panel-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.plan-pill { font-size:9px; padding:2px 7px; border-radius:10px; font-weight:700; letter-spacing:0.4px; }
+.plan-pill.free { background:rgba(255,255,255,0.18); color:#fff; }
+.plan-pill.pro { background:#f5c518; color:#3a2c00; }
+.usage-row { font-size:11px; opacity:0.85; margin-bottom:4px; display:flex; justify-content:space-between; }
+.usage-bar { height:4px; background:rgba(255,255,255,0.15); border-radius:2px; overflow:hidden; margin-bottom:8px; }
+.usage-fill { height:100%; background:#4a90d9; border-radius:2px; transition:width .3s; }
+.usage-fill.full { background:#f5c518; }
+.plan-upgrade-btn {
+  width:100%; padding:7px; border:none; border-radius:6px;
+  background:linear-gradient(135deg,#4a90d9,#7bb8f0); color:#0a1628;
+  font-weight:700; font-size:11px; cursor:pointer; font-family:'Space Grotesk',sans-serif;
+}
+.plan-upgrade-btn:hover { filter:brightness(1.05); }
+.plan-expiry { font-size:10px; opacity:0.7; margin-top:6px; }
+
+/* ── MAIN ── */
+.main { flex:1; overflow:auto; padding:20px 28px; }
+.main::-webkit-scrollbar { width:8px; }
+.main::-webkit-scrollbar-thumb { background:#ccc; border-radius:4px; }
+.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.section-title { font-family:'Outfit',sans-serif; font-size:20px; font-weight:600; color:var(--text); }
+.view-toggle { display:flex; gap:4px; }
+.view-btn {
+  padding:5px 8px; border:1px solid var(--border); background:white;
+  border-radius:3px; cursor:pointer; font-size:14px; color:var(--muted); transition:all 0.15s;
+}
+.view-btn.active,.view-btn:hover { background:var(--accent); color:white; border-color:var(--accent); }
+
+/* ── DOC CARDS ── */
+.doc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
+.doc-list { display:flex; flex-direction:column; gap:4px; }
+.doc-card {
+  background:white; border:1px solid var(--border); border-radius:4px;
+  cursor:pointer; transition:box-shadow 0.2s,border-color 0.2s; overflow:hidden; position:relative;
+}
+.doc-card:hover { box-shadow:var(--shadow-hover); border-color:var(--accent); }
+.doc-card-preview {
+  height:120px; background:linear-gradient(135deg,#f0f4ff 0%,#e8ecf7 100%);
+  display:flex; align-items:center; justify-content:center;
+  border-bottom:1px solid var(--border); position:relative;
+}
+.doc-card-preview .doc-lines {
+  position:absolute; bottom:12px; left:12px; right:12px;
+  display:flex; flex-direction:column; gap:4px;
+}
+.doc-line { height:4px; background:rgba(43,87,154,0.2); border-radius:2px; }
+.doc-line:nth-child(2) { width:75%; }
+.doc-line:nth-child(3) { width:55%; }
+.doc-card-body { padding:10px 12px; }
+.doc-card-title { font-weight:600; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px; }
+.doc-card-meta { font-size:11px; color:var(--muted); }
+.doc-card-actions { padding:6px 8px; display:flex; gap:4px; flex-wrap:wrap; border-top:1px solid var(--border); background:#fafafa; }
+.doc-action-btn {
+  padding:3px 8px; border:1px solid var(--border); background:white; border-radius:3px;
+  cursor:pointer; font-size:11px; font-family:'Space Grotesk',sans-serif; color:var(--text); transition:all 0.15s;
+}
+.doc-action-btn:hover { background:var(--accent-light); border-color:var(--accent); color:var(--accent); }
+.doc-action-btn.danger:hover { background:#fce8e6; border-color:var(--danger); color:var(--danger); }
+.star-btn {
+  background:none; border:none; cursor:pointer; font-size:14px; color:#ccc;
+  position:absolute; top:8px; right:8px; transition:color 0.15s; z-index:2;
+}
+.star-btn.on { color:#f5c518; }
+.star-btn:hover { color:#f5c518; }
+.shared-badge {
+  position:absolute; top:8px; left:8px; background:rgba(43,87,154,0.9); color:#fff;
+  font-size:9px; font-weight:700; padding:2px 7px; border-radius:10px; letter-spacing:0.3px;
+  z-index:2; font-family:'Space Grotesk',sans-serif;
+}
+.doc-list-item {
+  background:white; border:1px solid var(--border); border-radius:3px;
+  display:flex; align-items:center; padding:8px 12px; gap:12px; cursor:pointer; transition:background 0.15s;
+}
+.doc-list-item:hover { background:var(--card-hover); }
+.doc-list-icon { font-size:22px; width:28px; text-align:center; }
+.doc-list-info { flex:1; min-width:0; }
+.doc-list-title { font-weight:500; font-size:13px; }
+.doc-list-meta { font-size:11px; color:var(--muted); }
+.doc-list-actions { display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end; }
+.trash-header {
+  background:#fff3cd; border:1px solid #ffc107; border-radius:4px;
+  padding:8px 14px; margin-bottom:16px; display:flex; align-items:center;
+  justify-content:space-between; font-size:12px;
+}
+.trash-header button {
+  background:var(--danger); color:white; border:none; border-radius:3px;
+  padding:4px 12px; cursor:pointer; font-size:12px; font-family:'Space Grotesk',sans-serif;
+}
+.empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
+.empty-state .empty-icon { font-size:56px; margin-bottom:16px; opacity:0.4; }
+.empty-state .empty-title { font-size:16px; font-weight:600; margin-bottom:6px; }
+.empty-state .empty-sub { font-size:13px; }
+
+/* ── STATUS BAR ── */
+.status-bar {
+  background:var(--accent); color:rgba(255,255,255,0.8); font-size:11px;
+  padding:3px 16px; display:flex; align-items:center; gap:20px;
+  flex-shrink:0; font-family:'Space Grotesk',sans-serif;
+}
+
+/* ── MODALS ── */
+.modal-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.4); z-index:999;
+  align-items:center; justify-content:center;
+}
+.modal-overlay.open { display:flex; }
+.modal { background:white; border-radius:4px; box-shadow:0 8px 32px rgba(0,0,0,0.3); width:400px; overflow:hidden; max-height:90vh; overflow-y:auto; }
+.modal-header {
+  background:var(--accent); color:white; padding:12px 16px; font-weight:600;
+  font-size:14px; display:flex; align-items:center; justify-content:space-between; font-family:'Outfit',sans-serif;
+  position:sticky; top:0; z-index:2;
+}
+.modal-header button { background:none; border:none; color:white; cursor:pointer; font-size:18px; }
+.modal-body { padding:20px; }
+.modal-body label {
+  font-size:12px; font-weight:600; display:block; margin-bottom:6px; color:var(--muted);
+  text-transform:uppercase; letter-spacing:0.5px; font-family:'Space Grotesk',sans-serif;
+}
+.modal-body input {
+  width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:3px;
+  font-size:13px; font-family:'Space Grotesk',sans-serif; outline:none;
+}
+.modal-body input:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(43,87,154,0.15); }
+.modal-footer { padding:12px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+.btn { padding:7px 16px; border-radius:3px; border:1px solid var(--border); cursor:pointer; font-size:12px; font-family:'Space Grotesk',sans-serif; font-weight:500; }
+.btn-primary { background:var(--accent); color:white; border-color:var(--accent); }
+.btn-primary:hover { background:#1e3f73; }
+.btn-secondary { background:white; }
+.btn-secondary:hover { background:var(--bg); }
+
+.online-dot { width:7px; height:7px; background:#27ae60; border-radius:50%; display:inline-block; box-shadow:0 0 0 2px rgba(39,174,96,0.3); animation:onlinePulse 2s ease infinite; }
+@keyframes onlinePulse { 0%,100%{box-shadow:0 0 0 2px rgba(39,174,96,0.3)} 50%{box-shadow:0 0 0 4px rgba(39,174,96,0.15)} }
+
+/* ── UPGRADE / PAYMENT MODAL ── */
+.up-reason {
+  background:#fff7e0; border:1px solid #f5c518; color:#7a5d00;
+  font-size:12px; padding:9px 12px; border-radius:6px; margin-bottom:14px; text-align:center;
+}
+.up-toggle { display:flex; border-radius:8px; overflow:hidden; border:1px solid var(--accent); margin:2px 0 14px; }
+.up-toggle button {
+  flex:1; padding:9px; border:none; cursor:pointer; font-size:12px;
+  background:#fff; color:var(--accent); font-family:'Space Grotesk',sans-serif; font-weight:600;
+}
+.up-toggle button.active { background:var(--accent); color:#fff; }
+.up-amount { font-size:24px; font-weight:700; color:var(--accent); text-align:center; margin:0 0 14px; font-family:'Outfit',sans-serif; }
+.up-features { list-style:none; padding:0; margin:0 0 16px; font-size:12px; color:#444; }
+.up-features li { padding:5px 0 5px 22px; position:relative; }
+.up-features li::before { content:'✓'; position:absolute; left:0; color:#27ae60; font-weight:700; }
+.up-qr-wrap { text-align:center; margin:10px 0 14px; }
+.up-qr-wrap img { width:180px; height:180px; border-radius:8px; border:1px solid var(--border); }
+.up-pay-btn {
+  width:100%; padding:11px; border:none; border-radius:7px; background:var(--accent);
+  color:#fff; font-size:14px; font-weight:600; cursor:pointer; font-family:'Outfit',sans-serif;
+}
+.up-pay-btn:hover { background:#1e3f73; }
+.up-pay-btn:disabled { opacity:0.6; cursor:not-allowed; }
+.up-check-btn {
+  width:100%; padding:9px; border:1px solid var(--accent); border-radius:7px; background:#fff;
+  color:var(--accent); font-size:12px; font-weight:600; cursor:pointer;
+  font-family:'Space Grotesk',sans-serif; margin-top:8px;
+}
+.up-check-btn:hover { background:var(--accent-light); }
+.up-status { margin-top:10px; padding:9px 12px; border-radius:6px; font-size:12px; text-align:center; display:none; }
+.up-status.show { display:block; }
+.up-status.success { background:#edfaf1; color:#27ae60; border:1px solid #a9e5c3; }
+.up-status.error { background:#fef0f0; color:#c0392b; border:1px solid #f5c6c6; }
+.up-status.info { background:#eef4fd; color:#2b579a; border:1px solid #b8d0f5; }
+.up-note { font-size:11px; color:#888; text-align:center; margin-top:10px; }
+
+/* ── SHARE MODAL ── */
+.share-toggle-row { display:flex; align-items:center; gap:8px; font-weight:500; text-transform:none; letter-spacing:0; color:var(--text); font-size:13px; cursor:pointer; }
+.share-toggle-row input[type="checkbox"] { width:16px; height:16px; cursor:pointer; }
+.share-link-row { display:none; flex-direction:column; gap:10px; margin-top:14px; }
+.share-link-row.show { display:flex; }
+.share-copy-row { display:flex; gap:6px; }
+.share-copy-row input[type="text"] { flex:1; font-size:12px; color:var(--muted); background:#fafafa; }
+.share-status-line { margin-top:10px; font-size:12px; color:var(--muted); }
+.share-perm-note { font-size:11px; color:#888; margin-top:4px; }
+</style>
+</head>
+<body>
+
+
+<!-- LOADING SCREEN -->
+<div id="loadingScreen">
+  <div class="loader-particles" id="particles"></div>
+  <div class="loader-content">
+    <div class="loader-ring">
+      <div class="loader-ring-outer"></div>
+      <div class="loader-ring-inner"></div>
+      <div class="loader-ring-dot">📋</div>
+    </div>
+    <div class="loader-brand">Pro <span>Document</span></div>
+    <div class="loader-tagline">Your intelligent workspace</div>
+    <div class="loader-progress-wrap">
+      <div class="loader-progress-label">
+        <span id="loaderStatusText">Initializing…</span>
+        <span id="loaderPct">0%</span>
+      </div>
+      <div class="loader-progress-bar">
+        <div class="loader-progress-fill" id="loaderFill"></div>
+      </div>
+      <div class="loader-status" id="loaderSub"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- AUTH MODAL -->
+<div id="authModal">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo-circle">📋</div>
+      <div class="auth-title">Pro Document</div>
+      <div class="auth-sub">Your intelligent workspace</div>
+    </div>
+    <div class="auth-body">
+      <div class="gsi-wrap" id="gsiButtonContainer">
+        <button type="button" class="google-btn" id="googleSignInBtn" onclick="signInWithGoogle()">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">
+          Sign in with Google
+        </button>
+      </div>
+
+      <div class="auth-divider"><span>or</span></div>
+
+      <form id="emailAuthForm" onsubmit="event.preventDefault(); onEmailAuthSubmit();">
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="authEmailInput" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="authPasswordInput" placeholder="••••••••" autocomplete="current-password" required minlength="6">
+        </div>
+        <button type="submit" class="auth-submit-btn" id="emailAuthSubmitBtn">Sign In</button>
+      </form>
+
+      <div class="auth-switch-row">
+        <span id="authSwitchPrompt">Don't have an account?</span>
+        <button type="button" class="auth-link-btn" id="authSwitchModeBtn" onclick="toggleAuthMode()">Sign up</button>
+        <button type="button" class="auth-link-btn" id="authForgotBtn" onclick="onForgotPassword()">Forgot password?</button>
+      </div>
+
+      <div class="auth-msg" id="authMsg"></div>
+      <div class="auth-trust-note">
+        Sign in with <b>Google</b> or your <b>email & password</b>, powered by Firebase Authentication.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="appShell">
+
+<div class="title-bar">
+  <span style="background:rgba(255,255,255,0.2);padding:2px 6px;border-radius:3px;font-size:13px;">📋</span>
+  <span class="app-name">Pro Document</span>
+  <span class="plan-tag" id="planTag">FREE</span>
+  <span class="doc-name">— Dashboard</span>
+  <div class="title-bar-spacer"></div>
+  <div class="user-badge" id="userBadge" onclick="toggleUserDropdown()">
+    <div class="user-avatar" id="userAvatarLetter">?</div>
+    <span class="user-name-display" id="userNameDisplay">Guest</span>
+    <span style="font-size:10px;opacity:0.6;">▾</span>
+    <div class="user-dropdown" id="userDropdown">
+      <div class="user-dropdown-header">
+        <div class="user-dropdown-name" id="ddName">—</div>
+        <div class="user-dropdown-email" id="ddEmail">—</div>
+      </div>
+      <button class="user-dropdown-item" onclick="openProfileModal()">
+        <span class="item-icon">👤</span> My Profile
+      </button>
+      <button class="user-dropdown-item" onclick="openActivityModal()">
+        <span class="item-icon">📊</span> Session History
+      </button>
+      <button class="user-dropdown-item upgrade" id="ddUpgradeItem" onclick="openUpgradeModal()">
+        <span class="item-icon">💎</span> Upgrade to Pro
+      </button>
+      <div class="user-dropdown-divider"></div>
+      <button class="user-dropdown-item danger" onclick="doLogout()">
+        <span class="item-icon">🚪</span> Sign Out
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="ribbon">
+  <div class="ribbon-left">
+    <div class="ribbon-logo">
+      <div class="logo-icon">📋</div>
+      Pro Document
+    </div>
+<button class="ribbon-btn" id="installBtn" style="display:none;">
+  <span class="icon">⬇️</span>
+  Install App
+</button>
+    <button class="ribbon-btn primary" onclick="openCreateDocModal()">
+      <span class="icon">📄</span> New Document
+    </button>
+    <button class="ribbon-btn" onclick="openCreateFolderModal()">
+      <span class="icon">📁</span> New Folder
+    </button>
+    <div class="ribbon-sep"></div>
+    <button class="ribbon-btn" onclick="setFilter('all')">
+      <span class="icon">🗂️</span> All Docs
+    </button>
+    <button class="ribbon-btn" onclick="setFilter('starred')">
+      <span class="icon">⭐</span> Starred
+    </button>
+    <button class="ribbon-btn" onclick="setFilter('recent')">
+      <span class="icon">🕐</span> Recent
+    </button>
+    <button class="ribbon-btn" onclick="setFilter('shared')">
+      <span class="icon">🤝</span> Shared
+    </button>
+    <div class="ribbon-sep"></div>
+    <button class="ribbon-btn gold" onclick="openUpgradeModal()">
+      <span class="icon">💎</span> Upgrade
+    </button>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#888;">
+      <span class="online-dot"></span>
+      <span id="sessionLabel">Connected</span>
+    </div>
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search documents…" oninput="render()">
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Navigation</div>
+      <div class="nav-item active" id="nav-all" onclick="setFilter('all')">
+        <span class="nav-icon">📋</span> All Documents
+        <span class="nav-badge" id="badge-all">0</span>
+      </div>
+      <div class="nav-item" id="nav-starred" onclick="setFilter('starred')">
+        <span class="nav-icon">⭐</span> Starred
+        <span class="nav-badge" id="badge-starred">0</span>
+      </div>
+      <div class="nav-item" id="nav-recent" onclick="setFilter('recent')">
+        <span class="nav-icon">🕐</span> Recent
+      </div>
+      <div class="nav-item" id="nav-shared" onclick="setFilter('shared')">
+        <span class="nav-icon">🤝</span> Shared with me
+        <span class="nav-badge" id="badge-shared">0</span>
+      </div>
+      <div class="nav-item" id="nav-trash" onclick="setFilter('trash')">
+        <span class="nav-icon">🗑️</span> Trash
+        <span class="nav-badge" id="badge-trash">0</span>
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Folders</div>
+    </div>
+    <div class="folder-section" id="folderTree"></div>
+    <div class="plan-panel" id="planPanel"></div>
+  </aside>
+  <main class="main">
+    <div class="section-header">
+      <div class="section-title" id="sectionTitle">All Documents</div>
+      <div class="view-toggle">
+        <button class="view-btn active" id="view-grid" onclick="setView('grid')" title="Grid view">⊞</button>
+        <button class="view-btn" id="view-list" onclick="setView('list')" title="List view">☰</button>
+      </div>
+    </div>
+    <div id="trashHeader" class="trash-header" style="display:none;">
+      <span>⚠️ Items in Trash will be permanently deleted after 30 days.</span>
+      <button onclick="emptyTrash()">🗑️ Empty Trash</button>
+    </div>
+    <div id="docContainer"></div>
+  </main>
+</div>
+
+<div class="status-bar">
+  <span id="statusText">Ready</span>
+  <span id="docCount"></span>
+  <span style="margin-left:auto;opacity:0.6;" id="lastSyncLabel"></span>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="createDocModal">
+  <div class="modal">
+    <div class="modal-header">📄 New Document <button onclick="closeModal('createDocModal')">×</button></div>
+    <div class="modal-body">
+      <label>Document Name</label>
+      <input type="text" id="docNameInput" placeholder="Untitled Document" onkeydown="if(event.key==='Enter')confirmCreateDoc()">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('createDocModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmCreateDoc()">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="createFolderModal">
+  <div class="modal">
+    <div class="modal-header">📁 New Folder <button onclick="closeModal('createFolderModal')">×</button></div>
+    <div class="modal-body">
+      <label>Folder Name</label>
+      <input type="text" id="folderNameInput" placeholder="My Folder" onkeydown="if(event.key==='Enter')confirmCreateFolder()">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('createFolderModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmCreateFolder()">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="renameModal">
+  <div class="modal">
+    <div class="modal-header">✏️ Rename Document <button onclick="closeModal('renameModal')">×</button></div>
+    <div class="modal-body">
+      <label>New Name</label>
+      <input type="text" id="renameInput" placeholder="Document name" onkeydown="if(event.key==='Enter')confirmRename()">
+      <input type="hidden" id="renameDocId">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('renameModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmRename()">Rename</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="activityModal">
+  <div class="modal" style="width:520px;">
+    <div class="modal-header">📊 Session History <button onclick="closeModal('activityModal')">×</button></div>
+    <div class="modal-body" style="padding:0;">
+      <div id="activityContent" style="padding:20px;max-height:360px;overflow-y:auto;font-family:'Space Grotesk',sans-serif;font-size:12px;">Loading…</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('activityModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal-overlay" id="shareModal">
+  <div class="modal" style="width:420px;">
+    <div class="modal-header">🔗 Share "<span id="shareDocTitle">Document</span>" <button onclick="closeModal('shareModal')">×</button></div>
+    <div class="modal-body">
+      <label class="share-toggle-row" style="text-transform:none;font-weight:500;">
+        <input type="checkbox" id="shareToggle" onchange="onShareToggleChange(this.checked)">
+        Enable link sharing
+      </label>
+
+      <div class="share-link-row" id="shareLinkRow">
+        <div>
+          <label>Anyone with the link can</label>
+          <select class="tb-select-like" id="sharePermSelect" onchange="onSharePermChange(this.value)"
+                  style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:3px;font-size:13px;font-family:inherit;">
+            <option value="view">View only</option>
+            <option value="edit">View and edit</option>
+          </select>
+          <div class="share-perm-note">Edit access lets anyone with the link change and save this document.</div>
+        </div>
+        <div class="share-copy-row">
+          <input type="text" id="shareLinkInput" readonly>
+          <button class="btn btn-secondary" onclick="copyShareLink()">Copy</button>
+        </div>
+      </div>
+
+      <div class="share-status-line" id="shareStatus"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('shareModal')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPGRADE / PAYMENT MODAL -->
+<div class="modal-overlay" id="upgradeModal">
+  <div class="modal" style="width:380px;">
+    <div class="modal-header">💎 Upgrade to Pro <button onclick="closeModal('upgradeModal')">×</button></div>
+    <div class="modal-body">
+      <div class="up-reason" id="upgradeReason" style="display:none;"></div>
+
+      <div class="up-toggle">
+        <button type="button" id="upMonthlyBtn" class="active" onclick="selectUpgradePlan('monthly')">Monthly</button>
+        <button type="button" id="upYearlyBtn" onclick="selectUpgradePlan('yearly')">Yearly</button>
+      </div>
+      <div class="up-amount" id="upPrice">₹199 / month</div>
+
+      <ul class="up-features">
+        <li>Unlimited folders</li>
+        <li>Unlimited documents</li>
+        <li>Advanced PDF & Word export</li>
+        <li>20-step version history</li>
+        <li>Priority cloud sync</li>
+      </ul>
+
+      <div class="up-qr-wrap">
+        <a id="upUpiLink" target="_blank"><img id="upQrImg" alt="Scan to pay with UPI"></a>
+      </div>
+
+      <button class="up-pay-btn" id="upPayBtn" onclick="submitUpgradePayment()">I've paid via GPay / UPI</button>
+      <button class="up-check-btn" onclick="checkApprovalStatus()">✓ I've already paid — check status</button>
+
+      <div class="up-status" id="upgradeStatus"></div>
+      <div class="up-note">Access unlocks after manual verification (usually within a few hours).</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /#appShell -->
+
+<!-- Firebase (compat build — keeps the rest of this file's plain-script style) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script>
+/* ─────────────────────────────────────────────
+   INCOMING SHARE LINK — captured FIRST, before
+   any other script on this page can touch the
+   URL (see the removeHTML() cleanup script at the
+   bottom of <body>, which strips the query string
+   from the address bar via history.replaceState
+   as soon as it runs). If we wait and re-parse
+   window.location.search later — e.g. inside the
+   async onAuthStateChanged callback, as this file
+   used to — that string is already gone by the
+   time we look, so every ?share=<id> link quietly
+   turns into "just open the normal dashboard".
+   Reading it into a plain variable right here, at
+   parse time, is what actually fixes that race.
+───────────────────────────────────────────── */
+let pendingShareId = new URLSearchParams(window.location.search).get('share');
+
+/* ─────────────────────────────────────────────
+   FIREBASE INIT
+───────────────────────────────────────────── */
+const firebaseConfig = {
+  apiKey: "AIzaSyBjM_4W6DsCfOOrcUW-BoTfttU0ZBAngUQ",
+  authDomain: "pro-document-1723a.firebaseapp.com",
+  projectId: "pro-document-1723a",
+  storageBucket: "pro-document-1723a.firebasestorage.app",
+  messagingSenderId: "358645984079",
+  appId: "1:358645984079:web:6be4b45228f5f35fa0333a"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+// Keep users signed in across visits/tabs (default is already 'local', set explicitly for clarity)
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+
+/* Freemium limits — enforced client-side; the source of truth for isPro
+   is the users/{uid} document, which only an admin (Firebase console /
+   a trusted Cloud Function) can flip — see firestore.rules */
+const FREE_MAX_FOLDERS = 1;
+const FREE_MAX_DOCS = 3;
+
+/* UPI payment config */
+const UPI_VPA = 'banerjeearnab.live@oksbi';
+const UPI_PAYEE_NAME = 'Pro Document';
+const PRO_PLANS = {
+  monthly: { price: 199,  label: '₹199 / month' },
+  yearly:  { price: 1999, label: '₹1999 / year (2 months free)' }
+};
+let selectedUpgradeBilling = 'monthly';
+
+/* ─────────────────────────────────────────────
+   LOADING SCREEN
+───────────────────────────────────────────── */
+let loaderFinished = false;
+
+(function initLoader() {
+  const pContainer = document.getElementById('particles');
+  for (let i = 0; i < 28; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.setProperty('--x', Math.random() * 100 + 'vw');
+    p.style.setProperty('--dur', (6 + Math.random() * 10) + 's');
+    p.style.setProperty('--delay', (Math.random() * 8) + 's');
+    pContainer.appendChild(p);
+  }
+  const steps = [
+    { pct: 15,  label: 'Loading resources…',      sub: 'Preparing workspace environment' },
+    { pct: 35,  label: 'Connecting to Firebase…', sub: 'Establishing secure connection' },
+    { pct: 55,  label: 'Authenticating session…', sub: 'Verifying credentials' },
+    { pct: 75,  label: 'Loading your workspace…', sub: 'Fetching documents & folders' },
+    { pct: 92,  label: 'Almost ready…',           sub: 'Applying your preferences' },
+    { pct: 100, label: 'Welcome back!',            sub: 'Launching dashboard…' }
+  ];
+  const fill = document.getElementById('loaderFill');
+  const pct  = document.getElementById('loaderPct');
+  const lbl  = document.getElementById('loaderStatusText');
+  const sub  = document.getElementById('loaderSub');
+  let idx = 0;
+  function nextStep() {
+    if (idx >= steps.length) return;
+    const s = steps[idx++];
+    fill.style.width = s.pct + '%'; pct.textContent = s.pct + '%';
+    lbl.textContent  = s.label;     sub.textContent  = s.sub;
+    if (idx < steps.length) setTimeout(nextStep, 380 + Math.random() * 320);
+    else setTimeout(finishLoading, 600);
+  }
+  setTimeout(nextStep, 300);
+})();
+
+function finishLoading() {
+  const ls = document.getElementById('loadingScreen');
+  ls.classList.add('fade-out');
+  setTimeout(() => {
+    ls.style.display = 'none';
+    loaderFinished = true;
+    if (authStateKnown) handleAuthState(lastAuthUser);
+  }, 800);
+}
+
+/* ─────────────────────────────────────────────
+   AUTH STATE (Firebase Authentication)
+   onAuthStateChanged is the single source of
+   truth for whether someone is signed in — no
+   more manual localStorage session juggling.
+───────────────────────────────────────────── */
+let currentUser = null;
+let authStateKnown = false;
+let lastAuthUser = null;
+let unsubProfile = null, unsubDocs = null, unsubFolders = null, unsubSharedWithMe = null;
+
+auth.onAuthStateChanged(user => {
+  authStateKnown = true;
+  lastAuthUser = user;
+  if (loaderFinished) handleAuthState(user);
+});
+
+async function handleAuthState(user) {
+  if (user) {
+    currentUser = {
+      uid: user.uid,
+      email: user.email,
+      name: user.displayName || user.email,
+      picture: user.photoURL || null,
+      sessionId: 'ses_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      loginTime: new Date().toISOString(),
+      isPro: false, plan: 'free', planExpiresAt: null
+    };
+    document.getElementById('authModal').classList.remove('open');
+    try { await ensureUserProfile(); } catch (e) { console.warn('profile upsert failed', e); }
+    launchDashboard();
+    attachRealtimeListeners();
+    logActivity('login');
+    handleIncomingShareLink();
+  } else {
+    detachRealtimeListeners();
+    currentUser = null;
+    const shell = document.getElementById('appShell');
+    shell.classList.remove('visible');
+    shell.style.display = 'none';
+    document.getElementById('authMsg').className = 'auth-msg';
+    document.getElementById('authModal').classList.add('open');
+    setGoogleBtnBusy(false);
+    setEmailAuthBusy(false);
+  }
+}
+
+/* Per-user localStorage cache key (used only for instant paint / offline
+   fallback — Firestore is always the source of truth) */
+function userKey(base) {
+  const uid = currentUser ? currentUser.uid : 'guest';
+  return 'pd.' + uid + '.' + base;
+}
+
+/* ─────────────────────────────────────────────
+   LAUNCH
+───────────────────────────────────────────── */
+function launchDashboard() {
+  updateUserUI();
+  const shell = document.getElementById('appShell');
+  shell.style.display = 'flex';
+  requestAnimationFrame(() => shell.classList.add('visible'));
+  currentFilter = 'all'; currentFolder = null; currentView = 'grid';
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navAll = document.getElementById('nav-all');
+  if (navAll) navAll.classList.add('active');
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  const vg = document.getElementById('view-grid');
+  if (vg) vg.classList.add('active');
+  document.getElementById('searchInput').value = '';
+  loadCachedIndexFromLocal();
+  render(); renderFolders(); updatePlanPanel();
+  document.getElementById('lastSyncLabel').textContent = 'Synced ' + formatDate(new Date().toISOString());
+  setInterval(() => logActivity('heartbeat'), 5 * 60 * 1000);
+}
+
+function updateUserUI() {
+  if (!currentUser) return;
+  const initial = (currentUser.name || currentUser.email || '?')[0].toUpperCase();
+  const avatarEl = document.getElementById('userAvatarLetter');
+  if (currentUser.picture) {
+    avatarEl.innerHTML = '<img src="' + currentUser.picture + '" alt="">';
+  } else {
+    avatarEl.textContent = initial;
+  }
+  document.getElementById('userNameDisplay').textContent  = currentUser.name || currentUser.email;
+  document.getElementById('ddName').textContent  = currentUser.name || '—';
+  document.getElementById('ddEmail').textContent = currentUser.email || '—';
+  document.getElementById('sessionLabel').textContent = 'Signed in as ' + (currentUser.name || currentUser.email).split(' ')[0];
+}
+
+/* ─────────────────────────────────────────────
+   GOOGLE SIGN-IN (Firebase Auth popup)
+───────────────────────────────────────────── */
+function setGoogleBtnBusy(busy) {
+  const btn = document.getElementById('googleSignInBtn');
+  if (!btn) return;
+  btn.disabled = busy;
+  btn.innerHTML = busy
+    ? '<span class="auth-spinner" style="border-color:rgba(43,87,154,0.3);border-top-color:#2b579a;"></span> Signing in…'
+    : '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt=""> Sign in with Google';
+}
+
+async function signInWithGoogle() {
+  setGoogleBtnBusy(true);
+  showAuthMsg('authMsg', 'info', 'Opening Google sign-in…');
+  try {
+    await auth.signInWithPopup(googleProvider);
+    // onAuthStateChanged -> handleAuthState() takes it from here
+  } catch (e) {
+    console.error(e);
+    setGoogleBtnBusy(false);
+    if (e.code === 'auth/popup-closed-by-user') {
+      document.getElementById('authMsg').className = 'auth-msg';
+    } else {
+      showAuthMsg('authMsg', 'error', 'Sign-in failed. Please try again.');
+    }
+  }
+}
+
+function showAuthMsg(id, type, text) {
+  const el = document.getElementById(id);
+  el.textContent = text; el.className = 'auth-msg ' + type;
+}
+
+/* ─────────────────────────────────────────────
+   EMAIL / PASSWORD SIGN-IN (Firebase Auth)
+   Same onAuthStateChanged listener above handles
+   both providers identically once a session
+   exists — no separate code path is needed past
+   this point.
+───────────────────────────────────────────── */
+let authMode = 'signin'; // 'signin' | 'signup'
+
+function toggleAuthMode() {
+  authMode = authMode === 'signin' ? 'signup' : 'signin';
+  const submitBtn = document.getElementById('emailAuthSubmitBtn');
+  const prompt = document.getElementById('authSwitchPrompt');
+  const switchBtn = document.getElementById('authSwitchModeBtn');
+  const forgotBtn = document.getElementById('authForgotBtn');
+  if (authMode === 'signup') {
+    submitBtn.textContent = 'Create Account';
+    prompt.textContent = 'Already have an account?';
+    switchBtn.textContent = 'Sign in';
+    forgotBtn.style.display = 'none';
+  } else {
+    submitBtn.textContent = 'Sign In';
+    prompt.textContent = "Don't have an account?";
+    switchBtn.textContent = 'Sign up';
+    forgotBtn.style.display = 'inline-block';
+  }
+  document.getElementById('authMsg').className = 'auth-msg';
+}
+
+function setEmailAuthBusy(busy) {
+  const btn = document.getElementById('emailAuthSubmitBtn');
+  if (!btn) return;
+  btn.disabled = busy;
+  if (busy) {
+    btn.dataset.label = btn.textContent;
+    btn.innerHTML = '<span class="auth-spinner"></span> ' + (authMode === 'signup' ? 'Creating account…' : 'Signing in…');
+  } else if (btn.dataset.label) {
+    btn.textContent = btn.dataset.label;
+  }
+}
+
+function friendlyAuthError(e) {
+  switch (e.code) {
+    case 'auth/invalid-email':        return 'That email address looks invalid.';
+    case 'auth/user-not-found':
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':   return 'Incorrect email or password.';
+    case 'auth/email-already-in-use': return 'An account with that email already exists — try signing in instead.';
+    case 'auth/weak-password':        return 'Please choose a password with at least 6 characters.';
+    case 'auth/too-many-requests':    return 'Too many attempts. Please wait a moment and try again.';
+    default:                          return 'Something went wrong. Please try again.';
+  }
+}
+
+async function onEmailAuthSubmit() {
+  const email = document.getElementById('authEmailInput').value.trim();
+  const password = document.getElementById('authPasswordInput').value;
+  if (!email || !password) return;
+
+  setEmailAuthBusy(true);
+  showAuthMsg('authMsg', 'info', authMode === 'signup' ? 'Creating your account…' : 'Signing in…');
+  try {
+    if (authMode === 'signup') {
+      await auth.createUserWithEmailAndPassword(email, password);
+    } else {
+      await auth.signInWithEmailAndPassword(email, password);
+    }
+    // onAuthStateChanged -> handleAuthState() takes it from here
+  } catch (e) {
+    console.error(e);
+    setEmailAuthBusy(false);
+    showAuthMsg('authMsg', 'error', friendlyAuthError(e));
+  }
+}
+
+async function onForgotPassword() {
+  const email = document.getElementById('authEmailInput').value.trim();
+  if (!email) {
+    showAuthMsg('authMsg', 'error', 'Enter your email above first, then tap "Forgot password?".');
+    return;
+  }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    showAuthMsg('authMsg', 'success', 'Password reset email sent — check your inbox.');
+  } catch (e) {
+    console.error(e);
+    showAuthMsg('authMsg', 'error', friendlyAuthError(e));
+  }
+}
+
+/* ─────────────────────────────────────────────
+   FIRESTORE: USER PROFILE
+   users/{uid} holds email/name/picture plus the
+   admin-controlled isPro/plan/planExpiresAt
+   fields (see firestore.rules — clients cannot
+   write those three fields themselves).
+───────────────────────────────────────────── */
+async function ensureUserProfile() {
+  const ref = db.collection('users').doc(currentUser.uid);
+  const snap = await ref.get();
+  const patch = {
+    email: currentUser.email,
+    name: currentUser.name,
+    picture: currentUser.picture,
+    lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  if (!snap.exists) {
+    patch.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+    patch.isPro = false;
+    patch.plan = 'free';
+    patch.planExpiresAt = null;
+  }
+  await ref.set(patch, { merge: true });
+}
+
+/* ─────────────────────────────────────────────
+   REALTIME LISTENERS (docs / folders / profile /
+   shared-with-me). These replace the old
+   poll-the-backend model — the dashboard now
+   updates live, including when an admin approves
+   a Pro payment, or when a document is newly
+   shared with this user.
+───────────────────────────────────────────── */
+function attachRealtimeListeners() {
+  const uid = currentUser.uid;
+  const userRef = db.collection('users').doc(uid);
+
+  unsubProfile = userRef.onSnapshot(snap => {
+    if (!snap.exists) return;
+    const data = snap.data();
+    currentUser.isPro = !!data.isPro;
+    currentUser.plan = data.plan || (data.isPro ? 'pro' : 'free');
+    currentUser.planExpiresAt = data.planExpiresAt
+      ? (data.planExpiresAt.toDate ? data.planExpiresAt.toDate().toISOString() : data.planExpiresAt)
+      : null;
+    updatePlanPanel();
+  }, err => console.warn('profile listener error', err));
+
+  unsubDocs = userRef.collection('docs').onSnapshot(snap => {
+    snap.docChanges().forEach(change => {
+      if (change.type === 'removed') {
+        delete cachedIndex.docs[change.doc.id];
+      } else {
+        const d = { id: change.doc.id, ...change.doc.data() };
+        normalizeTimestamps(d);
+        cachedIndex.docs[d.id] = d;
+      }
+    });
+    cacheIndexLocally();
+    render(); updatePlanPanel();
+  }, err => { console.warn('docs listener error', err); setStatus('Could not sync documents.'); });
+
+  unsubFolders = userRef.collection('folders').onSnapshot(snap => {
+    snap.docChanges().forEach(change => {
+      if (change.type === 'removed') {
+        delete cachedIndex.folders[change.doc.id];
+      } else {
+        const f = { id: change.doc.id, ...change.doc.data() };
+        normalizeTimestamps(f);
+        cachedIndex.folders[f.id] = f;
+      }
+    });
+    cacheIndexLocally();
+    renderFolders(); updatePlanPanel();
+  }, err => console.warn('folders listener error', err));
+
+  unsubSharedWithMe = userRef.collection('sharedWithMe').onSnapshot(snap => {
+    snap.docChanges().forEach(change => {
+      if (change.type === 'removed') {
+        delete cachedSharedWithMe[change.doc.id];
+      } else {
+        const s = { id: change.doc.id, ...change.doc.data() };
+        normalizeTimestamps(s);
+        cachedSharedWithMe[s.id] = s;
+      }
+    });
+    render();
+  }, err => console.warn('sharedWithMe listener error', err));
+}
+
+function detachRealtimeListeners() {
+  if (unsubProfile) unsubProfile();
+  if (unsubDocs) unsubDocs();
+  if (unsubFolders) unsubFolders();
+  if (unsubSharedWithMe) unsubSharedWithMe();
+  unsubProfile = unsubDocs = unsubFolders = unsubSharedWithMe = null;
+  cachedIndex = { docs: {}, folders: {} };
+  cachedSharedWithMe = {};
+}
+
+function normalizeTimestamps(obj) {
+  ['createdAt', 'updatedAt', 'addedAt'].forEach(k => {
+    if (obj[k] && typeof obj[k].toDate === 'function') obj[k] = obj[k].toDate().toISOString();
+  });
+}
+
+/* ─────────────────────────────────────────────
+   LOGOUT
+───────────────────────────────────────────── */
+function doLogout() {
+  closeUserDropdown();
+  logActivity('logout');
+  auth.signOut();
+}
+
+/* ─────────────────────────────────────────────
+   ACTIVITY LOGGING (users/{uid}/sessions)
+───────────────────────────────────────────── */
+function logActivity(action) {
+  if (!currentUser) return;
+  db.collection('users').doc(currentUser.uid).collection('sessions').add({
+    event: action,
+    sessionId: currentUser.sessionId,
+    ts: firebase.firestore.FieldValue.serverTimestamp(),
+    ua: navigator.userAgent.slice(0, 120),
+    docCount: Object.values(cachedIndex.docs || {}).filter(d => !d.deleted).length
+  }).catch(() => {});
+}
+
+async function openActivityModal() {
+  closeUserDropdown();
+  openModal('activityModal');
+  const el = document.getElementById('activityContent');
+  el.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Loading session history…</div>';
+  const icons = { login:'🔐', logout:'🚪', heartbeat:'💓', page_load:'🖥️', create_doc:'📄', open_doc:'📂' };
+  try {
+    const snap = await db.collection('users').doc(currentUser.uid)
+      .collection('sessions').orderBy('ts', 'desc').limit(25).get();
+    if (snap.empty) {
+      el.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">No session history yet.</div>';
+      return;
+    }
+    el.innerHTML = snap.docs.map(doc => {
+      const s = doc.data();
+      const when = s.ts && s.ts.toDate ? s.ts.toDate() : new Date();
+      return `
+      <div style="padding:10px 0;border-bottom:1px solid #f0f0f0;display:flex;gap:12px;">
+        <span style="font-size:18px;">${icons[s.event]||'📌'}</span>
+        <div>
+          <div style="font-weight:600;color:#333;">${(s.event||'').replace(/_/g,' ')}</div>
+          <div style="color:#999;font-size:11px;">${when.toLocaleString()} · …${(s.sessionId||'').slice(-6)}</div>
+          ${s.docCount ? `<div style="color:#2b579a;font-size:11px;">${s.docCount} docs</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    console.warn(e);
+    el.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Could not load session history.</div>';
+  }
+}
+
+function openProfileModal() {
+  closeUserDropdown();
+  const planLine = currentUser?.isPro
+    ? `Pro (expires ${currentUser?.planExpiresAt ? new Date(currentUser.planExpiresAt).toLocaleDateString() : '—'})`
+    : 'Free';
+  alert(`👤 My Profile\n\nName: ${currentUser?.name||'—'}\nEmail: ${currentUser?.email||'—'}\nPlan: ${planLine}\nSession: …${(currentUser?.sessionId||'').slice(-8)}\nLogged in: ${currentUser?.loginTime ? new Date(currentUser.loginTime).toLocaleString() : '—'}`);
+}
+
+/* ─────────────────────────────────────────────
+   USER DROPDOWN
+───────────────────────────────────────────── */
+function toggleUserDropdown() { document.getElementById('userDropdown').classList.toggle('open'); }
+function closeUserDropdown()  { document.getElementById('userDropdown').classList.remove('open'); }
+document.addEventListener('click', e => {
+  if (!document.getElementById('userBadge').contains(e.target)) closeUserDropdown();
+});
+
+/* ─────────────────────────────────────────────
+   DASHBOARD DATA
+   cachedIndex is a live *read* mirror of Firestore,
+   kept in sync by the onSnapshot listeners above.
+   All writes go straight to Firestore; the
+   listeners then update cachedIndex + re-render.
+   cachedSharedWithMe mirrors this user's
+   sharedWithMe subcollection the same way.
+───────────────────────────────────────────── */
+let currentFilter = 'all';
+let currentFolder = null;
+let currentView   = 'grid';
+let cachedIndex = { docs: {}, folders: {} };
+let cachedSharedWithMe = {};
+
+function readIndex() { return cachedIndex; }
+
+function cacheIndexLocally() {
+  try { localStorage.setItem(userKey('index_cache'), JSON.stringify(cachedIndex)); } catch (e) {}
+}
+function loadCachedIndexFromLocal() {
+  try { cachedIndex = JSON.parse(localStorage.getItem(userKey('index_cache')) || '{"docs":{},"folders":{}}'); }
+  catch (e) { cachedIndex = { docs: {}, folders: {} }; }
+}
+
+function now() { return new Date().toISOString(); }
+
+/* ─────────────────────────────────────────────
+   FREEMIUM PLAN / LIMITS
+───────────────────────────────────────────── */
+function getActiveDocCount() {
+  return Object.values(readIndex().docs).filter(d => !d.deleted).length;
+}
+function getActiveFolderCount() {
+  return Object.values(readIndex().folders).filter(f => !f.deleted).length;
+}
+function isProUser() { return !!(currentUser && currentUser.isPro); }
+
+function updatePlanPanel() {
+  const panel = document.getElementById('planPanel');
+  const tag   = document.getElementById('planTag');
+  const ddItem = document.getElementById('ddUpgradeItem');
+  if (!panel || !currentUser) return;
+
+  const docCount    = getActiveDocCount();
+  const folderCount = getActiveFolderCount();
+
+  if (isProUser()) {
+    tag.textContent = 'PRO'; tag.classList.add('pro');
+    if (ddItem) ddItem.style.display = 'none';
+    const exp = currentUser.planExpiresAt
+      ? new Date(currentUser.planExpiresAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+      : null;
+    panel.innerHTML = `
+      <div class="plan-panel-title">Plan <span class="plan-pill pro">PRO</span></div>
+      <div class="usage-row"><span>Unlimited documents & folders</span></div>
+      ${exp ? `<div class="plan-expiry">Active until ${exp}</div>` : ''}`;
+  } else {
+    tag.textContent = 'FREE'; tag.classList.remove('pro');
+    if (ddItem) ddItem.style.display = 'flex';
+    const docPct    = Math.min(100, (docCount / FREE_MAX_DOCS) * 100);
+    const folderPct = Math.min(100, (folderCount / FREE_MAX_FOLDERS) * 100);
+    panel.innerHTML = `
+      <div class="plan-panel-title">Plan <span class="plan-pill free">FREE</span></div>
+      <div class="usage-row"><span>Documents</span><span>${docCount}/${FREE_MAX_DOCS}</span></div>
+      <div class="usage-bar"><div class="usage-fill ${docCount>=FREE_MAX_DOCS?'full':''}" style="width:${docPct}%"></div></div>
+      <div class="usage-row"><span>Folders</span><span>${folderCount}/${FREE_MAX_FOLDERS}</span></div>
+      <div class="usage-bar"><div class="usage-fill ${folderCount>=FREE_MAX_FOLDERS?'full':''}" style="width:${folderPct}%"></div></div>
+      <button class="plan-upgrade-btn" onclick="openUpgradeModal()">✨ Upgrade to Pro</button>`;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   MODALS
+───────────────────────────────────────────── */
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  setTimeout(() => { const inp = document.querySelector('#'+id+' input[type="text"]'); if(inp && !inp.readOnly){inp.value='';inp.focus();} }, 50);
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); });
+});
+
+function openCreateDocModal() {
+  if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents.`);
+    return;
+  }
+  openModal('createDocModal');
+}
+function openCreateFolderModal(parent = null) {
+  if (!isProUser() && getActiveFolderCount() >= FREE_MAX_FOLDERS) {
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_FOLDERS} folder.`);
+    return;
+  }
+  window._pendingFolderParent = parent;
+  openModal('createFolderModal');
+}
+
+/* ─────────────────────────────────────────────
+   DOC / FOLDER CRUD — straight to Firestore.
+   No manual cache mutation needed: the onSnapshot
+   listeners above pick up every write and re-render.
+───────────────────────────────────────────── */
+async function confirmCreateDoc() {
+  if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
+    closeModal('createDocModal');
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents.`);
+    return;
+  }
+  const title = document.getElementById('docNameInput').value.trim() || 'Untitled Document';
+  closeModal('createDocModal');
+  setStatus('Creating document…');
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('docs').add({
+      title, folder: currentFolder || null, starred: false, deleted: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    logActivity('create_doc');
+    setStatus('Document "' + title + '" created.');
+  } catch (e) {
+    console.warn(e);
+    setStatus('Could not create document — try again.');
+  }
+}
+
+async function confirmCreateFolder() {
+  if (!isProUser() && getActiveFolderCount() >= FREE_MAX_FOLDERS) {
+    closeModal('createFolderModal');
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_FOLDERS} folder.`);
+    return;
+  }
+  const name = document.getElementById('folderNameInput').value.trim();
+  if (!name) return;
+  closeModal('createFolderModal');
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('folders').add({
+      name, parent: window._pendingFolderParent || currentFolder || null, deleted: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setStatus('Folder "' + name + '" created.');
+  } catch (e) {
+    console.warn(e);
+    setStatus('Could not create folder — try again.');
+  }
+}
+
+function openRenameModal(id) {
+  const idx = readIndex();
+  document.getElementById('renameDocId').value = id;
+  document.getElementById('renameInput').value  = idx.docs[id].title;
+  openModal('renameModal');
+  setTimeout(() => document.getElementById('renameInput').focus(), 60);
+}
+async function confirmRename() {
+  const id = document.getElementById('renameDocId').value;
+  const newName = document.getElementById('renameInput').value.trim();
+  if (!newName) return;
+  closeModal('renameModal');
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
+      title: newName, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    // Keep the share record's display title (if this doc is shared) in sync.
+    db.collection('shares').doc(id).get().then(snap => {
+      if (snap.exists && snap.data().ownerUid === currentUser.uid) {
+        snap.ref.update({ title: newName }).catch(() => {});
+      }
+    }).catch(() => {});
+    setStatus('Document renamed.');
+  } catch (e) {
+    console.warn(e);
+    setStatus('Rename failed — try again.');
+  }
+}
+
+/* ─────────────────────────────────────────────
+   OPEN DOCUMENT (owned by the current user)
+───────────────────────────────────────────── */
+function openDoc(id) {
+  const idx = readIndex();
+  if (!idx.docs[id] || idx.docs[id].deleted) return;
+
+  db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(() => {});
+  logActivity('open_doc');
+
+  sessionStorage.setItem('pd_active_uid', currentUser.uid);
+  sessionStorage.setItem('pd_active_user', currentUser.email);
+  window.location.href = 'document-editor.html?id=' + encodeURIComponent(id);
+}
+
+/* ─────────────────────────────────────────────
+   FOLDERS / FILTER / VIEW
+───────────────────────────────────────────── */
+function renderFolders() {
+  const idx = readIndex(), container = document.getElementById('folderTree');
+  container.innerHTML = '';
+  function build(parent, el) {
+    Object.values(idx.folders).filter(f => (f.parent||null) === parent && !f.deleted).forEach(f => {
+      const div = document.createElement('div');
+      div.innerHTML = `<div class="folder-item ${currentFolder===f.id?'active':''}" onclick="openFolder('${f.id}')">📁 ${f.name}</div>`;
+      const ce = document.createElement('div'); ce.className='folder-children';
+      div.appendChild(ce); el.appendChild(div); build(f.id, ce);
+    });
+  }
+  build(null, container);
+}
+function openFolder(id) {
+  currentFolder=id; currentFilter='folder';
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  render(); renderFolders();
+}
+function setFilter(f) {
+  currentFilter=f; currentFolder=null;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const el=document.getElementById('nav-'+f); if(el) el.classList.add('active');
+  render();
+}
+function setView(v) {
+  currentView=v;
+  document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  render();
+}
+
+/* ─────────────────────────────────────────────
+   DOC ACTIONS
+───────────────────────────────────────────── */
+async function toggleStar(id) {
+  const cur = !!cachedIndex.docs[id]?.starred;
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({ starred: !cur });
+  } catch (e) {
+    console.warn(e);
+    setStatus('Could not update star — try again.');
+  }
+}
+async function trashDoc(id) {
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
+      deleted: true, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setStatus('Document moved to Trash.');
+  } catch (e) {
+    console.warn(e);
+    setStatus('Could not delete — try again.');
+  }
+}
+
+async function restoreDoc(id) {
+  if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents. Upgrade to restore this one.`);
+    return;
+  }
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
+      deleted: false, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setStatus('Document restored.');
+  } catch (e) {
+    console.warn(e);
+    setStatus('Could not restore — try again.');
+  }
+}
+
+async function deletePermanent(id) {
+  if (!confirm('Permanently delete this document? This cannot be undone.')) return;
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).delete();
+    // Best-effort: also retire any share link that pointed at it.
+    db.collection('shares').doc(id).get().then(snap => {
+      if (snap.exists && snap.data().ownerUid === currentUser.uid) {
+        snap.ref.update({ enabled: false }).catch(() => {});
+      }
+    }).catch(() => {});
+    setStatus('Document permanently deleted.');
+  } catch (e) {
+    console.warn(e);
+    setStatus('Could not delete — try again.');
+  }
+}
+
+async function emptyTrash() {
+  if (!confirm('Empty entire Trash? All deleted documents will be permanently removed.')) return;
+  const toDelete = Object.values(cachedIndex.docs).filter(d => d.deleted);
+  if (!toDelete.length) return;
+  try {
+    const batch = db.batch();
+    const docsRef = db.collection('users').doc(currentUser.uid).collection('docs');
+    toDelete.forEach(d => batch.delete(docsRef.doc(d.id)));
+    await batch.commit();
+    setStatus('Trash emptied.');
+  } catch (e) {
+    console.warn(e);
+    setStatus('Could not empty trash — try again.');
+  }
+}
+async function moveDoc(id) {
+  const folders = Object.values(cachedIndex.folders).filter(f => !f.deleted);
+  if (!folders.length) return alert('No folders exist. Create a folder first.');
+  const choice = prompt(`Move to folder:\n${folders.map((f,i)=>`${i+1}. ${f.name}`).join('\n')}\n\nEnter number, or 0 for root:`);
+  if (choice === null) return;
+  const num = parseInt(choice);
+  let targetFolder = null;
+  if (num === 0) targetFolder = null;
+  else if (num >= 1 && num <= folders.length) targetFolder = folders[num-1].id;
+  else return;
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
+      folder: targetFolder, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (e) {
+    console.warn(e);
+    setStatus('Could not move — try again.');
+  }
+}
+
+/* ─────────────────────────────────────────────
+   SHARING
+   shares/{docId} (top-level collection, doc id ==
+   the owner's Firestore docId) holds who owns the
+   document and what permission the link grants.
+   Anyone signed in can `get` a share record if
+   they already know its id (i.e. clicked the
+   link) — see firestore.rules — but only the
+   owner can create/update/delete it, and `list`
+   is disabled so the collection can't be browsed.
+
+   Accepting a link writes a small pointer into
+   the *viewer's own* users/{uid}/sharedWithMe
+   subcollection, which is what powers the
+   "Shared with me" view and keeps things in sync
+   live via attachRealtimeListeners().
+
+   The actual document body still lives in Google
+   Drive (via document-editor.html's GAS_URL calls,
+   keyed by the *owner's* email) — so a viewer's
+   editor is pointed at the owner's file by passing
+   ownerUid/ownerEmail/role through the URL.
+───────────────────────────────────────────── */
+let shareModalDocId = null;
+
+function shareLinkFor(id) {
+  const base = location.origin + location.pathname.replace(/[^/]*$/, '');
+  return `${base}dashboard.html?share=${encodeURIComponent(id)}`;
+}
+
+async function openShareModal(id) {
+  shareModalDocId = id;
+  const doc = cachedIndex.docs[id];
+  if (!doc) return;
+  document.getElementById('shareDocTitle').textContent = doc.title;
+  document.getElementById('shareStatus').textContent = 'Loading sharing status…';
+  document.getElementById('shareLinkRow').classList.remove('show');
+  document.getElementById('shareToggle').checked = false;
+  openModal('shareModal');
+  try {
+    const snap = await db.collection('shares').doc(id).get();
+    if (snap.exists && snap.data().enabled) renderShareEnabled(snap.data());
+    else renderShareDisabled();
+  } catch (e) {
+    console.warn(e);
+    document.getElementById('shareStatus').textContent = 'Could not load sharing status — try again.';
+  }
+}
+function renderShareEnabled(data) {
+  document.getElementById('shareToggle').checked = true;
+  document.getElementById('sharePermSelect').value = data.permission || 'view';
+  document.getElementById('shareLinkRow').classList.add('show');
+  document.getElementById('shareLinkInput').value = shareLinkFor(shareModalDocId);
+  document.getElementById('shareStatus').textContent = 'Anyone with this link can open this document.';
+}
+function renderShareDisabled() {
+  document.getElementById('shareToggle').checked = false;
+  document.getElementById('shareLinkRow').classList.remove('show');
+  document.getElementById('shareStatus').textContent = 'Sharing is currently off for this document.';
+}
+async function onShareToggleChange(checked) {
+  const id = shareModalDocId;
+  const doc = cachedIndex.docs[id];
+  if (!id || !doc) return;
+  const statusEl = document.getElementById('shareStatus');
+  try {
+    if (!checked) {
+      await db.collection('shares').doc(id).set({
+        enabled: false, ownerUid: currentUser.uid,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      renderShareDisabled();
+      setStatus('Sharing turned off.');
+      return;
+    }
+    const perm = document.getElementById('sharePermSelect').value || 'view';
+    await db.collection('shares').doc(id).set({
+      ownerUid: currentUser.uid,
+      ownerEmail: currentUser.email,
+      title: doc.title,
+      permission: perm,
+      enabled: true,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    renderShareEnabled({ permission: perm });
+    setStatus('Sharing turned on.');
+  } catch (e) {
+    console.warn(e);
+    statusEl.textContent = 'Could not update sharing — try again.';
+  }
+}
+async function onSharePermChange(perm) {
+  if (!shareModalDocId) return;
+  try {
+    await db.collection('shares').doc(shareModalDocId).update({
+      permission: perm, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById('shareStatus').textContent = 'Anyone with this link can open this document.';
+    setStatus('Sharing permission updated.');
+  } catch (e) {
+    console.warn(e);
+    setStatus('Could not update permission — try again.');
+  }
+}
+function copyShareLink() {
+  const input = document.getElementById('shareLinkInput');
+  input.select();
+  input.setSelectionRange(0, 99999);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(input.value)
+      .then(() => setStatus('Share link copied.'))
+      .catch(() => document.execCommand('copy'));
+  } else {
+    document.execCommand('copy');
+    setStatus('Share link copied.');
+  }
+}
+
+/* Open a document that someone else shared with the current user. The
+   editor is loaded with the owner's uid/email/role so it reads & (if
+   permitted) writes the owner's Drive-backed file, not the viewer's own. */
+function openSharedDoc(id) {
+  const s = cachedSharedWithMe[id];
+  if (!s) return;
+  sessionStorage.setItem('pd_active_uid', currentUser.uid);
+  sessionStorage.setItem('pd_active_user', currentUser.email);
+  const params = new URLSearchParams({
+    id, ownerUid: s.ownerUid, ownerEmail: s.ownerEmail, role: s.permission || 'view'
+  });
+  window.location.href = 'document-editor.html?' + params.toString();
+}
+async function removeSharedDoc(id) {
+  if (!confirm('Remove this document from "Shared with me"? You can re-open it again with the same link later.')) return;
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('sharedWithMe').doc(id).delete();
+    setStatus('Removed from Shared with me.');
+  } catch (e) {
+    console.warn(e);
+    setStatus('Could not remove — try again.');
+  }
+}
+
+/* Handles ?share=<docId> links. If it's the owner's own link, just opens
+   the doc normally; otherwise records a pointer in sharedWithMe and jumps
+   straight into the shared editor view.
+
+   Reads the id captured into pendingShareId at the very top of this
+   script — NOT window.location.search — because by the time this
+   function actually runs (after Firebase auth resolves), the removeHTML()
+   cleanup script at the bottom of <body> has already stripped the query
+   string from the address bar. Re-parsing location.search here would
+   always come up empty. */
+async function handleIncomingShareLink() {
+  const shareId = pendingShareId;
+  if (!shareId) return;
+  pendingShareId = null; // consume once, so this can't accidentally re-fire
+  window.history.replaceState(null, document.title, window.location.origin + window.location.pathname);
+
+  setStatus('Opening shared document…');
+  try {
+    const snap = await db.collection('shares').doc(shareId).get();
+    if (!snap.exists || snap.data().enabled === false) {
+      alert('This share link is invalid or sharing has been turned off by the owner.');
+      return;
+    }
+    const data = snap.data();
+
+    if (data.ownerUid === currentUser.uid) {
+      // It's our own document — just open it the normal way.
+      return openDoc(shareId);
+    }
+
+    await db.collection('users').doc(currentUser.uid).collection('sharedWithMe').doc(shareId).set({
+      ownerUid: data.ownerUid,
+      ownerEmail: data.ownerEmail,
+      title: data.title || 'Untitled Document',
+      permission: data.permission || 'view',
+      addedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    sessionStorage.setItem('pd_active_uid', currentUser.uid);
+    sessionStorage.setItem('pd_active_user', currentUser.email);
+    const p = new URLSearchParams({
+      id: shareId, ownerUid: data.ownerUid, ownerEmail: data.ownerEmail, role: data.permission || 'view'
+    });
+    window.location.href = 'document-editor.html?' + p.toString();
+  } catch (e) {
+    console.warn(e);
+    alert('Could not open the shared document. The link may be invalid.');
+  }
+}
+
+/* ─────────────────────────────────────────────
+   UPGRADE / PAYMENT FLOW
+   Payment submissions land in a top-level
+   `payments` collection for manual/admin review.
+   Approval is done in the Firebase console (or an
+   admin tool) by setting isPro/plan/planExpiresAt
+   on users/{uid} — clients cannot set those
+   fields themselves (see firestore.rules).
+───────────────────────────────────────────── */
+function openUpgradeModal(reason) {
+  closeUserDropdown();
+  const reasonEl = document.getElementById('upgradeReason');
+  if (reason) { reasonEl.textContent = '🔒 ' + reason; reasonEl.style.display = 'block'; }
+  else        { reasonEl.style.display = 'none'; }
+
+  document.getElementById('upgradeStatus').className = 'up-status';
+  document.getElementById('upgradeStatus').textContent = '';
+  const payBtn = document.getElementById('upPayBtn');
+  payBtn.disabled = false;
+  payBtn.textContent = "I've paid via GPay / UPI";
+
+  selectUpgradePlan('monthly');
+  openModal('upgradeModal');
+}
+
+function selectUpgradePlan(type) {
+  selectedUpgradeBilling = type;
+  document.getElementById('upMonthlyBtn').classList.toggle('active', type==='monthly');
+  document.getElementById('upYearlyBtn').classList.toggle('active', type==='yearly');
+  document.getElementById('upPrice').textContent = PRO_PLANS[type].label;
+
+  const upi = `upi://pay?pa=${encodeURIComponent(UPI_VPA)}&pn=${encodeURIComponent(UPI_PAYEE_NAME)}&am=${PRO_PLANS[type].price}&cu=INR`;
+  document.getElementById('upUpiLink').href = upi;
+  document.getElementById('upQrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upi)}`;
+}
+
+async function submitUpgradePayment() {
+  if (!currentUser) return;
+  const statusEl = document.getElementById('upgradeStatus');
+  const btn = document.getElementById('upPayBtn');
+
+  btn.disabled = true; btn.textContent = 'Submitting…';
+  statusEl.className = 'up-status show info';
+  statusEl.textContent = 'Submitting your payment for review…';
+
+  try {
+    await db.collection('payments').add({
+      uid: currentUser.uid,
+      email: currentUser.email,
+      name: currentUser.name || '',
+      plan: 'pro',
+      billing: selectedUpgradeBilling,
+      amount: PRO_PLANS[selectedUpgradeBilling].price,
+      method: 'gpay',
+      status: 'pending',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    btn.textContent = 'Payment submitted';
+    statusEl.className = 'up-status show success';
+    statusEl.textContent = "✔️ Submitted! You'll get Pro access once an admin approves your payment.";
+  } catch (e) {
+    console.warn(e);
+    btn.disabled = false; btn.textContent = "I've paid via GPay / UPI";
+    statusEl.className = 'up-status show error';
+    statusEl.textContent = 'Could not reach the server. Please check your connection and try again.';
+  }
+}
+
+function checkApprovalStatus() {
+  const statusEl = document.getElementById('upgradeStatus');
+  statusEl.className = 'up-status show info';
+  statusEl.textContent = 'Checking approval status…';
+  // isPro is kept live by the users/{uid} onSnapshot listener, so this
+  // just reads the latest known value instead of polling a server.
+  setTimeout(() => {
+    if (isProUser()) {
+      statusEl.className = 'up-status show success';
+      statusEl.textContent = "🎉 You're now on Pro! Closing…";
+      setTimeout(() => { closeModal('upgradeModal'); render(); }, 1200);
+    } else {
+      statusEl.className = 'up-status show info';
+      statusEl.textContent = 'Still pending admin approval. Please check back later.';
+    }
+  }, 400);
+}
+
+/* ─────────────────────────────────────────────
+   STATUS / DATE
+───────────────────────────────────────────── */
+function setStatus(msg) {
+  document.getElementById('statusText').textContent=msg;
+  setTimeout(()=>document.getElementById('statusText').textContent='Ready', 3000);
+}
+function formatDate(iso) {
+  const d=new Date(iso), n=new Date(), diff=n-d;
+  if (diff<60000)    return 'Just now';
+  if (diff<3600000)  return Math.floor(diff/60000)+'m ago';
+  if (diff<86400000) return Math.floor(diff/3600000)+'h ago';
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+
+/* ─────────────────────────────────────────────
+   RENDER
+───────────────────────────────────────────── */
+function render() {
+  const idx=readIndex(), container=document.getElementById('docContainer');
+  const searchQuery=document.getElementById('searchInput').value.toLowerCase();
+  let docs=[];
+  let isSharedView = false;
+
+  if (currentFilter === 'shared') {
+    isSharedView = true;
+    docs = Object.values(cachedSharedWithMe).map(s => ({
+      id: s.id,
+      title: s.title || 'Untitled Document',
+      updatedAt: s.addedAt,
+      createdAt: s.addedAt,
+      starred: false,
+      shared: true,
+      role: s.permission || 'view',
+      ownerEmail: s.ownerEmail
+    }));
+    if (searchQuery) docs = docs.filter(d => (d.title||'').toLowerCase().includes(searchQuery));
+  } else {
+    docs=Object.values(idx.docs);
+    if      (currentFilter==='all')     docs=docs.filter(d=>!d.deleted);
+    else if (currentFilter==='starred') docs=docs.filter(d=>d.starred&&!d.deleted);
+    else if (currentFilter==='recent')  docs=docs.filter(d=>!d.deleted).sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt)).slice(0,20);
+    else if (currentFilter==='trash')   docs=docs.filter(d=>d.deleted);
+    else if (currentFilter==='folder')  docs=docs.filter(d=>d.folder===currentFolder&&!d.deleted);
+    if (searchQuery) docs=docs.filter(d=>(d.title||'').toLowerCase().includes(searchQuery));
+  }
+
+  document.getElementById('sectionTitle').textContent={all:'All Documents',starred:'Starred',recent:'Recent',trash:'Trash',folder:'📁 Folder',shared:'🤝 Shared with me'}[currentFilter]||'Documents';
+  document.getElementById('trashHeader').style.display=currentFilter==='trash'?'flex':'none';
+  const all=Object.values(idx.docs);
+  document.getElementById('badge-all').textContent     = all.filter(d=>!d.deleted).length;
+  document.getElementById('badge-starred').textContent = all.filter(d=>d.starred&&!d.deleted).length;
+  document.getElementById('badge-trash').textContent   = all.filter(d=>d.deleted).length;
+  document.getElementById('badge-shared').textContent  = Object.keys(cachedSharedWithMe).length;
+  document.getElementById('docCount').textContent      = docs.length+' item'+(docs.length!==1?'s':'');
+
+  if (!docs.length) {
+    container.innerHTML=`
+      <div class="empty-state">
+        <div class="empty-icon">${isSharedView ? '🤝' : '📄'}</div>
+        <div class="empty-title">${searchQuery?'No results found':(isSharedView?'Nothing shared with you yet':'Nothing here')}</div>
+        <div class="empty-sub">${searchQuery?'Try a different search term.':(isSharedView?'Documents someone shares a link with you for will show up here.':(currentFilter==='trash'?'Trash is empty.':'Create a new document to get started.'))}</div>
+      </div>`;
+    renderFolders(); updatePlanPanel(); return;
+  }
+
+  if (currentView==='grid') {
+    container.innerHTML=''; container.className='doc-grid';
+    docs.forEach(d=>{
+      const el=document.createElement('div'); el.className='doc-card';
+      const openAction = d.shared ? `openSharedDoc('${d.id}')` : `openDoc('${d.id}')`;
+      const actionsHtml = d.shared
+        ? `<button class="doc-action-btn" onclick="${openAction}">Open</button>
+           <span class="doc-action-btn" style="cursor:default;background:#f5f5f5;color:var(--muted);">${d.role==='edit'?'✏️ Can edit':'👁 View only'}</span>
+           <button class="doc-action-btn danger" onclick="removeSharedDoc('${d.id}')">Remove</button>`
+        : `<button class="doc-action-btn" onclick="openDoc('${d.id}')">Open</button>
+           <button class="doc-action-btn" onclick="openRenameModal('${d.id}')">Rename</button>
+           <button class="doc-action-btn" onclick="moveDoc('${d.id}')">Move</button>
+           ${currentFilter!=='trash' ? `<button class="doc-action-btn" onclick="openShareModal('${d.id}')">Share</button>` : ''}
+           ${currentFilter==='trash'
+             ?`<button class="doc-action-btn" onclick="restoreDoc('${d.id}')">Restore</button>
+               <button class="doc-action-btn danger" onclick="deletePermanent('${d.id}')">Delete</button>`
+             :`<button class="doc-action-btn danger" onclick="trashDoc('${d.id}')">Trash</button>`}`;
+      el.innerHTML=`
+        ${d.shared ? `<span class="shared-badge">🤝 Shared</span>` : `<button class="star-btn ${d.starred?'on':''}" onclick="event.stopPropagation();toggleStar('${d.id}')" title="${d.starred?'Unstar':'Star'}">★</button>`}
+        <div class="doc-card-preview" onclick="${openAction}">
+          <div class="doc-lines"><div class="doc-line"></div><div class="doc-line"></div><div class="doc-line"></div></div>
+        </div>
+        <div class="doc-card-body" onclick="${openAction}">
+          <div class="doc-card-title" title="${d.title}">${d.title}</div>
+          <div class="doc-card-meta">${d.shared ? ('Shared by ' + (d.ownerEmail||'')) : ('Modified ' + formatDate(d.updatedAt))}</div>
+        </div>
+        <div class="doc-card-actions">${actionsHtml}</div>`;
+      container.appendChild(el);
+    });
+  } else {
+    container.innerHTML=''; container.className='doc-list';
+    docs.forEach(d=>{
+      const el=document.createElement('div'); el.className='doc-list-item';
+      const openAction = d.shared ? `openSharedDoc('${d.id}')` : `openDoc('${d.id}')`;
+      const actionsHtml = d.shared
+        ? `<button class="doc-action-btn" onclick="event.stopPropagation();${openAction}">Open</button>
+           <span class="doc-action-btn" style="cursor:default;background:#f5f5f5;color:var(--muted);">${d.role==='edit'?'✏️ Can edit':'👁 View only'}</span>
+           <button class="doc-action-btn danger" onclick="event.stopPropagation();removeSharedDoc('${d.id}')">Remove</button>`
+        : `<button class="doc-action-btn" onclick="event.stopPropagation();toggleStar('${d.id}')">${d.starred?'⭐':'☆'}</button>
+           <button class="doc-action-btn" onclick="event.stopPropagation();openDoc('${d.id}')">Open</button>
+           <button class="doc-action-btn" onclick="event.stopPropagation();openRenameModal('${d.id}')">Rename</button>
+           <button class="doc-action-btn" onclick="event.stopPropagation();moveDoc('${d.id}')">Move</button>
+           ${currentFilter!=='trash' ? `<button class="doc-action-btn" onclick="event.stopPropagation();openShareModal('${d.id}')">Share</button>` : ''}
+           ${currentFilter==='trash'
+             ?`<button class="doc-action-btn" onclick="event.stopPropagation();restoreDoc('${d.id}')">Restore</button>
+               <button class="doc-action-btn danger" onclick="event.stopPropagation();deletePermanent('${d.id}')">Delete</button>`
+             :`<button class="doc-action-btn danger" onclick="event.stopPropagation();trashDoc('${d.id}')">Trash</button>`}`;
+      el.innerHTML=`
+        <div class="doc-list-icon">${d.shared ? '🤝' : '📄'}</div>
+        <div class="doc-list-info" onclick="${openAction}">
+          <div class="doc-list-title">${d.title}</div>
+          <div class="doc-list-meta">${d.shared ? ('Shared by ' + (d.ownerEmail||'')) : ('Modified ' + formatDate(d.updatedAt) + ' · Created ' + formatDate(d.createdAt))}</div>
+        </div>
+        <div class="doc-list-actions">${actionsHtml}</div>`;
+      container.appendChild(el);
+    });
+  }
+  renderFolders();
+  updatePlanPanel();
+}
+</script>
+<script>
+
+if ("serviceWorker" in navigator) {
+
+window.addEventListener("load",()=>{
+
+navigator.serviceWorker.register("sw.js")
+.then(()=>{
+console.log("PWA Ready");
+});
+
+});
+
+}
+
+
+let deferredPrompt;
+
+const installBtn = document.getElementById("installBtn");
+
+
+window.addEventListener("beforeinstallprompt",(e)=>{
+
+e.preventDefault();
+
+deferredPrompt=e;
+
+installBtn.style.display="flex";
+
+
+});
+
+
+installBtn.addEventListener("click",async()=>{
+
+if(!deferredPrompt) return;
+
+
+deferredPrompt.prompt();
+
+
+const result = await deferredPrompt.userChoice;
+
+
+console.log(result.outcome);
+
+
+deferredPrompt=null;
+
+
+installBtn.style.display="none";
+
+
+});
+
+
+</script>
+<script>
+(function removeHTML(){
+
+  const path = window.location.pathname;
+
+  if (path.endsWith(".html")) {
+
+    const cleanPath = path.substring(0, path.length - 5);
+
+    window.history.replaceState(
+      null,
+      document.title,
+      cleanPath
+    );
+
+  }
+
+})();
+</script>
+</body>
+</html>
