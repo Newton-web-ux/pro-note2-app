@@ -1977,12 +1977,12 @@ async function exportPPT() {
 function goDashboard() {
   if (isReadOnly) {
     // Nothing to save — go straight back.
-    location.href = "dashboard.html";
+    location.href = "index.html";
     return;
   }
   if (confirm("Return to Dashboard? Document will be saved automatically.")) {
     saveDocument();
-    location.href = "dashboard.html";
+    location.href = "index.html";
   }
 }
 
