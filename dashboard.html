@@ -2088,61 +2088,84 @@ function render() {
 }
 </script>
 <script>
+  // Paste the /exec URL from your Apps Script deployment (Deploy → Manage
+  // deployments → Web app). Must be the deployed URL, not the editor URL.
+  var INSTALL_TRACKING_URL = 'https://script.google.com/macros/s/AKfycbyz8Ju5--wE7ePjNBLu2-CQLEIp9yNT9x_MJ9zbF2f-tftE5hL7mPy1vqiHh0UDd1vf/exec';
 
-if ("serviceWorker" in navigator) {
+  // Must match SHARED_TOKEN in Code.gs if you set one there; leave '' to disable.
+  var INSTALL_TRACKING_TOKEN = '';
 
-window.addEventListener("load",()=>{
+  function trackInstallEvent(event, extra) {
+    try {
+      var payload = {
+        event: event,
+        token: INSTALL_TRACKING_TOKEN,
+        uid: (typeof currentUser !== 'undefined' && currentUser) ? currentUser.uid : '',
+        email: (typeof currentUser !== 'undefined' && currentUser) ? currentUser.email : '',
+        sessionId: (typeof currentUser !== 'undefined' && currentUser) ? currentUser.sessionId : '',
+        userAgent: navigator.userAgent,
+        extra: extra || {}
+      };
+      // no-cors: we don't need to read the response, just fire-and-forget.
+      // This also sidesteps CORS preflight issues with Apps Script web apps.
+      fetch(INSTALL_TRACKING_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight
+        body: JSON.stringify(payload)
+      }).catch(function () { /* tracking must never break the app */ });
+    } catch (e) { /* swallow — tracking is best-effort */ }
+  }
 
-navigator.serviceWorker.register("sw.js")
-.then(()=>{
-console.log("PWA Ready");
-});
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").then(() => {
+        console.log("PWA Ready");
+      });
+    });
+  }
 
-});
+  let deferredPrompt;
+  const installBtn = document.getElementById("installBtn");
 
-}
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = "flex";
+    trackInstallEvent('prompt_available');
+  });
 
+  installBtn.addEventListener("click", async () => {
+    trackInstallEvent('click');
 
-let deferredPrompt;
+    if (!deferredPrompt) {
+      // iOS Safari / browsers with no native prompt: manual instructions.
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) trackInstallEvent('ios_manual_hint');
+      alert(isIOS
+        ? 'To install: tap the Share icon, then "Add to Home Screen".'
+        : 'To install: open your browser menu and choose "Install app" (or "Add to Home screen").');
+      return;
+    }
 
-const installBtn = document.getElementById("installBtn");
+    deferredPrompt.prompt();
+    const result = await deferredPrompt.userChoice;
+    console.log(result.outcome); // 'accepted' | 'dismissed'
+    trackInstallEvent(result.outcome); // logs 'accepted' or 'dismissed'
 
+    deferredPrompt = null;
+    installBtn.style.display = "none";
+  });
 
-window.addEventListener("beforeinstallprompt",(e)=>{
-
-e.preventDefault();
-
-deferredPrompt=e;
-
-installBtn.style.display="flex";
-
-
-});
-
-
-installBtn.addEventListener("click",async()=>{
-
-if(!deferredPrompt) return;
-
-
-deferredPrompt.prompt();
-
-
-const result = await deferredPrompt.userChoice;
-
-
-console.log(result.outcome);
-
-
-deferredPrompt=null;
-
-
-installBtn.style.display="none";
-
-
-});
-
-
+  // Ground truth: fires only once the browser actually completes install,
+  // whether the user went through the button, the browser's own omnibox
+  // install icon, or Android's "Add to Home screen" menu item.
+  window.addEventListener("appinstalled", () => {
+    trackInstallEvent('installed');
+    deferredPrompt = null;
+    installBtn.style.display = "none";
+    if (typeof setStatus === 'function') setStatus('Pro Document installed.');
+  });
 </script>
 <script>
 (function removeHTML(){
