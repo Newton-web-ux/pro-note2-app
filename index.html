@@ -1258,28 +1258,141 @@ Got it
 
 
 
+```html
 <script>
 
-function acceptCookies(){
+const TRACKING_URL = "https://script.google.com/macros/s/AKfycbykQgKpdGnROL83PHU4VJNBLTNnlRVIbiQf64Mle-BblKPuTSK-gsG56d1q0mdUHONN/exec
+";
 
-localStorage.setItem('proDocCookieConsent', 'accepted');
 
-document.getElementById('cookieBanner').style.display = 'none';
+// ===============================
+// Generate / Get Device ID
+// ===============================
+
+function getDeviceId() {
+
+    let deviceId = localStorage.getItem("proDocDeviceId");
+
+    if (!deviceId) {
+
+        deviceId = crypto.randomUUID();
+
+        localStorage.setItem("proDocDeviceId", deviceId);
+    }
+
+    return deviceId;
+}
+
+
+// ===============================
+// Track User Event
+// ===============================
+
+function trackEvent(eventType) {
+
+    // Only track users who accepted cookies
+    if (localStorage.getItem('proDocCookieConsent') !== 'accepted') {
+        return;
+    }
+
+    const data = {
+
+        eventType: eventType,
+
+        deviceId: getDeviceId(),
+
+        userAgent: navigator.userAgent,
+
+        platform: navigator.platform,
+
+        referrer: document.referrer
+    };
+
+
+    fetch(TRACKING_URL, {
+
+        method: "POST",
+
+        mode: "no-cors",
+
+        headers: {
+            "Content-Type": "text/plain"
+        },
+
+        body: JSON.stringify(data)
+
+    });
 
 }
 
 
-document.addEventListener('DOMContentLoaded', function(){
+// ===============================
+// Accept Cookies
+// ===============================
 
-if(localStorage.getItem('proDocCookieConsent') !== 'accepted'){
+function acceptCookies() {
 
-document.getElementById('cookieBanner').style.display = 'flex';
+    localStorage.setItem(
+        'proDocCookieConsent',
+        'accepted'
+    );
 
+    document.getElementById('cookieBanner').style.display = 'none';
+
+    // Track cookie acceptance
+    trackEvent("cookie_accepted");
 }
+
+
+// ===============================
+// Page Load
+// ===============================
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    if (
+        localStorage.getItem('proDocCookieConsent') !== 'accepted'
+    ) {
+
+        document.getElementById('cookieBanner').style.display = 'flex';
+
+    }
+    else {
+
+        // Track page view only after consent
+        trackEvent("page_view");
+
+    }
 
 });
 
 </script>
+```
+
+Replace:
+
+```text
+YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL
+```
+
+with your deployed Apps Script Web App URL.
+
+### Event flow
+
+**New visitor:**
+
+`Page → Cookie Banner → Accept → cookie_accepted`
+
+**Returning visitor:**
+
+`Page → page_view`
+
+And the Sheet will receive:
+
+`Timestamp | EventType | DeviceID | UserAgent | Platform | Referrer`
+
+This version **does not track visitors before they accept cookies**, which is the safer setup for your consent banner.
+
 
 
 </body>
