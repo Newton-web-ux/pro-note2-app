@@ -1257,17 +1257,16 @@ Got it
 
 
 
-
+```html
 ```html
 <script>
 
-const TRACKING_URL = "https://script.google.com/macros/s/AKfycbykQgKpdGnROL83PHU4VJNBLTNnlRVIbiQf64Mle-BblKPuTSK-gsG56d1q0mdUHONN/exec
-";
+const TRACKING_URL = "https://script.google.com/macros/s/AKfycbw-AdzT4Gp_cbLabQKforkgceAwapLyTnNsw-LyzBCvenYAlRw16jYY_ERapudegvbl6g/exec";
 
 
-// ===============================
-// Generate / Get Device ID
-// ===============================
+// ==============================
+// GET / CREATE DEVICE ID
+// ==============================
 
 function getDeviceId() {
 
@@ -1275,7 +1274,13 @@ function getDeviceId() {
 
     if (!deviceId) {
 
-        deviceId = crypto.randomUUID();
+        if (window.crypto && crypto.randomUUID) {
+            deviceId = crypto.randomUUID();
+        } else {
+            deviceId =
+                Date.now().toString(36) +
+                Math.random().toString(36).substring(2);
+        }
 
         localStorage.setItem("proDocDeviceId", deviceId);
     }
@@ -1284,14 +1289,16 @@ function getDeviceId() {
 }
 
 
-// ===============================
-// Track User Event
-// ===============================
+// ==============================
+// TRACK EVENT
+// ==============================
 
 function trackEvent(eventType) {
 
-    // Only track users who accepted cookies
-    if (localStorage.getItem('proDocCookieConsent') !== 'accepted') {
+    // Do not track before cookie consent
+    if (
+        localStorage.getItem("proDocCookieConsent") !== "accepted"
+    ) {
         return;
     }
 
@@ -1305,7 +1312,7 @@ function trackEvent(eventType) {
 
         platform: navigator.platform,
 
-        referrer: document.referrer
+        referrer: document.referrer || ""
     };
 
 
@@ -1313,53 +1320,75 @@ function trackEvent(eventType) {
 
         method: "POST",
 
-        mode: "no-cors",
-
         headers: {
-            "Content-Type": "text/plain"
+            "Content-Type": "text/plain;charset=utf-8"
         },
 
         body: JSON.stringify(data)
+
+    })
+    .then(function(response) {
+
+        console.log("Tracking request sent");
+
+    })
+    .catch(function(error) {
+
+        console.error("Tracking error:", error);
 
     });
 
 }
 
 
-// ===============================
-// Accept Cookies
-// ===============================
+// ==============================
+// ACCEPT COOKIES
+// ==============================
 
 function acceptCookies() {
 
     localStorage.setItem(
-        'proDocCookieConsent',
-        'accepted'
+        "proDocCookieConsent",
+        "accepted"
     );
 
-    document.getElementById('cookieBanner').style.display = 'none';
+    const banner = document.getElementById("cookieBanner");
 
-    // Track cookie acceptance
+    if (banner) {
+        banner.style.display = "none";
+    }
+
+    // Record acceptance
     trackEvent("cookie_accepted");
+
+    // Also record this page visit
+    trackEvent("page_view");
 }
 
 
-// ===============================
-// Page Load
-// ===============================
+// ==============================
+// PAGE LOAD
+// ==============================
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function() {
 
-    if (
-        localStorage.getItem('proDocCookieConsent') !== 'accepted'
-    ) {
+    const consent =
+        localStorage.getItem("proDocCookieConsent");
 
-        document.getElementById('cookieBanner').style.display = 'flex';
+
+    if (consent !== "accepted") {
+
+        const banner =
+            document.getElementById("cookieBanner");
+
+        if (banner) {
+            banner.style.display = "flex";
+        }
 
     }
     else {
 
-        // Track page view only after consent
+        // Returning user
         trackEvent("page_view");
 
     }
@@ -1369,29 +1398,6 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 ```
 
-Replace:
-
-```text
-YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL
-```
-
-with your deployed Apps Script Web App URL.
-
-### Event flow
-
-**New visitor:**
-
-`Page → Cookie Banner → Accept → cookie_accepted`
-
-**Returning visitor:**
-
-`Page → page_view`
-
-And the Sheet will receive:
-
-`Timestamp | EventType | DeviceID | UserAgent | Platform | Referrer`
-
-This version **does not track visitors before they accept cookies**, which is the safer setup for your consent banner.
 
 
 
