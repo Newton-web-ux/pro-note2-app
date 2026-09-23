@@ -501,6 +501,17 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
 .up-features li::before { content:'✓'; position:absolute; left:0; color:#27ae60; font-weight:700; }
 .up-qr-wrap { text-align:center; margin:10px 0 14px; }
 .up-qr-wrap img { width:180px; height:180px; border-radius:8px; border:1px solid var(--border); }
+.up-utr-field { margin: 4px 0 14px; text-align:left; }
+.up-utr-field label {
+  font-size:11px; font-weight:600; display:block; margin-bottom:6px; color:var(--muted);
+  text-transform:uppercase; letter-spacing:0.5px; font-family:'Space Grotesk',sans-serif;
+}
+.up-utr-field input {
+  width:100%; padding:9px 10px; border:1px solid var(--border); border-radius:6px;
+  font-size:13px; font-family:'Space Grotesk',sans-serif; outline:none; letter-spacing:0.4px;
+}
+.up-utr-field input:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(43,87,154,0.15); }
+.up-utr-hint { font-size:10px; color:#999; margin-top:5px; }
 .up-pay-btn {
   width:100%; padding:11px; border:none; border-radius:7px; background:var(--accent);
   color:#fff; font-size:14px; font-weight:600; cursor:pointer; font-family:'Outfit',sans-serif;
@@ -849,14 +860,21 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
       </ul>
 
       <div class="up-qr-wrap">
-        <a id="upUpiLink" target="_blank"><img id="upQrImg" alt="Scan to pay with UPI"></a>
+        <a id="upUpiLink" target="_blank" onclick="onUpiLinkTapped()"><img id="upQrImg" alt="Scan to pay with UPI"></a>
       </div>
 
-      <button class="up-pay-btn" id="upPayBtn" onclick="submitUpgradePayment()">I've paid via GPay / UPI</button>
+      <div class="up-utr-field">
+        <label for="upUtrInput">UPI transaction ID / UTR</label>
+        <input type="text" id="upUtrInput" placeholder="e.g. 402913827461" maxlength="30"
+               autocomplete="off" oninput="onUtrInputChange()">
+        <div class="up-utr-hint">Find this in your UPI app's payment confirmation screen or SMS, right after you pay.</div>
+      </div>
+
+      <button class="up-pay-btn" id="upPayBtn" onclick="submitUpgradePayment()" disabled>Enter your UTR to continue</button>
       <button class="up-check-btn" onclick="checkApprovalStatus()">✓ I've already paid — check status</button>
 
       <div class="up-status" id="upgradeStatus"></div>
-      <div class="up-note">Access unlocks after manual verification (usually within a few hours).</div>
+      <div class="up-note">Access unlocks after manual verification against your UTR (usually within a few hours).</div>
     </div>
   </div>
 </div>
@@ -1883,22 +1901,21 @@ async function handleIncomingShareLink() {
    on users/{uid} — clients cannot set those
    fields themselves (see firestore.rules).
 
-   PAYMENT GATE: the "I've paid" button is disabled
-   until the person has actually engaged with the
-   QR/UPI link — not just landed on the modal and
-   clicked straight through. This is a UX safeguard,
-   not real payment verification: a page like this
-   has no way to confirm a UPI transfer actually
-   happened (that still requires the manual/admin
-   review this flow already does, or a real payment
-   gateway with server-side webhooks). What it does
-   do is make "click without paying" require active
-   effort to bypass instead of being the default path.
+   UTR GATE: the "I've paid" button stays disabled
+   until the person has entered a plausible UPI
+   transaction ID / UTR. This is NOT real payment
+   verification — a page like this has no way to
+   confirm a UPI transfer actually happened; that
+   still requires either (a) the manual/admin
+   review this flow already does, now checking the
+   submitted UTR against your bank/UPI statement,
+   or (b) a real payment gateway with server-side
+   webhooks. What the UTR field does do is replace
+   a single blind click with a specific, checkable
+   claim, and give the admin something concrete to
+   verify against before approving.
 ───────────────────────────────────────────── */
-const PAY_GATE_SECONDS = 15;   // minimum wait before "I've paid" is enabled
-let payGateTimer = null;
-let payGateRemaining = 0;
-let payGateReady = false;
+let selectedUpgradeBilling = selectedUpgradeBilling || 'monthly';
 
 function openUpgradeModal(reason) {
   closeUserDropdown();
@@ -1909,7 +1926,11 @@ function openUpgradeModal(reason) {
   document.getElementById('upgradeStatus').className = 'up-status';
   document.getElementById('upgradeStatus').textContent = '';
 
-  selectUpgradePlan('monthly'); // also (re)starts the payment gate + QR
+  const utrInput = document.getElementById('upUtrInput');
+  if (utrInput) utrInput.value = '';
+  updatePayButtonState();
+
+  selectUpgradePlan('monthly'); // also (re)builds the QR
   openModal('upgradeModal');
 }
 
@@ -1922,58 +1943,44 @@ function selectUpgradePlan(type) {
   const upi = `upi://pay?pa=${encodeURIComponent(UPI_VPA)}&pn=${encodeURIComponent(UPI_PAYEE_NAME)}&am=${PRO_PLANS[type].price}&cu=INR`;
   document.getElementById('upUpiLink').href = upi;
   document.getElementById('upQrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upi)}`;
-
-  // Amount just changed, so any earlier QR interaction is stale — restart the gate.
-  startPayGate();
 }
 
-/* Starts (or restarts) the minimum-wait gate on the "I've paid" button.
-   Tapping the QR/UPI link itself (see onUpiLinkTapped below) shortens
-   the remaining wait, since actually opening a UPI app is a stronger
-   signal than just letting the timer run out on a phone that scanned
-   the code with its camera instead of tapping the link. */
-function startPayGate() {
-  payGateReady = false;
-  payGateRemaining = PAY_GATE_SECONDS;
-  if (payGateTimer) clearInterval(payGateTimer);
+/* A UTR/UPI reference number is normally 12 digits, but banks and some
+   UPI apps occasionally show a longer alphanumeric reference instead —
+   so this only checks for "long enough to plausibly be a real reference",
+   not a strict 12-digit format. Real validation is the admin's manual
+   check against the bank/UPI statement, not this regex. */
+function isPlausibleUtr(value) {
+  const cleaned = (value || '').trim();
+  return /^[A-Za-z0-9]{8,30}$/.test(cleaned);
+}
 
+function onUtrInputChange() {
+  updatePayButtonState();
+}
+
+function updatePayButtonState() {
   const btn = document.getElementById('upPayBtn');
-  btn.disabled = true;
-  renderPayGateLabel();
-
-  payGateTimer = setInterval(() => {
-    payGateRemaining--;
-    if (payGateRemaining <= 0) {
-      clearInterval(payGateTimer);
-      payGateTimer = null;
-      payGateReady = true;
-      btn.disabled = false;
-      btn.textContent = "I've paid via GPay / UPI";
-    } else {
-      renderPayGateLabel();
-    }
-  }, 1000);
+  const utrInput = document.getElementById('upUtrInput');
+  if (!btn || !utrInput) return;
+  const ok = isPlausibleUtr(utrInput.value);
+  btn.disabled = !ok;
+  btn.textContent = ok ? "I've paid via GPay / UPI" : 'Enter your UTR to continue';
 }
 
-function renderPayGateLabel() {
-  const btn = document.getElementById('upPayBtn');
-  btn.textContent = `Scan the QR & pay first (${payGateRemaining}s)`;
-}
-
-/* Tapping the QR image / UPI deep link is a real signal that the person
-   is actually going to pay (it opens their UPI app on mobile) — so treat
-   it as if a good chunk of the wait already elapsed, instead of forcing
-   the full timer on top of the time they spend in the UPI app. */
-function onUpiLinkTapped() {
-  if (payGateTimer && payGateRemaining > 5) {
-    payGateRemaining = 5;
-    renderPayGateLabel();
-  }
-}
+/* Tapping the QR image / UPI deep link opens the person's UPI app —
+   purely informational here now that the gate is the UTR field itself,
+   kept as a light nudge/status touch rather than altering any timer. */
+function onUpiLinkTapped() { /* no-op: kept for the onclick hook on the QR link */ }
 
 async function submitUpgradePayment() {
   if (!currentUser) return;
-  if (!payGateReady) return; // defensive — button should already be disabled
+  const utrInput = document.getElementById('upUtrInput');
+  const utr = (utrInput ? utrInput.value : '').trim();
+  if (!isPlausibleUtr(utr)) {
+    updatePayButtonState();
+    return; // defensive — button should already be disabled
+  }
 
   const statusEl = document.getElementById('upgradeStatus');
   const btn = document.getElementById('upPayBtn');
@@ -1991,15 +1998,16 @@ async function submitUpgradePayment() {
       billing: selectedUpgradeBilling,
       amount: PRO_PLANS[selectedUpgradeBilling].price,
       method: 'gpay',
+      utr: utr,
       status: 'pending',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     btn.textContent = 'Payment submitted';
     statusEl.className = 'up-status show success';
-    statusEl.textContent = "✔️ Submitted! You'll get Pro access once an admin approves your payment.";
+    statusEl.textContent = "✔️ Submitted! You'll get Pro access once an admin matches your UTR to a real payment.";
   } catch (e) {
     console.warn(e);
-    btn.disabled = false; btn.textContent = "I've paid via GPay / UPI";
+    updatePayButtonState();
     statusEl.className = 'up-status show error';
     statusEl.textContent = 'Could not reach the server. Please check your connection and try again.';
   }
