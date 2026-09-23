@@ -1915,8 +1915,6 @@ async function handleIncomingShareLink() {
    claim, and give the admin something concrete to
    verify against before approving.
 ───────────────────────────────────────────── */
-let selectedUpgradeBilling = selectedUpgradeBilling || 'monthly';
-
 function openUpgradeModal(reason) {
   closeUserDropdown();
   const reasonEl = document.getElementById('upgradeReason');
