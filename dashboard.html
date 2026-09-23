@@ -1882,7 +1882,24 @@ async function handleIncomingShareLink() {
    admin tool) by setting isPro/plan/planExpiresAt
    on users/{uid} — clients cannot set those
    fields themselves (see firestore.rules).
+
+   PAYMENT GATE: the "I've paid" button is disabled
+   until the person has actually engaged with the
+   QR/UPI link — not just landed on the modal and
+   clicked straight through. This is a UX safeguard,
+   not real payment verification: a page like this
+   has no way to confirm a UPI transfer actually
+   happened (that still requires the manual/admin
+   review this flow already does, or a real payment
+   gateway with server-side webhooks). What it does
+   do is make "click without paying" require active
+   effort to bypass instead of being the default path.
 ───────────────────────────────────────────── */
+const PAY_GATE_SECONDS = 15;   // minimum wait before "I've paid" is enabled
+let payGateTimer = null;
+let payGateRemaining = 0;
+let payGateReady = false;
+
 function openUpgradeModal(reason) {
   closeUserDropdown();
   const reasonEl = document.getElementById('upgradeReason');
@@ -1891,11 +1908,8 @@ function openUpgradeModal(reason) {
 
   document.getElementById('upgradeStatus').className = 'up-status';
   document.getElementById('upgradeStatus').textContent = '';
-  const payBtn = document.getElementById('upPayBtn');
-  payBtn.disabled = false;
-  payBtn.textContent = "I've paid via GPay / UPI";
 
-  selectUpgradePlan('monthly');
+  selectUpgradePlan('monthly'); // also (re)starts the payment gate + QR
   openModal('upgradeModal');
 }
 
@@ -1908,10 +1922,59 @@ function selectUpgradePlan(type) {
   const upi = `upi://pay?pa=${encodeURIComponent(UPI_VPA)}&pn=${encodeURIComponent(UPI_PAYEE_NAME)}&am=${PRO_PLANS[type].price}&cu=INR`;
   document.getElementById('upUpiLink').href = upi;
   document.getElementById('upQrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upi)}`;
+
+  // Amount just changed, so any earlier QR interaction is stale — restart the gate.
+  startPayGate();
+}
+
+/* Starts (or restarts) the minimum-wait gate on the "I've paid" button.
+   Tapping the QR/UPI link itself (see onUpiLinkTapped below) shortens
+   the remaining wait, since actually opening a UPI app is a stronger
+   signal than just letting the timer run out on a phone that scanned
+   the code with its camera instead of tapping the link. */
+function startPayGate() {
+  payGateReady = false;
+  payGateRemaining = PAY_GATE_SECONDS;
+  if (payGateTimer) clearInterval(payGateTimer);
+
+  const btn = document.getElementById('upPayBtn');
+  btn.disabled = true;
+  renderPayGateLabel();
+
+  payGateTimer = setInterval(() => {
+    payGateRemaining--;
+    if (payGateRemaining <= 0) {
+      clearInterval(payGateTimer);
+      payGateTimer = null;
+      payGateReady = true;
+      btn.disabled = false;
+      btn.textContent = "I've paid via GPay / UPI";
+    } else {
+      renderPayGateLabel();
+    }
+  }, 1000);
+}
+
+function renderPayGateLabel() {
+  const btn = document.getElementById('upPayBtn');
+  btn.textContent = `Scan the QR & pay first (${payGateRemaining}s)`;
+}
+
+/* Tapping the QR image / UPI deep link is a real signal that the person
+   is actually going to pay (it opens their UPI app on mobile) — so treat
+   it as if a good chunk of the wait already elapsed, instead of forcing
+   the full timer on top of the time they spend in the UPI app. */
+function onUpiLinkTapped() {
+  if (payGateTimer && payGateRemaining > 5) {
+    payGateRemaining = 5;
+    renderPayGateLabel();
+  }
 }
 
 async function submitUpgradePayment() {
   if (!currentUser) return;
+  if (!payGateReady) return; // defensive — button should already be disabled
+
   const statusEl = document.getElementById('upgradeStatus');
   const btn = document.getElementById('upPayBtn');
 
