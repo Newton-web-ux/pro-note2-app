@@ -2672,6 +2672,7 @@ if (location.pathname.endsWith(".html")) {
 }
 </script>
 <script>
+
 (function () {
   'use strict';
   if (window.__proLocalAiLoaded) return;
@@ -2686,44 +2687,98 @@ if (location.pathname.endsWith(".html")) {
   const lget = k => { try { return JSON.parse(localStorage.getItem('pd.localai.' + k)); } catch (e) { return null; } };
   const lset = (k, v) => { try { localStorage.setItem('pd.localai.' + k, JSON.stringify(v)); } catch (e) {} };
   const shortErr = e => String((e && e.message) || e || 'unknown error').replace(/\s+/g, ' ').slice(0, 90);
+  const countWords = s => { const t = String(s || '').replace(/[#*_`>\-\[\]]/g, ' ').trim(); return t ? t.split(/\s+/).length : 0; };
 
   const S = {
     webllmP: null, engine: null, engineModel: null,
     busy: false, streaming: false, stop: false,
-    md: '', undoPage: null, undoNodes: null, caps: null, raf: 0
+    md: '', undoPage: null, undoNodes: null, caps: null, raf: 0, view: 'preview', started: 0
   };
 
   /* ───────── styles ───────── */
   const css = document.createElement('style');
   css.textContent = `
-  .lai-panel{display:none;position:fixed;top:96px;left:240px;width:500px;max-width:calc(100vw - 16px);background:#fff;border:1px solid var(--border);border-radius:6px;box-shadow:0 8px 32px rgba(0,0,0,.25);z-index:9999;overflow:hidden}
-  .lai-panel.open{display:block}
-  .lai-head{background:var(--accent);color:#fff;padding:8px 12px;cursor:move;display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;user-select:none}
-  .lai-x{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:3px;padding:2px 8px;cursor:pointer;font-size:14px}
-  .lai-body{padding:12px;max-height:78vh;overflow-y:auto}
-  .lai-body label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px}
-  .lai-body textarea{width:100%;resize:vertical;padding:8px;border:1px solid var(--border);border-radius:4px;font:inherit;font-size:13px;margin-bottom:10px}
-  .lai-body textarea:focus,.lai-body select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(43,87,154,.15)}
-  .lai-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 10px;margin-bottom:10px}
-  .lai-grid select{width:100%;padding:5px 6px;border:1px solid var(--border);border-radius:3px;background:#fff;font:inherit;font-size:12px;height:28px}
-  .lai-check{display:flex!important;align-items:center;gap:6px;font-weight:500!important;color:var(--text)!important;font-size:12px!important;margin:2px 0 8px!important;cursor:pointer}
-  .lai-note{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:8px}
-  .lai-progress{margin:6px 0 10px}
-  .lai-bar{height:5px;background:#e3e8f2;border-radius:3px;overflow:hidden}
-  .lai-bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
-  .lai-progtext{display:block;font-size:10px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .lai-actions{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-  .lai-actions button{padding:6px 12px;border:1px solid var(--border);border-radius:3px;background:#fff;cursor:pointer;font:inherit;font-size:12px;font-weight:600}
-  .lai-actions button:hover:not(:disabled){background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
-  .lai-actions button:disabled{opacity:.4;cursor:not-allowed}
-  .lai-actions .lai-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-  .lai-actions .lai-primary:hover:not(:disabled){background:var(--accent-dark);color:#fff}
-  .lai-state{font-size:12px;color:var(--text);min-height:16px;margin-bottom:8px}
-  .lai-preview{border:1px solid var(--border);border-radius:4px;background:#fafafa;padding:12px 14px;max-height:260px;overflow-y:auto;font-size:12.5px;line-height:1.55;color:#222}
-  .lai-preview:empty::before{content:'Your draft will appear here.';color:#999}
-  .lai-preview h1{font-size:17px;margin:0 0 8px}.lai-preview h2{font-size:14px;margin:12px 0 4px;color:var(--accent-dark)}.lai-preview h3{font-size:13px;margin:10px 0 3px}
+  .lai-panel{display:none;position:fixed;top:84px;left:240px;width:560px;max-width:calc(100vw - 16px);background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 18px 48px rgba(15,30,60,.28),0 2px 6px rgba(15,30,60,.12);z-index:9999;overflow:hidden;font-size:13px;color:var(--text)}
+  .lai-panel.open{display:flex;flex-direction:column;max-height:calc(100vh - 100px)}
+  .lai-panel *{box-sizing:border-box}
+  .lai-head{background:linear-gradient(135deg,var(--accent-dark),var(--accent));color:#fff;padding:12px 14px;cursor:move;display:flex;align-items:center;gap:10px;user-select:none;flex:none}
+  .lai-logo{width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:15px;flex:none}
+  .lai-title{flex:1;min-width:0}
+  .lai-title b{display:block;font-size:14px;font-weight:700;letter-spacing:.1px}
+  .lai-title span{display:block;font-size:11px;opacity:.8;margin-top:1px}
+  .lai-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;white-space:nowrap;max-width:190px;overflow:hidden;text-overflow:ellipsis}
+  .lai-chip i{width:7px;height:7px;border-radius:50%;background:#7be0a0;flex:none}
+  .lai-chip.off i{background:#ffd27a}
+  .lai-chip.busy i{background:#fff;animation:laipulse 1s infinite}
+  @keyframes laipulse{50%{opacity:.25}}
+  .lai-x{background:rgba(255,255,255,.16);border:none;color:#fff;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;flex:none}
+  .lai-x:hover{background:rgba(255,255,255,.3)}
+  .lai-body{padding:14px;overflow-y:auto;flex:1;min-height:0;background:#fff}
+  .lai-sec{margin-bottom:14px}
+  .lai-lab{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+  .lai-lab em{font-style:normal;text-transform:none;letter-spacing:0;font-weight:500}
+  .lai-prompt{width:100%;resize:vertical;min-height:84px;max-height:220px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:13.5px;line-height:1.5;color:var(--text);background:#fff}
+  .lai-prompt:focus,.lai-sel:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43,87,154,.16)}
+  .lai-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .lai-chips button{border:1px solid var(--border);background:#f6f8fc;color:var(--text);border-radius:999px;padding:4px 10px;font:inherit;font-size:11.5px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lai-chips button:hover{border-color:var(--accent);background:var(--accent-light);color:var(--accent-dark)}
+  .lai-chips .lai-hist{background:#fff}
+  .lai-chiplab{font-size:11px;color:var(--muted);align-self:center;margin-right:2px}
+  .lai-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+  .lai-grid .lai-full{grid-column:1/-1}
+  .lai-sel{width:100%;height:32px;padding:0 8px;border:1px solid var(--border);border-radius:8px;background:#fff;font:inherit;font-size:12.5px;color:var(--text)}
+  .lai-seg{display:flex;background:#eef1f7;border-radius:8px;padding:3px;gap:2px}
+  .lai-seg button{flex:1;border:none;background:transparent;border-radius:6px;padding:5px 6px;font:inherit;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap}
+  .lai-seg button:hover:not(:disabled):not(.on){color:var(--text)}
+  .lai-seg button.on{background:#fff;color:var(--accent-dark);box-shadow:0 1px 3px rgba(15,30,60,.18)}
+  .lai-seg button:disabled{opacity:.4;cursor:not-allowed}
+  .lai-adv{border:1px solid var(--border);border-radius:8px;margin-bottom:14px;background:#fafbfd}
+  .lai-adv summary{cursor:pointer;padding:8px 12px;font-size:12px;font-weight:600;color:var(--text);list-style:none;display:flex;align-items:center;justify-content:space-between}
+  .lai-adv summary::-webkit-details-marker{display:none}
+  .lai-adv summary::after{content:'▾';color:var(--muted);transition:transform .2s}
+  .lai-adv[open] summary::after{transform:rotate(180deg)}
+  .lai-adv .lai-advbody{padding:4px 12px 12px;display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+  .lai-check{display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;grid-column:1/-1}
+  .lai-note{font-size:11.5px;color:var(--muted);line-height:1.55;background:#f3f6fb;border-left:3px solid var(--accent);border-radius:0 6px 6px 0;padding:8px 10px;margin-bottom:14px}
+  .lai-steps{display:flex;align-items:center;margin-bottom:8px}
+  .lai-steps[hidden],.lai-progress[hidden]{display:none}
+  .lai-step{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);font-weight:600;white-space:nowrap}
+  .lai-step b{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:10.5px;background:#e3e8f2;color:var(--muted)}
+  .lai-step.active{color:var(--accent-dark)}
+  .lai-step.active b{background:var(--accent);color:#fff;box-shadow:0 0 0 3px rgba(43,87,154,.2)}
+  .lai-step.done{color:var(--text)}
+  .lai-step.done b{background:#2e9b5f;color:#fff}
+  .lai-step.skip{opacity:.45;text-decoration:line-through}
+  .lai-line{flex:1;height:2px;background:#e3e8f2;margin:0 8px;min-width:12px;border-radius:2px}
+  .lai-progress{margin-bottom:10px}
+  .lai-bar{height:6px;background:#e3e8f2;border-radius:4px;overflow:hidden}
+  .lai-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-dark));transition:width .25s}
+  .lai-progtext{display:block;font-size:10.5px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lai-result{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fff}
+  .lai-rhead{display:flex;align-items:center;gap:8px;padding:6px 8px;background:#f6f8fc;border-bottom:1px solid var(--border)}
+  .lai-tabs{display:flex;gap:2px}
+  .lai-tabs button{border:none;background:transparent;padding:5px 10px;border-radius:6px;font:inherit;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer}
+  .lai-tabs button.on{background:#fff;color:var(--accent-dark);box-shadow:0 1px 2px rgba(15,30,60,.15)}
+  .lai-meta{margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap}
+  .lai-icon{border:1px solid var(--border);background:#fff;border-radius:6px;height:26px;padding:0 8px;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--text)}
+  .lai-icon:hover:not(:disabled){border-color:var(--accent);color:var(--accent-dark);background:var(--accent-light)}
+  .lai-icon:disabled{opacity:.4;cursor:not-allowed}
+  .lai-preview,.lai-edit{display:block;width:100%;height:250px;overflow-y:auto;padding:14px 16px;font-size:12.5px;line-height:1.6;color:#222;background:#fff;border:none;resize:none}
+  .lai-edit{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+  .lai-edit:focus{outline:none;box-shadow:inset 0 0 0 2px rgba(43,87,154,.25)}
+  .lai-preview:empty::before{content:'Your draft will appear here. Describe the document above, then press Generate.';color:#9aa3b2}
+  .lai-preview h1{font-size:18px;margin:0 0 8px;color:#16233b}.lai-preview h2{font-size:14.5px;margin:14px 0 4px;color:var(--accent-dark)}.lai-preview h3{font-size:13px;margin:10px 0 3px}
   .lai-preview p{margin:0 0 8px}.lai-preview ul,.lai-preview ol{margin:0 0 8px 20px}
-  @media (max-width:640px){.lai-panel{left:8px!important;right:8px;width:auto;top:56px!important}.lai-grid{grid-template-columns:repeat(2,1fr)}}
+  .lai-foot{flex:none;display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--border);background:#f6f8fc}
+  .lai-state{flex:1;min-width:0;font-size:11.5px;color:var(--muted);line-height:1.35;overflow:hidden;text-overflow:ellipsis}
+  .lai-state.err{color:#b4501a}.lai-state.ok{color:#2e7d4f}
+  .lai-btn{padding:7px 14px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;color:var(--text);white-space:nowrap}
+  .lai-btn:hover:not(:disabled){background:var(--accent-light);border-color:var(--accent);color:var(--accent-dark)}
+  .lai-btn:disabled{opacity:.4;cursor:not-allowed}
+  .lai-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .lai-btn.primary:hover:not(:disabled){background:var(--accent-dark);color:#fff}
+  .lai-kbd{font-size:10px;opacity:.75;margin-left:6px;font-weight:500}
+  @media (max-width:640px){.lai-panel{left:8px!important;right:8px;width:auto;top:56px!important}.lai-grid,.lai-adv .lai-advbody{grid-template-columns:1fr}.lai-step span{display:none}.lai-kbd{display:none}.lai-foot{flex-wrap:wrap}.lai-state{flex-basis:100%}}
   `;
   document.head.appendChild(css);
 
@@ -2752,69 +2807,169 @@ if (location.pathname.endsWith(".html")) {
     <div class="ribbon-group">
       <div class="ribbon-group-row">
         <span id="laiToolbarNote" style="font-size:11px;color:var(--muted);max-width:360px;line-height:1.4;">Runs in your browser. No API key needed.</span>
-        <button class="tb-btn small" id="laiFreeBtn" title="Unload the model to free memory"><span class="tb-icon">🧹</span> Free memory</button>
       </div>
       <div class="ribbon-group-label">Local engine</div>
     </div>`;
   homeToolbar.after(toolbar);
 
   /* ───────── UI: floating panel ───────── */
+  const EXAMPLES = [
+    ['📄 Report', 'Write a report on renewable energy in India for a college seminar'],
+    ['✉️ Leave letter', 'Write a leave application for 3 days due to a family function'],
+    ['👤 Resume', 'Create a resume for a fresher computer science graduate'],
+    ['📝 Meeting minutes', 'Prepare meeting minutes for a project kickoff'],
+    ['📢 Notice', 'Draft a notice about the annual sports day']
+  ];
+  const seg = (id, items) =>
+    '<div class="lai-seg" id="' + id + '" role="radiogroup">' +
+    items.map(i => '<button type="button" role="radio" data-v="' + i[0] + '">' + i[1] + '</button>').join('') + '</div>';
+
   const panel = document.createElement('div');
   panel.id = 'laiPanel';
   panel.className = 'lai-panel';
   panel.setAttribute('role', 'dialog');
   panel.setAttribute('aria-label', 'Write with AI');
   panel.innerHTML = `
-    <div class="lai-head" id="laiHead"><span>✨ Write with AI</span><button class="lai-x" id="laiClose" aria-label="Close">✕</button></div>
+    <div class="lai-head" id="laiHead">
+      <div class="lai-logo">✨</div>
+      <div class="lai-title"><b>Write with AI</b><span>Private. Runs on your device.</span></div>
+      <span class="lai-chip off" id="laiChip" title="Current engine"><i></i><span id="laiChipText">Checking…</span></span>
+      <button class="lai-x" id="laiClose" aria-label="Close">✕</button>
+    </div>
     <div class="lai-body">
-      <label for="laiPrompt">What should the document be about?</label>
-      <textarea id="laiPrompt" rows="3" placeholder="e.g. Write a report on renewable energy in India for a college seminar"></textarea>
-      <div class="lai-grid">
-        <div><label for="laiType">Type</label>
-          <select id="laiType">
-            <option value="auto">Auto-detect</option><option value="report">Report</option><option value="essay">Essay</option>
+      <div class="lai-sec">
+        <div class="lai-lab"><label for="laiPrompt">Describe your document</label><em id="laiCount">0 / 800</em></div>
+        <textarea class="lai-prompt" id="laiPrompt" maxlength="800" placeholder="e.g. A report on renewable energy in India for a college seminar, covering solar, wind and policy"></textarea>
+        <div class="lai-chips" id="laiExamples"><span class="lai-chiplab">Try:</span></div>
+        <div class="lai-chips" id="laiHistory" hidden></div>
+      </div>
+
+      <div class="lai-grid lai-sec">
+        <div class="lai-full"><div class="lai-lab"><label for="laiType">Document type</label></div>
+          <select class="lai-sel" id="laiType">
+            <option value="auto">Auto-detect from my description</option><option value="report">Report</option><option value="essay">Essay</option>
             <option value="letter">Letter / Application</option><option value="resume">Resume</option><option value="assignment">Assignment / Lab report</option>
             <option value="proposal">Proposal</option><option value="minutes">Meeting minutes</option><option value="notice">Notice</option>
             <option value="lesson">Lesson plan</option><option value="article">Article / Blog</option>
           </select></div>
-        <div><label for="laiTone">Tone</label>
-          <select id="laiTone"><option value="formal">Formal</option><option value="neutral">Neutral</option><option value="friendly">Friendly</option></select></div>
-        <div><label for="laiLength">Length</label>
-          <select id="laiLength"><option value="short">Short</option><option value="medium" selected>Medium</option><option value="long">Long</option></select></div>
-        <div><label for="laiEngine">Engine</label>
-          <select id="laiEngine"><option value="smart">Smart (in-browser AI)</option><option value="instant">Instant template</option></select></div>
-        <div id="laiQualityWrap"><label for="laiQuality">Model size</label>
-          <select id="laiQuality"><option value="fast">Fast (smallest)</option><option value="balanced" selected>Balanced</option><option value="best">Best (largest)</option></select></div>
-        <div><label for="laiMode">Insert</label>
-          <select id="laiMode"><option value="auto">Replace if blank, else add below</option><option value="replace">Replace this page</option><option value="append">Add below existing text</option></select></div>
+        <div><div class="lai-lab">Tone</div>${seg('laiTone', [['formal', 'Formal'], ['neutral', 'Neutral'], ['friendly', 'Friendly']])}</div>
+        <div><div class="lai-lab">Length</div>${seg('laiLength', [['short', 'Short'], ['medium', 'Medium'], ['long', 'Long']])}</div>
+        <div class="lai-full"><div class="lai-lab">Engine</div>${seg('laiEngine', [['smart', '🧠 Smart (in-browser AI)'], ['instant', '⚡ Instant template']])}</div>
       </div>
-      <label class="lai-check"><input type="checkbox" id="laiAuto" checked> Insert into the page when finished</label>
+
+      <details class="lai-adv">
+        <summary>Advanced options</summary>
+        <div class="lai-advbody">
+          <div id="laiQualityWrap"><div class="lai-lab"><label for="laiQuality">Model size</label></div>
+            <select class="lai-sel" id="laiQuality"><option value="fast">Fast (smallest)</option><option value="balanced">Balanced</option><option value="best">Best (largest)</option></select></div>
+          <div><div class="lai-lab"><label for="laiMode">Insert behaviour</label></div>
+            <select class="lai-sel" id="laiMode"><option value="auto">Replace if blank, else add below</option><option value="replace">Replace this page</option><option value="append">Add below existing text</option></select></div>
+          <label class="lai-check"><input type="checkbox" id="laiAuto"> Insert into the page automatically when finished</label>
+        </div>
+      </details>
+
       <div class="lai-note" id="laiNote">Checking this browser…</div>
-      <div class="lai-progress" id="laiProg" hidden><div class="lai-bar"><i id="laiBar"></i></div><span class="lai-progtext" id="laiProgText"></span></div>
-      <div class="lai-actions">
-        <button class="lai-primary" id="laiGen">Generate</button>
-        <button id="laiStop" disabled>Stop</button>
-        <button id="laiInsert" disabled>Insert</button>
-        <button id="laiUndo" disabled>Undo insert</button>
+
+      <div class="lai-steps" id="laiSteps" hidden>
+        <div class="lai-step" data-s="0"><b>1</b><span>Prepare</span></div><div class="lai-line"></div>
+        <div class="lai-step" data-s="1"><b>2</b><span>Load model</span></div><div class="lai-line"></div>
+        <div class="lai-step" data-s="2"><b>3</b><span>Write</span></div><div class="lai-line"></div>
+        <div class="lai-step" data-s="3"><b>4</b><span>Done</span></div>
       </div>
+      <div class="lai-progress" id="laiProg" hidden><div class="lai-bar"><i id="laiBar"></i></div><span class="lai-progtext" id="laiProgText"></span></div>
+
+      <div class="lai-result">
+        <div class="lai-rhead">
+          <div class="lai-tabs" role="tablist">
+            <button type="button" class="on" data-view="preview" role="tab">Preview</button>
+            <button type="button" data-view="edit" role="tab">Edit text</button>
+          </div>
+          <span class="lai-meta" id="laiMeta"></span>
+          <button type="button" class="lai-icon" id="laiCopy" disabled title="Copy the draft as text">Copy</button>
+          <button type="button" class="lai-icon" id="laiRegen" disabled title="Write a new version">↻ Regenerate</button>
+        </div>
+        <div class="lai-preview" id="laiPreview" aria-live="polite"></div>
+        <textarea class="lai-edit" id="laiEdit" hidden spellcheck="false" aria-label="Edit the draft in Markdown"></textarea>
+      </div>
+    </div>
+    <div class="lai-foot">
       <div class="lai-state" id="laiState" aria-live="polite"></div>
-      <div class="lai-preview" id="laiPreview"></div>
+      <button class="lai-btn" id="laiUndo" disabled>Undo insert</button>
+      <button class="lai-btn" id="laiStop" disabled>Stop</button>
+      <button class="lai-btn" id="laiInsert" disabled>Insert</button>
+      <button class="lai-btn primary" id="laiGen">Generate<span class="lai-kbd">Ctrl+Enter</span></button>
     </div>`;
   document.body.appendChild(panel);
 
-  /* draggable header (same pattern as the other floating panels) */
+  /* segmented controls expose .value like a select */
+  ['laiTone', 'laiLength', 'laiEngine'].forEach(id => {
+    const el = $(id);
+    Object.defineProperty(el, 'value', {
+      get() { const b = el.querySelector('.on'); return b ? b.dataset.v : ''; },
+      set(v) {
+        el.querySelectorAll('button').forEach(b => {
+          const on = b.dataset.v === v;
+          b.classList.toggle('on', on);
+          b.setAttribute('aria-checked', on ? 'true' : 'false');
+        });
+      }
+    });
+    el.addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (!b || b.disabled || S.busy) return;
+      el.value = b.dataset.v;
+      el.dispatchEvent(new Event('change'));
+    });
+  });
+  $('laiTone').value = 'formal'; $('laiLength').value = 'medium'; $('laiEngine').value = 'smart';
+  $('laiQuality').value = 'balanced'; $('laiAuto').checked = true;
+
+  /* draggable header, kept inside the viewport */
   (function () {
     const head = $('laiHead');
     head.addEventListener('mousedown', e => {
       if (e.target.closest('.lai-x')) return;
       e.preventDefault();
       const sx = e.clientX, sy = e.clientY, ox = panel.offsetLeft, oy = panel.offsetTop;
-      const move = ev => { panel.style.left = (ox + ev.clientX - sx) + 'px'; panel.style.top = (oy + ev.clientY - sy) + 'px'; };
+      const move = ev => {
+        const x = Math.min(Math.max(0, ox + ev.clientX - sx), window.innerWidth - 80);
+        const y = Math.min(Math.max(0, oy + ev.clientY - sy), window.innerHeight - 50);
+        panel.style.left = x + 'px'; panel.style.top = y + 'px';
+      };
       const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
       document.addEventListener('mousemove', move);
       document.addEventListener('mouseup', up);
     });
   })();
+
+  /* example chips */
+  EXAMPLES.forEach(ex => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = ex[0]; b.title = ex[1];
+    b.addEventListener('click', () => { $('laiPrompt').value = ex[1]; updateCount(); $('laiPrompt').focus(); });
+    $('laiExamples').appendChild(b);
+  });
+
+  /* recent prompts */
+  function renderHistory() {
+    const h = lget('history') || [];
+    const box = $('laiHistory');
+    box.hidden = !h.length;
+    box.innerHTML = h.length ? '<span class="lai-chiplab">Recent:</span>' : '';
+    h.forEach(p => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'lai-hist'; b.textContent = p.length > 46 ? p.slice(0, 44) + '…' : p; b.title = p;
+      b.addEventListener('click', () => { $('laiPrompt').value = p; updateCount(); $('laiPrompt').focus(); });
+      box.appendChild(b);
+    });
+  }
+  function rememberPrompt(p) {
+    const h = (lget('history') || []).filter(x => x !== p);
+    h.unshift(p);
+    lset('history', h.slice(0, 4));
+    renderHistory();
+  }
+  function updateCount() { $('laiCount').textContent = $('laiPrompt').value.length + ' / 800'; }
 
   /* ───────── saved preferences ───────── */
   const prefIds = ['laiType', 'laiTone', 'laiLength', 'laiEngine', 'laiQuality', 'laiMode'];
@@ -2846,20 +3001,34 @@ if (location.pathname.endsWith(".html")) {
     return caps;
   }
 
+  function updateChip() {
+    const chip = $('laiChip');
+    chip.classList.toggle('busy', S.busy);
+    const instant = $('laiEngine').value === 'instant';
+    const caps = S.caps;
+    let txt;
+    if (instant || (caps && !caps.gpu)) { txt = 'Instant template'; chip.classList.add('off'); }
+    else if (S.engineModel) { txt = 'Smart · ' + S.engineModel.replace(/-q4f.*$/, '').replace(/-Instruct$/i, ''); chip.classList.remove('off'); }
+    else { txt = caps ? 'Smart · ready' : 'Checking…'; chip.classList.toggle('off', !caps); }
+    $('laiChipText').textContent = txt;
+  }
+
   function syncEngineUI() {
     const instant = $('laiEngine').value === 'instant';
-    $('laiQualityWrap').style.visibility = instant ? 'hidden' : 'visible';
+    $('laiQualityWrap').style.opacity = instant ? '.4' : '1';
+    $('laiQuality').disabled = instant;
+    updateChip();
   }
 
   async function refreshNote() {
     const caps = await detectCaps();
-    const smartOpt = $('laiEngine').querySelector('option[value="smart"]');
+    const smartBtn = $('laiEngine').querySelector('button[data-v="smart"]');
     if (caps.gpu) {
-      smartOpt.disabled = false;
-      $('laiNote').textContent = 'Smart mode runs a small AI model on this device, so your prompt stays private. The first use downloads the model once; after that it works from the saved copy. Small models can make mistakes, so please review the draft.';
+      smartBtn.disabled = false;
+      $('laiNote').textContent = 'Smart mode runs a small AI model on this device, so your prompt stays private. The first use downloads the model once; after that it works from the saved copy. Small models can make mistakes, so review the draft before sharing it.';
       $('laiToolbarNote').textContent = 'Smart mode is available. Runs on your device, no API key.';
     } else {
-      smartOpt.disabled = true;
+      smartBtn.disabled = true;
       $('laiEngine').value = 'instant';
       $('laiNote').textContent = caps.why + ' Instant templates are used instead. They build a structured draft with highlighted [brackets] for you to fill in.';
       $('laiToolbarNote').textContent = 'Instant templates only (' + caps.why.replace(/\.$/, '') + ').';
@@ -2912,7 +3081,6 @@ if (location.pathname.endsWith(".html")) {
     flush(); closeList();
     return out.join('');
   }
-
   /* ───────── Instant mode: template writer ───────── */
   const TYPE_WORDS = 'report|essay|letter|application|resume|cv|curriculum vitae|minutes|meeting notes|proposal|notice|circular|lesson plan|assignment|lab report|project report|case study|article|blog post|blog|summary|analysis|review|document|paragraph|newsletter|agenda';
 
@@ -2988,7 +3156,6 @@ if (location.pathname.endsWith(".html")) {
         return `# ${T}\n\n## Introduction\n[Introduce ${t} and explain why it matters.]\n\n## Main Points\n- [Point 1]\n- [Point 2]\n- [Point 3]\n\n## Details\n[Expand on each point with facts, examples or explanations.]\n\n## Conclusion\n[Summarise the key takeaways.]`;
     }
   }
-
   /* ───────── Smart mode: WebLLM in the browser ───────── */
   const FAMILIES = {
     fast:     ['Qwen2\\.5-0\\.5B-Instruct', 'SmolLM2-360M-Instruct', 'Llama-3\\.2-1B-Instruct'],
@@ -3049,6 +3216,7 @@ if (location.pathname.endsWith(".html")) {
     if (!rec) throw new Error('no matching model in this WebLLM version');
     const id = rec.model_id;
 
+    setStep(1);
     if (!(S.engine && S.engineModel === id)) {
       let cached = false;
       try { if (typeof webllm.hasModelInCache === 'function') cached = await webllm.hasModelInCache(id); } catch (e) {}
@@ -3070,8 +3238,10 @@ if (location.pathname.endsWith(".html")) {
       });
       S.engineModel = id;
       showProgress(false);
+      updateChip();
     }
 
+    setStep(2);
     setState('Writing…');
     S.streaming = true; syncButtons();
     try {
@@ -3092,32 +3262,68 @@ if (location.pathname.endsWith(".html")) {
   }
 
   /* ───────── panel plumbing ───────── */
-  function setState(msg) { $('laiState').textContent = msg || ''; }
+  function setState(msg, kind) {
+    const el = $('laiState');
+    el.textContent = msg || '';
+    el.className = 'lai-state' + (kind ? ' ' + kind : '');
+    el.title = msg || '';
+  }
+  function setStep(i, skipLoad) {
+    const box = $('laiSteps');
+    box.hidden = i < 0;
+    box.querySelectorAll('.lai-step').forEach(el => {
+      const n = +el.dataset.s;
+      el.classList.toggle('done', n < i || i > 3);
+      el.classList.toggle('active', n === i);
+      el.classList.toggle('skip', !!skipLoad && n === 1);
+    });
+  }
   function showProgress(on, frac, text) {
     $('laiProg').hidden = !on;
     if (!on) return;
     $('laiBar').style.width = Math.round(Math.max(0, Math.min(1, frac || 0)) * 100) + '%';
     $('laiProgText').textContent = String(text || '').slice(0, 110);
   }
+  function updateMeta() {
+    const w = countWords(S.md);
+    $('laiMeta').textContent = w ? w + ' words · ' + Math.max(1, Math.round(w / 200)) + ' min read' : '';
+  }
   function renderPreview() {
     const pv = $('laiPreview');
     pv.innerHTML = S.md ? mdToHtml(S.md, false) : '';
-    pv.scrollTop = pv.scrollHeight;
+    if (S.streaming) pv.scrollTop = pv.scrollHeight;
+    if (S.view === 'edit' && S.streaming) $('laiEdit').value = S.md;
+    updateMeta();
   }
   function queuePreview() {
     if (S.raf) return;
     S.raf = requestAnimationFrame(() => { S.raf = 0; renderPreview(); });
   }
+  function setView(v) {
+    S.view = v;
+    panel.querySelectorAll('.lai-tabs button').forEach(b => b.classList.toggle('on', b.dataset.view === v));
+    $('laiPreview').hidden = v !== 'preview';
+    $('laiEdit').hidden = v !== 'edit';
+    if (v === 'edit') $('laiEdit').value = S.md;
+    else renderPreview();
+  }
   function syncButtons() {
+    const has = !!S.md.trim();
     $('laiGen').disabled = S.busy;
     $('laiStop').disabled = !S.streaming;
-    $('laiInsert').disabled = S.busy || !S.md.trim();
+    $('laiInsert').disabled = S.busy || !has;
     $('laiUndo').disabled = !S.undoNodes;
+    $('laiCopy').disabled = S.busy || !has;
+    $('laiRegen').disabled = S.busy || !$('laiPrompt').value.trim();
+    $('laiEdit').readOnly = S.busy;
+    updateChip();
   }
   function openPanel() {
     if (readOnly()) { flash('This document is view-only.'); return; }
     panel.classList.add('open');
     refreshNote();
+    renderHistory();
+    updateCount();
     $('laiPrompt').focus();
   }
   function closePanel() { panel.classList.remove('open'); }
@@ -3126,24 +3332,27 @@ if (location.pathname.endsWith(".html")) {
     if (S.busy) return;
     if (readOnly()) { flash('This document is view-only.'); return; }
     const prompt = $('laiPrompt').value.trim();
-    if (!prompt) { setState('Describe the document you want first.'); $('laiPrompt').focus(); return; }
+    if (!prompt) { setState('Describe the document you want first.', 'err'); $('laiPrompt').focus(); return; }
+    rememberPrompt(prompt);
 
     const o = {
       type: $('laiType').value, tone: $('laiTone').value, length: $('laiLength').value,
       quality: $('laiQuality').value, engine: $('laiEngine').value
     };
-    S.busy = true; S.stop = false; S.md = '';
-    renderPreview(); syncButtons(); setState('Starting…');
+    S.busy = true; S.stop = false; S.md = ''; S.started = Date.now();
+    if (S.view !== 'preview') setView('preview');
+    renderPreview(); syncButtons(); setState('Starting…'); setStep(0, o.engine === 'instant');
 
-    let note = '';
+    let note = '', failed = false;
     try {
-      if (o.engine === 'instant') { S.md = buildTemplate(prompt, o.type); renderPreview(); }
+      if (o.engine === 'instant') { setStep(2, true); S.md = buildTemplate(prompt, o.type); renderPreview(); }
       else await runSmart(prompt, o);
     } catch (err) {
       console.warn('Local AI:', err);
       showProgress(false);
       S.streaming = false;
       if (!S.stop) {
+        failed = true;
         S.md = buildTemplate(prompt, o.type);
         renderPreview();
         note = err && err.cancelled
@@ -3152,9 +3361,13 @@ if (location.pathname.endsWith(".html")) {
       }
     }
     S.busy = false; syncButtons();
+    setStep(4, o.engine === 'instant' || failed);
 
-    const words = S.md.trim() ? S.md.trim().split(/\s+/).length : 0;
-    setState(note || (S.stop ? 'Stopped. You can still insert what was written.' : 'Done. ' + words + ' words.'));
+    const words = countWords(S.md);
+    const secs = ((Date.now() - S.started) / 1000).toFixed(1);
+    if (note) setState(note, 'err');
+    else if (S.stop) setState('Stopped. You can still insert what was written.');
+    else setState('Done · ' + words + ' words in ' + secs + 's', 'ok');
     if (S.md.trim() && !S.stop && $('laiAuto').checked) insertResult();
   }
 
@@ -3186,7 +3399,7 @@ if (location.pathname.endsWith(".html")) {
     page.dispatchEvent(new Event('input'));
     syncButtons();
     flash('AI draft inserted. You can edit it like any other text.');
-    setState('Inserted into page ' + (currentPage + 1) + '.');
+    setState('Inserted into page ' + (currentPage + 1) + '.', 'ok');
   }
 
   function undoInsert() {
@@ -3199,29 +3412,45 @@ if (location.pathname.endsWith(".html")) {
     setState('Insert undone.');
   }
 
-  async function freeMemory() {
-    if (!S.engine) { flash('No model is loaded.'); return; }
-    try { await S.engine.unload(); } catch (e) {}
-    S.engine = null; S.engineModel = null;
-    flash('Model unloaded. It stays saved on this device for next time.');
+  async function copyDraft() {
+    const text = S.md.trim();
+    if (!text) return;
+    const plain = $('laiPreview').innerText || text;
+    try { await navigator.clipboard.writeText(plain); }
+    catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = plain; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (e2) {}
+      ta.remove();
+    }
+    setState('Draft copied to the clipboard.', 'ok');
   }
 
   /* ───────── wiring ───────── */
   $('laiOpenBtn').addEventListener('click', openPanel);
-  $('laiFreeBtn').addEventListener('click', freeMemory);
   $('laiClose').addEventListener('click', closePanel);
   $('laiGen').addEventListener('click', generate);
+  $('laiRegen').addEventListener('click', generate);
   $('laiStop').addEventListener('click', () => { S.stop = true; setState('Stopping…'); });
   $('laiInsert').addEventListener('click', insertResult);
   $('laiUndo').addEventListener('click', undoInsert);
+  $('laiCopy').addEventListener('click', copyDraft);
+  panel.querySelectorAll('.lai-tabs button').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+  $('laiEdit').addEventListener('input', () => { S.md = $('laiEdit').value; updateMeta(); syncButtons(); });
+  $('laiPrompt').addEventListener('input', () => { updateCount(); syncButtons(); });
   $('laiPrompt').addEventListener('keydown', e => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); generate(); }
+  });
+  panel.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !S.busy) { e.stopPropagation(); closePanel(); }
   });
 
   syncEngineUI();
   syncButtons();
+  updateCount();
+  setStep(-1);
+  detectCaps().then(updateChip);
 })();
 </script>
-
 </body>
 </html>
