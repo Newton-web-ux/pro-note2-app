@@ -2671,6 +2671,557 @@ if (location.pathname.endsWith(".html")) {
   history.replaceState(null, "", cleanURL);
 }
 </script>
+<script>
+(function () {
+  'use strict';
+  if (window.__proLocalAiLoaded) return;
+  window.__proLocalAiLoaded = true;
+
+  /* ───────── helpers ───────── */
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const flash = msg => { if (typeof setStatus === 'function') setStatus(msg); };
+  const readOnly = () => typeof isReadOnly !== 'undefined' && isReadOnly;
+  const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+  const lget = k => { try { return JSON.parse(localStorage.getItem('pd.localai.' + k)); } catch (e) { return null; } };
+  const lset = (k, v) => { try { localStorage.setItem('pd.localai.' + k, JSON.stringify(v)); } catch (e) {} };
+  const shortErr = e => String((e && e.message) || e || 'unknown error').replace(/\s+/g, ' ').slice(0, 90);
+
+  const S = {
+    webllmP: null, engine: null, engineModel: null,
+    busy: false, streaming: false, stop: false,
+    md: '', undoPage: null, undoNodes: null, caps: null, raf: 0
+  };
+
+  /* ───────── styles ───────── */
+  const css = document.createElement('style');
+  css.textContent = `
+  .lai-panel{display:none;position:fixed;top:96px;left:240px;width:500px;max-width:calc(100vw - 16px);background:#fff;border:1px solid var(--border);border-radius:6px;box-shadow:0 8px 32px rgba(0,0,0,.25);z-index:9999;overflow:hidden}
+  .lai-panel.open{display:block}
+  .lai-head{background:var(--accent);color:#fff;padding:8px 12px;cursor:move;display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;user-select:none}
+  .lai-x{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:3px;padding:2px 8px;cursor:pointer;font-size:14px}
+  .lai-body{padding:12px;max-height:78vh;overflow-y:auto}
+  .lai-body label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px}
+  .lai-body textarea{width:100%;resize:vertical;padding:8px;border:1px solid var(--border);border-radius:4px;font:inherit;font-size:13px;margin-bottom:10px}
+  .lai-body textarea:focus,.lai-body select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(43,87,154,.15)}
+  .lai-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 10px;margin-bottom:10px}
+  .lai-grid select{width:100%;padding:5px 6px;border:1px solid var(--border);border-radius:3px;background:#fff;font:inherit;font-size:12px;height:28px}
+  .lai-check{display:flex!important;align-items:center;gap:6px;font-weight:500!important;color:var(--text)!important;font-size:12px!important;margin:2px 0 8px!important;cursor:pointer}
+  .lai-note{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:8px}
+  .lai-progress{margin:6px 0 10px}
+  .lai-bar{height:5px;background:#e3e8f2;border-radius:3px;overflow:hidden}
+  .lai-bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
+  .lai-progtext{display:block;font-size:10px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lai-actions{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .lai-actions button{padding:6px 12px;border:1px solid var(--border);border-radius:3px;background:#fff;cursor:pointer;font:inherit;font-size:12px;font-weight:600}
+  .lai-actions button:hover:not(:disabled){background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
+  .lai-actions button:disabled{opacity:.4;cursor:not-allowed}
+  .lai-actions .lai-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .lai-actions .lai-primary:hover:not(:disabled){background:var(--accent-dark);color:#fff}
+  .lai-state{font-size:12px;color:var(--text);min-height:16px;margin-bottom:8px}
+  .lai-preview{border:1px solid var(--border);border-radius:4px;background:#fafafa;padding:12px 14px;max-height:260px;overflow-y:auto;font-size:12.5px;line-height:1.55;color:#222}
+  .lai-preview:empty::before{content:'Your draft will appear here.';color:#999}
+  .lai-preview h1{font-size:17px;margin:0 0 8px}.lai-preview h2{font-size:14px;margin:12px 0 4px;color:var(--accent-dark)}.lai-preview h3{font-size:13px;margin:10px 0 3px}
+  .lai-preview p{margin:0 0 8px}.lai-preview ul,.lai-preview ol{margin:0 0 8px 20px}
+  @media (max-width:640px){.lai-panel{left:8px!important;right:8px;width:auto;top:56px!important}.lai-grid{grid-template-columns:repeat(2,1fr)}}
+  `;
+  document.head.appendChild(css);
+
+  /* ───────── UI: ribbon tab + toolbar ───────── */
+  const tabs = document.querySelector('.ribbon-tabs');
+  const homeToolbar = $('home');
+  if (!tabs || !homeToolbar) return;
+
+  const tabBtn = document.createElement('button');
+  tabBtn.className = 'tab-btn';
+  tabBtn.dataset.tab = 'ai';
+  tabBtn.textContent = '✨ AI';
+  tabBtn.addEventListener('click', () => { switchTab('ai'); openPanel(); });
+  tabs.children[0].after(tabBtn);
+
+  const toolbar = document.createElement('div');
+  toolbar.id = 'ai';
+  toolbar.className = 'ribbon-toolbar';
+  toolbar.innerHTML = `
+    <div class="ribbon-group">
+      <div class="ribbon-group-row">
+        <button class="tb-btn" id="laiOpenBtn" title="Create a document from a prompt"><span class="tb-icon">✨</span> Write with AI</button>
+      </div>
+      <div class="ribbon-group-label">Assistant</div>
+    </div>
+    <div class="ribbon-group">
+      <div class="ribbon-group-row">
+        <span id="laiToolbarNote" style="font-size:11px;color:var(--muted);max-width:360px;line-height:1.4;">Runs in your browser. No API key needed.</span>
+        <button class="tb-btn small" id="laiFreeBtn" title="Unload the model to free memory"><span class="tb-icon">🧹</span> Free memory</button>
+      </div>
+      <div class="ribbon-group-label">Local engine</div>
+    </div>`;
+  homeToolbar.after(toolbar);
+
+  /* ───────── UI: floating panel ───────── */
+  const panel = document.createElement('div');
+  panel.id = 'laiPanel';
+  panel.className = 'lai-panel';
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-label', 'Write with AI');
+  panel.innerHTML = `
+    <div class="lai-head" id="laiHead"><span>✨ Write with AI</span><button class="lai-x" id="laiClose" aria-label="Close">✕</button></div>
+    <div class="lai-body">
+      <label for="laiPrompt">What should the document be about?</label>
+      <textarea id="laiPrompt" rows="3" placeholder="e.g. Write a report on renewable energy in India for a college seminar"></textarea>
+      <div class="lai-grid">
+        <div><label for="laiType">Type</label>
+          <select id="laiType">
+            <option value="auto">Auto-detect</option><option value="report">Report</option><option value="essay">Essay</option>
+            <option value="letter">Letter / Application</option><option value="resume">Resume</option><option value="assignment">Assignment / Lab report</option>
+            <option value="proposal">Proposal</option><option value="minutes">Meeting minutes</option><option value="notice">Notice</option>
+            <option value="lesson">Lesson plan</option><option value="article">Article / Blog</option>
+          </select></div>
+        <div><label for="laiTone">Tone</label>
+          <select id="laiTone"><option value="formal">Formal</option><option value="neutral">Neutral</option><option value="friendly">Friendly</option></select></div>
+        <div><label for="laiLength">Length</label>
+          <select id="laiLength"><option value="short">Short</option><option value="medium" selected>Medium</option><option value="long">Long</option></select></div>
+        <div><label for="laiEngine">Engine</label>
+          <select id="laiEngine"><option value="smart">Smart (in-browser AI)</option><option value="instant">Instant template</option></select></div>
+        <div id="laiQualityWrap"><label for="laiQuality">Model size</label>
+          <select id="laiQuality"><option value="fast">Fast (smallest)</option><option value="balanced" selected>Balanced</option><option value="best">Best (largest)</option></select></div>
+        <div><label for="laiMode">Insert</label>
+          <select id="laiMode"><option value="auto">Replace if blank, else add below</option><option value="replace">Replace this page</option><option value="append">Add below existing text</option></select></div>
+      </div>
+      <label class="lai-check"><input type="checkbox" id="laiAuto" checked> Insert into the page when finished</label>
+      <div class="lai-note" id="laiNote">Checking this browser…</div>
+      <div class="lai-progress" id="laiProg" hidden><div class="lai-bar"><i id="laiBar"></i></div><span class="lai-progtext" id="laiProgText"></span></div>
+      <div class="lai-actions">
+        <button class="lai-primary" id="laiGen">Generate</button>
+        <button id="laiStop" disabled>Stop</button>
+        <button id="laiInsert" disabled>Insert</button>
+        <button id="laiUndo" disabled>Undo insert</button>
+      </div>
+      <div class="lai-state" id="laiState" aria-live="polite"></div>
+      <div class="lai-preview" id="laiPreview"></div>
+    </div>`;
+  document.body.appendChild(panel);
+
+  /* draggable header (same pattern as the other floating panels) */
+  (function () {
+    const head = $('laiHead');
+    head.addEventListener('mousedown', e => {
+      if (e.target.closest('.lai-x')) return;
+      e.preventDefault();
+      const sx = e.clientX, sy = e.clientY, ox = panel.offsetLeft, oy = panel.offsetTop;
+      const move = ev => { panel.style.left = (ox + ev.clientX - sx) + 'px'; panel.style.top = (oy + ev.clientY - sy) + 'px'; };
+      const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+  })();
+
+  /* ───────── saved preferences ───────── */
+  const prefIds = ['laiType', 'laiTone', 'laiLength', 'laiEngine', 'laiQuality', 'laiMode'];
+  const prefs = lget('prefs') || {};
+  prefIds.forEach(id => { if (prefs[id]) $(id).value = prefs[id]; });
+  if (typeof prefs.auto === 'boolean') $('laiAuto').checked = prefs.auto;
+  function savePrefs() {
+    const p = { auto: $('laiAuto').checked };
+    prefIds.forEach(id => { p[id] = $(id).value; });
+    lset('prefs', p);
+  }
+  prefIds.forEach(id => $(id).addEventListener('change', () => { savePrefs(); syncEngineUI(); }));
+  $('laiAuto').addEventListener('change', savePrefs);
+
+  /* ───────── capability detection ───────── */
+  async function detectCaps() {
+    if (S.caps) return S.caps;
+    const caps = { gpu: false, f16: false, why: '' };
+    try {
+      if (!('gpu' in navigator)) {
+        caps.why = window.isSecureContext ? 'This browser does not support WebGPU.' : 'WebGPU needs a secure (https) page.';
+      } else {
+        const adapter = await navigator.gpu.requestAdapter();
+        if (!adapter) caps.why = 'No compatible graphics adapter was found.';
+        else { caps.gpu = true; caps.f16 = adapter.features.has('shader-f16'); }
+      }
+    } catch (e) { caps.why = 'WebGPU could not be started.'; }
+    S.caps = caps;
+    return caps;
+  }
+
+  function syncEngineUI() {
+    const instant = $('laiEngine').value === 'instant';
+    $('laiQualityWrap').style.visibility = instant ? 'hidden' : 'visible';
+  }
+
+  async function refreshNote() {
+    const caps = await detectCaps();
+    const smartOpt = $('laiEngine').querySelector('option[value="smart"]');
+    if (caps.gpu) {
+      smartOpt.disabled = false;
+      $('laiNote').textContent = 'Smart mode runs a small AI model on this device, so your prompt stays private. The first use downloads the model once; after that it works from the saved copy. Small models can make mistakes, so please review the draft.';
+      $('laiToolbarNote').textContent = 'Smart mode is available. Runs on your device, no API key.';
+    } else {
+      smartOpt.disabled = true;
+      $('laiEngine').value = 'instant';
+      $('laiNote').textContent = caps.why + ' Instant templates are used instead. They build a structured draft with highlighted [brackets] for you to fill in.';
+      $('laiToolbarNote').textContent = 'Instant templates only (' + caps.why.replace(/\.$/, '') + ').';
+    }
+    syncEngineUI();
+  }
+
+  /* ───────── markdown → page HTML ───────── */
+  function inline(s) {
+    return esc(s)
+      .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+      .replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?![*\w])/g, '$1<i>$2</i>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\[([^\]\n]{1,80})\]/g, '<span style="background:#fff3b0;">[$1]</span>');
+  }
+  function mdToHtml(md, styled) {
+    const H = styled
+      ? { 1: ' style="font-size:24pt;margin:0 0 12px;"', 2: ' style="font-size:16pt;margin:18px 0 6px;color:#1e3f73;"', 3: ' style="font-size:13pt;margin:14px 0 4px;"', 4: '' }
+      : { 1: '', 2: '', 3: '', 4: '' };
+    const out = []; let para = []; let list = null;
+    const closeList = () => { if (list) { out.push('</' + list + '>'); list = null; } };
+    const flush = () => {
+      if (!para.length) return;
+      let h = '';
+      para.forEach((ln, i) => { h += inline(ln.trim()); if (i < para.length - 1) h += / {2,}$/.test(ln) ? '<br>' : ' '; });
+      out.push('<p>' + h + '</p>');
+      para = [];
+    };
+    for (const ln of md.replace(/\r/g, '').split('\n')) {
+      let m;
+      if (/^\s*```/.test(ln)) continue;
+      if (!ln.trim()) { flush(); closeList(); continue; }
+      if ((m = ln.match(/^\s{0,3}(#{1,6})\s+(.*?)\s*#*\s*$/))) {
+        flush(); closeList();
+        const lv = Math.min(m[1].length, 4);
+        out.push('<h' + lv + H[lv] + '>' + inline(m[2]) + '</h' + lv + '>');
+        continue;
+      }
+      if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(ln)) { flush(); closeList(); out.push('<hr style="border:1px solid #ccc;margin:12px 0;">'); continue; }
+      if ((m = ln.match(/^\s*[-*•]\s+(.*)$/))) {
+        flush(); if (list !== 'ul') { closeList(); out.push('<ul>'); list = 'ul'; }
+        out.push('<li>' + inline(m[1]) + '</li>'); continue;
+      }
+      if ((m = ln.match(/^\s*\d+[.)]\s+(.*)$/))) {
+        flush(); if (list !== 'ol') { closeList(); out.push('<ol>'); list = 'ol'; }
+        out.push('<li>' + inline(m[1]) + '</li>'); continue;
+      }
+      closeList(); para.push(ln);
+    }
+    flush(); closeList();
+    return out.join('');
+  }
+
+  /* ───────── Instant mode: template writer ───────── */
+  const TYPE_WORDS = 'report|essay|letter|application|resume|cv|curriculum vitae|minutes|meeting notes|proposal|notice|circular|lesson plan|assignment|lab report|project report|case study|article|blog post|blog|summary|analysis|review|document|paragraph|newsletter|agenda';
+
+  function detectType(raw) {
+    const r = raw.toLowerCase();
+    if (/\b(resume|cv|curriculum vitae)\b/.test(r)) return 'resume';
+    if (/\b(minutes|meeting notes|agenda)\b/.test(r)) return 'minutes';
+    if (/\b(proposal|pitch|business plan)\b/.test(r)) return 'proposal';
+    if (/\b(notice|circular|announcement)\b/.test(r)) return 'notice';
+    if (/\blesson( plan)?\b/.test(r)) return 'lesson';
+    if (/\b(letter|application|leave|resignation|complaint)\b/.test(r)) return 'letter';
+    if (/\b(assignment|lab report|practical|project report|seminar|term paper|case study)\b/.test(r)) return 'assignment';
+    if (/\b(essay|paragraph)\b/.test(r)) return 'essay';
+    if (/\b(article|blog|post|newsletter)\b/.test(r)) return 'article';
+    if (/\b(report|summary|analysis|review)\b/.test(r)) return 'report';
+    return 'generic';
+  }
+
+  function extractTopic(raw) {
+    let s = raw.trim().replace(/\s+/g, ' ').replace(/[.?!]+$/, '');
+    s = s.replace(/^(please\s+|kindly\s+|can you\s+|could you\s+|i (?:want|need) (?:you )?(?:to )?)/i, '');
+    s = s.replace(/^(write|create|make|generate|draft|prepare|compose|build|give me|help me (?:write|create|make))\s+(?:me\s+)?/i, '');
+    s = s.replace(/^(a|an|the|some|my)\s+/i, '');
+    const lead = s.match(new RegExp('^(?:[a-z-]+\\s+){0,3}?(?:' + TYPE_WORDS + ')s?\\s+(?:on|about|regarding|for|of|to|titled|called|in)\\s+(.+)$', 'i'));
+    let topic;
+    if (lead) topic = lead[1];
+    else topic = s.replace(new RegExp('\\b(?:' + TYPE_WORDS + ')s?\\b', 'gi'), '').replace(/^\s*(on|about|regarding)\s+/i, '').replace(/\s+/g, ' ').trim();
+    return topic.replace(/^(a|an|the)\s+/i, '').trim();
+  }
+
+  function buildTemplate(raw, typeKey) {
+    const topic = extractTopic(raw);
+    const T = topic ? cap(topic) : '[Title]';
+    const t = topic || '[topic]';
+    const date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    const k = typeKey === 'auto' ? detectType(raw) : typeKey;
+
+    switch (k) {
+      case 'report':
+        return `# ${T}\n\n**Prepared by:** [Your name]  \n**Date:** ${date}\n\n## 1. Introduction\nThis report looks at ${t}. It explains the background, sets out the main points and ends with conclusions. [Add one or two sentences on why this topic matters.]\n\n## 2. Background\n[Describe the context of ${t}: history, key terms and current situation.]\n\n## 3. Key Findings\n- [Finding 1]\n- [Finding 2]\n- [Finding 3]\n\n## 4. Discussion\n[Explain what the findings mean and how they relate to ${t}.]\n\n## 5. Conclusion\n[Summarise the main points in three or four sentences.]\n\n## 6. Recommendations\n1. [Recommendation 1]\n2. [Recommendation 2]\n\n## References\n- [Source 1]\n- [Source 2]`;
+
+      case 'essay':
+        return `# ${T}\n\n## Introduction\n[Open with a sentence that draws the reader in, then state your main point about ${t}.]\n\n## Body\n**First point.** [Make your first argument about ${t} and support it with an example.]\n\n**Second point.** [Make your second argument and support it.]\n\n**Third point.** [Make your third argument, or address a counter-argument.]\n\n## Conclusion\n[Restate your main point in new words and finish with a closing thought on ${t}.]`;
+
+      case 'letter':
+        if (/\bleave\b/i.test(raw)) {
+          return `[Your name]  \n[Class / Department / Designation]  \n[Address]\n\n${date}\n\nTo,  \nThe [Principal / Head of Department / Manager]  \n[Institution / Company name]  \n[Address]\n\n**Subject: Application for leave${topic ? ' – ' + t : ''}**\n\nRespected Sir/Madam,\n\nI am writing to request leave from [start date] to [end date] ([number] days) because of ${topic || '[reason]'}. I will complete any missed work after I return.\n\nI would be grateful if you could grant me leave for this period.\n\nThank you for your consideration.\n\nYours sincerely,  \n[Your name]  \n[Roll no. / Employee ID]`;
+        }
+        return `[Your name]  \n[Your address]  \n[Phone / Email]\n\n${date}\n\nTo,  \n[Recipient name and designation]  \n[Organisation]  \n[Address]\n\n**Subject: ${topic ? T : '[Subject]'}**\n\nDear [Name],\n\nI am writing regarding ${t}. [State the purpose of the letter in one or two sentences.]\n\n[Give the details: what happened, what you need, and any dates or reference numbers.]\n\n[Say what action you are asking for and by when.]\n\nThank you for your time and attention.\n\nYours sincerely,  \n[Your name]`;
+
+      case 'resume':
+        return `# [Your Full Name]\n[City, State] | [Phone] | [Email] | [LinkedIn / Portfolio]\n\n## Professional Summary\n[Two or three sentences about who you are, your strongest skills and the kind of role you want${topic ? ' (' + t + ')' : ''}.]\n\n## Education\n**[Degree / Course]** – [Institution]  \n[Year – Year] | [CGPA / Percentage]\n\n## Experience\n**[Job title]** – [Organisation]  \n[Month Year – Month Year]\n- [Achievement with a number, e.g. improved X by 20%]\n- [Responsibility or result]\n\n## Projects\n**[Project name]** – [One-line description]\n- [What you built and the tools you used]\n\n## Skills\n- [Skill 1], [Skill 2], [Skill 3], [Skill 4]\n\n## Achievements\n- [Award, certificate or recognition]`;
+
+      case 'minutes':
+        return `# Meeting Minutes${topic ? ' – ' + T : ''}\n\n**Date:** ${date}  \n**Time:** [Start time] – [End time]  \n**Venue:** [Location / Online link]  \n**Chaired by:** [Name]  \n**Minutes taken by:** [Name]\n\n## Attendees\n- [Name, role]\n- [Name, role]\n\n## Agenda\n1. [Agenda item 1]\n2. [Agenda item 2]\n3. [Agenda item 3]\n\n## Discussion\n**[Agenda item 1].** [Summary of what was discussed.]\n\n**[Agenda item 2].** [Summary of what was discussed.]\n\n## Decisions\n- [Decision 1]\n- [Decision 2]\n\n## Action Items\n- [Task] – [Owner] – [Due date]\n- [Task] – [Owner] – [Due date]\n\n**Next meeting:** [Date and time]`;
+
+      case 'proposal':
+        return `# Proposal: ${T}\n\n**Submitted by:** [Your name / team]  \n**Submitted to:** [Recipient]  \n**Date:** ${date}\n\n## Executive Summary\n[Summarise the proposal for ${t} in three or four sentences.]\n\n## Problem Statement\n[Describe the problem or need this proposal addresses.]\n\n## Proposed Solution\n[Explain what you propose to do and how it solves the problem.]\n\n## Objectives\n- [Objective 1]\n- [Objective 2]\n- [Objective 3]\n\n## Timeline\n1. [Phase 1] – [Dates]\n2. [Phase 2] – [Dates]\n3. [Phase 3] – [Dates]\n\n## Budget\n- [Item] – [Cost]\n- [Item] – [Cost]\n- **Total:** [Amount]\n\n## Expected Outcomes\n[Describe the results and benefits.]\n\n## Conclusion\n[Close with a short request for approval or next steps.]`;
+
+      case 'notice':
+        return `# NOTICE\n\n**[Institution / Organisation name]**\n\n**Ref. No.:** [Reference number]  \n**Date:** ${date}\n\n**Subject: ${topic ? T : '[Subject of the notice]'}**\n\nThis is to inform all [students / staff / members] that ${topic ? t : '[state the announcement]'}. [Add the date, time and venue if there is an event.]\n\n[Add any instructions, deadlines or contact details.]\n\nAll concerned are requested to take note and comply.\n\n[Name]  \n[Designation]  \n[Institution / Organisation]`;
+
+      case 'lesson':
+        return `# Lesson Plan: ${T}\n\n**Subject:** [Subject]  \n**Class / Level:** [Class]  \n**Duration:** [Minutes]  \n**Date:** ${date}\n\n## Learning Objectives\nBy the end of the lesson, students will be able to:\n- [Objective 1]\n- [Objective 2]\n\n## Materials\n- [Material 1]\n- [Material 2]\n\n## Introduction ([5] minutes)\n[Hook or recap question that leads into ${t}.]\n\n## Main Activity ([20] minutes)\n[Explain the steps of the teaching activity.]\n\n## Practice ([10] minutes)\n[Describe the exercise students will do.]\n\n## Assessment\n[How you will check understanding.]\n\n## Homework\n[Task for students.]\n\n## Reflection\n[Notes on what worked and what to change.]`;
+
+      case 'assignment':
+        return `# ${T}\n\n**Name:** [Your name]  \n**Roll No.:** [Roll number]  \n**Course / Subject:** [Subject code and name]  \n**Submitted to:** [Teacher name]  \n**Date:** ${date}\n\n## Aim / Objective\n[State what this assignment sets out to do regarding ${t}.]\n\n## Introduction\n[Give a short overview of ${t}.]\n\n## Theory / Discussion\n[Explain the main concepts, with diagrams, formulas or examples where needed.]\n\n## Observations / Analysis\n[Present your data, results or analysis.]\n\n## Conclusion\n[Summarise what you found or learned.]\n\n## References\n- [Book or website 1]\n- [Book or website 2]`;
+
+      case 'article':
+        return `# ${T}\n\n*By [Author name] · ${date}*\n\n[Opening paragraph: hook the reader and say what this article covers about ${t}.]\n\n## [First section heading]\n[Develop your first idea with an example or a fact.]\n\n## [Second section heading]\n[Develop your second idea.]\n\n## [Third section heading]\n[Develop your third idea.]\n\n## Final Thoughts\n[Wrap up and tell the reader what to do or think next.]`;
+
+      default:
+        return `# ${T}\n\n## Introduction\n[Introduce ${t} and explain why it matters.]\n\n## Main Points\n- [Point 1]\n- [Point 2]\n- [Point 3]\n\n## Details\n[Expand on each point with facts, examples or explanations.]\n\n## Conclusion\n[Summarise the key takeaways.]`;
+    }
+  }
+
+  /* ───────── Smart mode: WebLLM in the browser ───────── */
+  const FAMILIES = {
+    fast:     ['Qwen2\\.5-0\\.5B-Instruct', 'SmolLM2-360M-Instruct', 'Llama-3\\.2-1B-Instruct'],
+    balanced: ['Qwen2\\.5-1\\.5B-Instruct', 'Llama-3\\.2-1B-Instruct', 'SmolLM2-1\\.7B-Instruct'],
+    best:     ['Qwen2\\.5-3B-Instruct', 'Llama-3\\.2-3B-Instruct', 'Phi-3\\.5-mini-instruct']
+  };
+  const LENGTH = {
+    short:  { words: 'about 250 words',  tokens: 700 },
+    medium: { words: 'about 600 words',  tokens: 1300 },
+    long:   { words: 'about 1200 words', tokens: 2300 }
+  };
+  const TYPE_LABEL = {
+    auto: 'document', report: 'report', essay: 'essay', letter: 'letter or application', resume: 'resume',
+    assignment: 'assignment or lab report', proposal: 'proposal', minutes: 'set of meeting minutes',
+    notice: 'notice', lesson: 'lesson plan', article: 'article'
+  };
+
+  function loadWebLLM() {
+    if (!S.webllmP) {
+      S.webllmP = import('https://esm.run/@mlc-ai/web-llm').catch(e => { S.webllmP = null; throw e; });
+    }
+    return S.webllmP;
+  }
+
+  function pickModel(webllm, quality, f16) {
+    const list = (webllm.prebuiltAppConfig && webllm.prebuiltAppConfig.model_list) || [];
+    const quants = f16 ? ['q4f16_1', 'q4f32_1'] : ['q4f32_1'];
+    for (const fam of FAMILIES[quality] || FAMILIES.balanced) {
+      for (const q of quants) {
+        const re = new RegExp('^' + fam + '-' + q + '-MLC$', 'i');
+        const hit = list.find(m => re.test(m.model_id));
+        if (hit) return hit;
+      }
+    }
+    return null;
+  }
+
+  function buildMessages(prompt, o) {
+    const system =
+      'You are a writing assistant inside a word processor. Write the complete document the user asks for, in Markdown. ' +
+      'Use "# " for the title, "## " for section headings, short paragraphs, and bullet or numbered lists where they help. ' +
+      'Write in the same language as the request. Do not add any commentary before or after the document. ' +
+      'If a specific fact such as a name, date or number is not given, write it as a [bracketed placeholder] instead of inventing it.';
+    const user =
+      'Write a ' + (TYPE_LABEL[o.type] || 'document') + '. Tone: ' + o.tone + '. Length: ' + LENGTH[o.length].words + '.\n\nRequest: ' + prompt;
+    return [{ role: 'system', content: system }, { role: 'user', content: user }];
+  }
+
+  function cleanMd(md) {
+    return md.replace(/^\s*```(?:markdown|md)?\s*\n/i, '').replace(/\n```\s*$/, '').trim();
+  }
+
+  async function runSmart(prompt, o) {
+    const caps = await detectCaps();
+    if (!caps.gpu) throw new Error(caps.why || 'WebGPU is not available');
+    const webllm = await loadWebLLM();
+    const rec = pickModel(webllm, o.quality, caps.f16);
+    if (!rec) throw new Error('no matching model in this WebLLM version');
+    const id = rec.model_id;
+
+    if (!(S.engine && S.engineModel === id)) {
+      let cached = false;
+      try { if (typeof webllm.hasModelInCache === 'function') cached = await webllm.hasModelInCache(id); } catch (e) {}
+      if (!cached && !lget('consent.' + id)) {
+        const gb = rec.vram_required_MB ? ' It needs roughly ' + (rec.vram_required_MB / 1024).toFixed(1) + ' GB of free graphics memory.' : '';
+        const ok = confirm(
+          'Smart mode runs a small AI model inside your browser, with no account or API key.\n\n' +
+          'The first time, the model must be downloaded and saved on this device (a few hundred MB to a couple of GB, depending on the size you picked).' + gb +
+          '\n\nDownload it now?'
+        );
+        if (!ok) { const err = new Error('download declined'); err.cancelled = true; throw err; }
+        lset('consent.' + id, 1);
+      }
+      setState('Loading the model…');
+      showProgress(true, 0, 'Preparing…');
+      if (S.engine) { try { await S.engine.unload(); } catch (e) {} S.engine = null; S.engineModel = null; }
+      S.engine = await webllm.CreateMLCEngine(id, {
+        initProgressCallback: r => showProgress(true, r.progress || 0, r.text || '')
+      });
+      S.engineModel = id;
+      showProgress(false);
+    }
+
+    setState('Writing…');
+    S.streaming = true; syncButtons();
+    try {
+      const stream = await S.engine.chat.completions.create({
+        messages: buildMessages(prompt, o),
+        stream: true, temperature: 0.7, top_p: 0.9, max_tokens: LENGTH[o.length].tokens
+      });
+      for await (const chunk of stream) {
+        const d = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
+        if (d) { S.md += d; queuePreview(); }
+        if (S.stop) { try { S.engine.interruptGenerate(); } catch (e) {} break; }
+      }
+    } finally {
+      S.streaming = false;
+    }
+    S.md = cleanMd(S.md);
+    if (!S.md) throw new Error('the model returned no text');
+  }
+
+  /* ───────── panel plumbing ───────── */
+  function setState(msg) { $('laiState').textContent = msg || ''; }
+  function showProgress(on, frac, text) {
+    $('laiProg').hidden = !on;
+    if (!on) return;
+    $('laiBar').style.width = Math.round(Math.max(0, Math.min(1, frac || 0)) * 100) + '%';
+    $('laiProgText').textContent = String(text || '').slice(0, 110);
+  }
+  function renderPreview() {
+    const pv = $('laiPreview');
+    pv.innerHTML = S.md ? mdToHtml(S.md, false) : '';
+    pv.scrollTop = pv.scrollHeight;
+  }
+  function queuePreview() {
+    if (S.raf) return;
+    S.raf = requestAnimationFrame(() => { S.raf = 0; renderPreview(); });
+  }
+  function syncButtons() {
+    $('laiGen').disabled = S.busy;
+    $('laiStop').disabled = !S.streaming;
+    $('laiInsert').disabled = S.busy || !S.md.trim();
+    $('laiUndo').disabled = !S.undoNodes;
+  }
+  function openPanel() {
+    if (readOnly()) { flash('This document is view-only.'); return; }
+    panel.classList.add('open');
+    refreshNote();
+    $('laiPrompt').focus();
+  }
+  function closePanel() { panel.classList.remove('open'); }
+
+  async function generate() {
+    if (S.busy) return;
+    if (readOnly()) { flash('This document is view-only.'); return; }
+    const prompt = $('laiPrompt').value.trim();
+    if (!prompt) { setState('Describe the document you want first.'); $('laiPrompt').focus(); return; }
+
+    const o = {
+      type: $('laiType').value, tone: $('laiTone').value, length: $('laiLength').value,
+      quality: $('laiQuality').value, engine: $('laiEngine').value
+    };
+    S.busy = true; S.stop = false; S.md = '';
+    renderPreview(); syncButtons(); setState('Starting…');
+
+    let note = '';
+    try {
+      if (o.engine === 'instant') { S.md = buildTemplate(prompt, o.type); renderPreview(); }
+      else await runSmart(prompt, o);
+    } catch (err) {
+      console.warn('Local AI:', err);
+      showProgress(false);
+      S.streaming = false;
+      if (!S.stop) {
+        S.md = buildTemplate(prompt, o.type);
+        renderPreview();
+        note = err && err.cancelled
+          ? 'Download skipped, so an instant template was built instead.'
+          : 'The smart model could not run here (' + shortErr(err) + '), so an instant template was built instead.';
+      }
+    }
+    S.busy = false; syncButtons();
+
+    const words = S.md.trim() ? S.md.trim().split(/\s+/).length : 0;
+    setState(note || (S.stop ? 'Stopped. You can still insert what was written.' : 'Done. ' + words + ' words.'));
+    if (S.md.trim() && !S.stop && $('laiAuto').checked) insertResult();
+  }
+
+  function isBlank(page) {
+    const t = (page.innerText || '').replace(/\s+/g, ' ').trim();
+    return (!t || /^start typing here\.{0,3}$/i.test(t)) && !page.querySelector('table, img:not(.draggable)');
+  }
+
+  function insertResult() {
+    if (readOnly()) { flash('This document is view-only.'); return; }
+    if (!S.md.trim()) return;
+    if (typeof pages === 'undefined' || !pages[currentPage]) { flash('Open a page first.'); return; }
+    const page = pages[currentPage];
+    const html = mdToHtml(S.md, true);
+    const mode = $('laiMode').value;
+    const replace = mode === 'replace' || (mode === 'auto' && isBlank(page));
+
+    if (typeof clearImageHandles === 'function') clearImageHandles();
+    S.undoPage = page;
+    S.undoNodes = Array.from(page.childNodes);
+
+    if (replace) {
+      const imgs = Array.from(page.querySelectorAll('img.draggable'));
+      page.innerHTML = html;
+      imgs.forEach(i => page.appendChild(i));
+    } else {
+      page.insertAdjacentHTML('beforeend', '<p><br></p>' + html);
+    }
+    page.dispatchEvent(new Event('input'));
+    syncButtons();
+    flash('AI draft inserted. You can edit it like any other text.');
+    setState('Inserted into page ' + (currentPage + 1) + '.');
+  }
+
+  function undoInsert() {
+    if (!S.undoPage || !S.undoNodes) return;
+    S.undoPage.replaceChildren(...S.undoNodes);
+    S.undoPage.dispatchEvent(new Event('input'));
+    S.undoNodes = null; S.undoPage = null;
+    syncButtons();
+    flash('AI insert undone.');
+    setState('Insert undone.');
+  }
+
+  async function freeMemory() {
+    if (!S.engine) { flash('No model is loaded.'); return; }
+    try { await S.engine.unload(); } catch (e) {}
+    S.engine = null; S.engineModel = null;
+    flash('Model unloaded. It stays saved on this device for next time.');
+  }
+
+  /* ───────── wiring ───────── */
+  $('laiOpenBtn').addEventListener('click', openPanel);
+  $('laiFreeBtn').addEventListener('click', freeMemory);
+  $('laiClose').addEventListener('click', closePanel);
+  $('laiGen').addEventListener('click', generate);
+  $('laiStop').addEventListener('click', () => { S.stop = true; setState('Stopping…'); });
+  $('laiInsert').addEventListener('click', insertResult);
+  $('laiUndo').addEventListener('click', undoInsert);
+  $('laiPrompt').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); generate(); }
+  });
+
+  syncEngineUI();
+  syncButtons();
+})();
+</script>
 
 </body>
 </html>
