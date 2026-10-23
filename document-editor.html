@@ -2687,10 +2687,11 @@ if (location.pathname.endsWith(".html")) {
   const lget = k => { try { return JSON.parse(localStorage.getItem('pd.localai.' + k)); } catch (e) { return null; } };
   const lset = (k, v) => { try { localStorage.setItem('pd.localai.' + k, JSON.stringify(v)); } catch (e) {} };
   const shortErr = e => String((e && e.message) || e || 'unknown error').replace(/\s+/g, ' ').slice(0, 90);
-  const countWords = s => { const t = String(s || '').replace(/[#*_`>\-\[\]]/g, ' ').trim(); return t ? t.split(/\s+/).length : 0; };
+  const countWords = s => { const t = String(s || '').replace(/\$+[^$]*\$+/g, ' eq ').replace(/[#*_`>\-\[\]]/g, ' ').trim(); return t ? t.split(/\s+/).length : 0; };
+  const R = String.raw;
 
   const S = {
-    webllmP: null, engine: null, engineModel: null,
+    webllmP: null, engine: null, engineModel: null, katexP: null,
     busy: false, streaming: false, stop: false,
     md: '', undoPage: null, undoNodes: null, caps: null, raf: 0, view: 'preview', started: 0
   };
@@ -2738,8 +2739,14 @@ if (location.pathname.endsWith(".html")) {
   .lai-adv summary::after{content:'▾';color:var(--muted);transition:transform .2s}
   .lai-adv[open] summary::after{transform:rotate(180deg)}
   .lai-adv .lai-advbody{padding:4px 12px 12px;display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+  .lai-adv .lai-eqbody{padding:4px 12px 12px}
   .lai-check{display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;grid-column:1/-1}
   .lai-note{font-size:11.5px;color:var(--muted);line-height:1.55;background:#f3f6fb;border-left:3px solid var(--accent);border-radius:0 6px 6px 0;padding:8px 10px;margin-bottom:14px}
+  .lai-eq{width:100%;resize:vertical;min-height:54px;max-height:140px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;color:var(--text);background:#fff}
+  .lai-eq:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43,87,154,.16)}
+  .lai-eqprev{min-height:46px;margin-top:8px;padding:8px 10px;border:1px dashed var(--border);border-radius:8px;background:#fff;text-align:center;font-size:15px;overflow-x:auto}
+  .lai-eqprev:empty::before{content:'Live equation preview';color:#9aa3b2;font-size:12px}
+  .lai-eqbtns{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
   .lai-steps{display:flex;align-items:center;margin-bottom:8px}
   .lai-steps[hidden],.lai-progress[hidden]{display:none}
   .lai-step{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);font-weight:600;white-space:nowrap}
@@ -2769,6 +2776,8 @@ if (location.pathname.endsWith(".html")) {
   .lai-preview:empty::before{content:'Your draft will appear here. Describe the document above, then press Generate.';color:#9aa3b2}
   .lai-preview h1{font-size:18px;margin:0 0 8px;color:#16233b}.lai-preview h2{font-size:14.5px;margin:14px 0 4px;color:var(--accent-dark)}.lai-preview h3{font-size:13px;margin:10px 0 3px}
   .lai-preview p{margin:0 0 8px}.lai-preview ul,.lai-preview ol{margin:0 0 8px 20px}
+  .lai-preview math{font-size:1.15em}
+  .lai-preview .lai-math[data-display]{overflow-x:auto}
   .lai-foot{flex:none;display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--border);background:#f6f8fc}
   .lai-state{flex:1;min-width:0;font-size:11.5px;color:var(--muted);line-height:1.35;overflow:hidden;text-overflow:ellipsis}
   .lai-state.err{color:#b4501a}.lai-state.ok{color:#2e7d4f}
@@ -2801,6 +2810,7 @@ if (location.pathname.endsWith(".html")) {
     <div class="ribbon-group">
       <div class="ribbon-group-row">
         <button class="tb-btn" id="laiOpenBtn" title="Create a document from a prompt"><span class="tb-icon">✨</span> Write with AI</button>
+        <button class="tb-btn" id="laiEqBtn" title="Open the equation editor"><span class="tb-icon">∑</span> Equation</button>
       </div>
       <div class="ribbon-group-label">Assistant</div>
     </div>
@@ -2817,8 +2827,16 @@ if (location.pathname.endsWith(".html")) {
     ['📄 Report', 'Write a report on renewable energy in India for a college seminar'],
     ['✉️ Leave letter', 'Write a leave application for 3 days due to a family function'],
     ['👤 Resume', 'Create a resume for a fresher computer science graduate'],
-    ['📝 Meeting minutes', 'Prepare meeting minutes for a project kickoff'],
-    ['📢 Notice', 'Draft a notice about the annual sports day']
+    ['∑ Quadratics', 'Explain the quadratic formula with a derivation and two worked examples'],
+    ['∫ Calculus', 'Write notes on integration by parts with solved problems'],
+    ['⚛️ Physics', 'Summarise the equations of projectile motion with a solved numerical'],
+    ['📝 Meeting minutes', 'Prepare meeting minutes for a project kickoff']
+  ];
+  const SYMBOLS = [
+    ['a⁄b', R`\frac{a}{b}`], ['√', R`\sqrt{x}`], ['xⁿ', R`x^{n}`], ['xₙ', R`x_{n}`],
+    ['∑', R`\sum_{i=1}^{n} i`], ['∫', R`\int_{a}^{b} f(x)\,dx`], ['lim', R`\lim_{x \to 0}`],
+    ['∂', R`\frac{\partial f}{\partial x}`], ['π', R`\pi`], ['θ', R`\theta`], ['±', R`\pm`], ['≤', R`\leq`],
+    ['≠', R`\neq`], ['∞', R`\infty`], ['matrix', R`\begin{bmatrix} a & b \\ c & d \end{bmatrix}`]
   ];
   const seg = (id, items) =>
     '<div class="lai-seg" id="' + id + '" role="radiogroup">' +
@@ -2839,7 +2857,7 @@ if (location.pathname.endsWith(".html")) {
     <div class="lai-body">
       <div class="lai-sec">
         <div class="lai-lab"><label for="laiPrompt">Describe your document</label><em id="laiCount">0 / 800</em></div>
-        <textarea class="lai-prompt" id="laiPrompt" maxlength="800" placeholder="e.g. A report on renewable energy in India for a college seminar, covering solar, wind and policy"></textarea>
+        <textarea class="lai-prompt" id="laiPrompt" maxlength="800" placeholder="e.g. A report on renewable energy in India for a college seminar, or: derive the quadratic formula and solve 2x² − 5x + 3 = 0"></textarea>
         <div class="lai-chips" id="laiExamples"><span class="lai-chiplab">Try:</span></div>
         <div class="lai-chips" id="laiHistory" hidden></div>
       </div>
@@ -2848,6 +2866,7 @@ if (location.pathname.endsWith(".html")) {
         <div class="lai-full"><div class="lai-lab"><label for="laiType">Document type</label></div>
           <select class="lai-sel" id="laiType">
             <option value="auto">Auto-detect from my description</option><option value="report">Report</option><option value="essay">Essay</option>
+            <option value="math">Maths / Science notes (with equations)</option>
             <option value="letter">Letter / Application</option><option value="resume">Resume</option><option value="assignment">Assignment / Lab report</option>
             <option value="proposal">Proposal</option><option value="minutes">Meeting minutes</option><option value="notice">Notice</option>
             <option value="lesson">Lesson plan</option><option value="article">Article / Blog</option>
@@ -2864,7 +2883,22 @@ if (location.pathname.endsWith(".html")) {
             <select class="lai-sel" id="laiQuality"><option value="fast">Fast (smallest)</option><option value="balanced">Balanced</option><option value="best">Best (largest)</option></select></div>
           <div><div class="lai-lab"><label for="laiMode">Insert behaviour</label></div>
             <select class="lai-sel" id="laiMode"><option value="auto">Replace if blank, else add below</option><option value="replace">Replace this page</option><option value="append">Add below existing text</option></select></div>
+          <label class="lai-check"><input type="checkbox" id="laiMath"> Write equations in LaTeX and show them as real maths</label>
           <label class="lai-check"><input type="checkbox" id="laiAuto"> Insert into the page automatically when finished</label>
+        </div>
+      </details>
+
+      <details class="lai-adv" id="laiEqBox">
+        <summary>∑ Equation editor</summary>
+        <div class="lai-eqbody">
+          <div class="lai-lab"><label for="laiEq">LaTeX</label><em>e.g. x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}</em></div>
+          <textarea class="lai-eq" id="laiEq" spellcheck="false" placeholder="Type or click a symbol below"></textarea>
+          <div class="lai-chips" id="laiSyms"></div>
+          <div class="lai-eqprev" id="laiEqPrev" aria-live="polite"></div>
+          <div class="lai-eqbtns">
+            <button type="button" class="lai-btn" id="laiEqDraft" disabled>Add to draft</button>
+            <button type="button" class="lai-btn primary" id="laiEqInsert" disabled>Insert into page</button>
+          </div>
         </div>
       </details>
 
@@ -2885,7 +2919,7 @@ if (location.pathname.endsWith(".html")) {
             <button type="button" data-view="edit" role="tab">Edit text</button>
           </div>
           <span class="lai-meta" id="laiMeta"></span>
-          <button type="button" class="lai-icon" id="laiCopy" disabled title="Copy the draft as text">Copy</button>
+          <button type="button" class="lai-icon" id="laiCopy" disabled title="Copy the draft as Markdown / LaTeX text">Copy</button>
           <button type="button" class="lai-icon" id="laiRegen" disabled title="Write a new version">↻ Regenerate</button>
         </div>
         <div class="lai-preview" id="laiPreview" aria-live="polite"></div>
@@ -2922,7 +2956,7 @@ if (location.pathname.endsWith(".html")) {
     });
   });
   $('laiTone').value = 'formal'; $('laiLength').value = 'medium'; $('laiEngine').value = 'smart';
-  $('laiQuality').value = 'balanced'; $('laiAuto').checked = true;
+  $('laiQuality').value = 'balanced'; $('laiAuto').checked = true; $('laiMath').checked = true;
 
   /* draggable header, kept inside the viewport */
   (function () {
@@ -2948,6 +2982,21 @@ if (location.pathname.endsWith(".html")) {
     b.type = 'button'; b.textContent = ex[0]; b.title = ex[1];
     b.addEventListener('click', () => { $('laiPrompt').value = ex[1]; updateCount(); $('laiPrompt').focus(); });
     $('laiExamples').appendChild(b);
+  });
+
+  /* symbol chips for the equation editor */
+  SYMBOLS.forEach(sy => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = sy[0]; b.title = sy[1];
+    b.addEventListener('click', () => {
+      const ta = $('laiEq');
+      const a = ta.selectionStart == null ? ta.value.length : ta.selectionStart;
+      const z = ta.selectionEnd == null ? a : ta.selectionEnd;
+      ta.value = ta.value.slice(0, a) + sy[1] + ta.value.slice(z);
+      ta.focus(); ta.selectionStart = ta.selectionEnd = a + sy[1].length;
+      updateEqPreview();
+    });
+    $('laiSyms').appendChild(b);
   });
 
   /* recent prompts */
@@ -2976,13 +3025,15 @@ if (location.pathname.endsWith(".html")) {
   const prefs = lget('prefs') || {};
   prefIds.forEach(id => { if (prefs[id]) $(id).value = prefs[id]; });
   if (typeof prefs.auto === 'boolean') $('laiAuto').checked = prefs.auto;
+  if (typeof prefs.math === 'boolean') $('laiMath').checked = prefs.math;
   function savePrefs() {
-    const p = { auto: $('laiAuto').checked };
+    const p = { auto: $('laiAuto').checked, math: $('laiMath').checked };
     prefIds.forEach(id => { p[id] = $(id).value; });
     lset('prefs', p);
   }
   prefIds.forEach(id => $(id).addEventListener('change', () => { savePrefs(); syncEngineUI(); }));
   $('laiAuto').addEventListener('change', savePrefs);
+  $('laiMath').addEventListener('change', savePrefs);
 
   /* ───────── capability detection ───────── */
   async function detectCaps() {
@@ -3025,15 +3076,93 @@ if (location.pathname.endsWith(".html")) {
     const smartBtn = $('laiEngine').querySelector('button[data-v="smart"]');
     if (caps.gpu) {
       smartBtn.disabled = false;
-      $('laiNote').textContent = 'Smart mode runs a small AI model on this device, so your prompt stays private. The first use downloads the model once; after that it works from the saved copy. Small models can make mistakes, so review the draft before sharing it.';
+      $('laiNote').textContent = 'Smart mode runs a small AI model on this device, so your prompt stays private. The first use downloads the model once; after that it works from the saved copy. Small models can make mistakes, especially in maths, so choose Balanced or Best for equations and always check the working before sharing.';
       $('laiToolbarNote').textContent = 'Smart mode is available. Runs on your device, no API key.';
     } else {
       smartBtn.disabled = true;
       $('laiEngine').value = 'instant';
-      $('laiNote').textContent = caps.why + ' Instant templates are used instead. They build a structured draft with highlighted [brackets] for you to fill in.';
+      $('laiNote').textContent = caps.why + ' Instant templates are used instead. They build a structured draft with highlighted [brackets] for you to fill in, and include standard formulas (quadratic, Pythagoras, derivatives, Ohm\'s law and more) when your topic matches.';
       $('laiToolbarNote').textContent = 'Instant templates only (' + caps.why.replace(/\.$/, '') + ').';
     }
     syncEngineUI();
+  }
+
+  /* ───────── maths: KaTeX (MathML output) with a plain-text fallback ───────── */
+  function loadKatex() {
+    if (window.katex) return Promise.resolve(window.katex);
+    if (!S.katexP) {
+      S.katexP = new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js';
+        s.onload = () => window.katex ? res(window.katex) : rej(new Error('KaTeX did not start'));
+        s.onerror = () => { S.katexP = null; rej(new Error('KaTeX could not be loaded')); };
+        document.head.appendChild(s);
+      });
+    }
+    return S.katexP;
+  }
+
+  const MATH_SYMS = {
+    alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', epsilon: 'ε', varepsilon: 'ε', zeta: 'ζ', eta: 'η', theta: 'θ', kappa: 'κ', lambda: 'λ', mu: 'μ', nu: 'ν', xi: 'ξ',
+    pi: 'π', rho: 'ρ', sigma: 'σ', tau: 'τ', phi: 'φ', varphi: 'φ', chi: 'χ', psi: 'ψ', omega: 'ω',
+    Gamma: 'Γ', Delta: 'Δ', Theta: 'Θ', Lambda: 'Λ', Xi: 'Ξ', Pi: 'Π', Sigma: 'Σ', Phi: 'Φ', Psi: 'Ψ', Omega: 'Ω',
+    cdot: '·', times: '×', div: '÷', pm: '±', mp: '∓', leq: '≤', le: '≤', geq: '≥', ge: '≥', neq: '≠', ne: '≠', approx: '≈', equiv: '≡', sim: '∼',
+    infty: '∞', sum: '∑', prod: '∏', int: '∫', oint: '∮', partial: '∂', nabla: '∇', to: '→', rightarrow: '→', leftarrow: '←', Rightarrow: '⇒', Leftarrow: '⇐',
+    Leftrightarrow: '⇔', leftrightarrow: '↔', implies: '⇒', iff: '⇔', mapsto: '↦', in: '∈', notin: '∉', subset: '⊂', subseteq: '⊆', cup: '∪', cap: '∩', emptyset: '∅',
+    forall: '∀', exists: '∃', ldots: '…', cdots: '⋯', dots: '…', degree: '°', circ: '∘', propto: '∝', angle: '∠', perp: '⊥', parallel: '∥', hbar: 'ħ', ell: 'ℓ',
+    sin: 'sin', cos: 'cos', tan: 'tan', cot: 'cot', sec: 'sec', csc: 'csc', log: 'log', ln: 'ln', lim: 'lim', min: 'min', max: 'max', exp: 'exp', det: 'det', sup: 'sup', inf: 'inf',
+    arcsin: 'arcsin', arccos: 'arccos', arctan: 'arctan', sinh: 'sinh', cosh: 'cosh', tanh: 'tanh', gcd: 'gcd', mod: 'mod', bmod: 'mod', ',': ' '
+  };
+  const SUP = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '+': '⁺', '-': '⁻', '=': '⁼', '(': '⁽', ')': '⁾', n: 'ⁿ', i: 'ⁱ', x: 'ˣ' };
+  const SUB = { '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄', '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉', '+': '₊', '-': '₋', '=': '₌', '(': '₍', ')': '₎', a: 'ₐ', e: 'ₑ', o: 'ₒ', x: 'ₓ', i: 'ᵢ', j: 'ⱼ', k: 'ₖ', m: 'ₘ', n: 'ₙ', p: 'ₚ', s: 'ₛ', t: 'ₜ' };
+  const scr = (s, map, mark) => { let o = ''; for (const c of s) { if (!map[c]) return mark + '(' + s + ')'; o += map[c]; } return o; };
+
+  function texToText(tex) {
+    let s = String(tex)
+      .replace(/\\(?:begin|end)\s*\{[^}]*\}/g, ' ')
+      .replace(/\\\\/g, ' ; ')
+      .replace(/\\(?:left|right|big|Big|bigg|Bigg)(?![A-Za-z])\s*/g, '')
+      .replace(/\\(?:quad|qquad)(?![A-Za-z])|\\[,;:! ]/g, ' ')
+      .replace(/\\(?:text|mathrm|mathbf|mathit|operatorname|mathbb|mathcal|vec|hat|bar|overline)\s*\{([^{}]*)\}/g, '$1');
+    for (let i = 0; i < 12; i++) {
+      const n = s
+        .replace(/\\[dt]?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, (m, a, b) => (a.length > 1 ? '(' + a + ')' : a) + '/' + (b.length > 1 ? '(' + b + ')' : b))
+        .replace(/\\sqrt\s*\[([^\]]*)\]\s*\{([^{}]*)\}/g, '$1√($2)')
+        .replace(/\\sqrt\s*\{([^{}]*)\}/g, '√($1)');
+      if (n === s) break;
+      s = n;
+    }
+    return s
+      .replace(/\^\s*\{([^{}]*)\}/g, (m, a) => scr(a, SUP, '^'))
+      .replace(/\^\s*([A-Za-z0-9+\-])/g, (m, a) => scr(a, SUP, '^'))
+      .replace(/_\s*\{([^{}]*)\}/g, (m, a) => scr(a, SUB, '_'))
+      .replace(/_\s*([A-Za-z0-9])/g, (m, a) => scr(a, SUB, '_'))
+      .replace(/\\([A-Za-z]+)/g, (m, c) => MATH_SYMS[c] !== undefined ? MATH_SYMS[c] : c)
+      .replace(/[{}&]/g, ' ').replace(/\s{2,}/g, ' ').trim();
+  }
+
+  function renderMath(tex, display) {
+    let inner = '';
+    try {
+      if (window.katex) inner = window.katex.renderToString(tex, { displayMode: !!display, throwOnError: false, output: 'mathml', strict: 'ignore' });
+    } catch (e) { inner = ''; }
+    if (!inner) inner = '<i>' + esc(texToText(tex)) + '</i>';
+    const attr = ' class="lai-math" data-tex="' + esc(tex) + '" contenteditable="false"';
+    return display
+      ? '<div' + attr + ' data-display="1" style="text-align:center;margin:10px 0;">' + inner + '</div>'
+      : '<span' + attr + '>' + inner + '</span>';
+  }
+
+  /* pull $...$ and $$...$$ out before Markdown touches them */
+  function extractMath(md) {
+    const items = [];
+    const put = (tex, display) => { items.push({ tex: tex.trim(), display }); return '@@M' + (items.length - 1) + '@@'; };
+    const text = md
+      .replace(/\$\$([\s\S]+?)\$\$/g, (m, t) => put(t, true))
+      .replace(/\\\[([\s\S]+?)\\\]/g, (m, t) => put(t, true))
+      .replace(/\\\(([\s\S]+?)\\\)/g, (m, t) => put(t, false))
+      .replace(/(?<![\\$\w])\$(?!\s)([^$\n]+?)(?<!\s)\$(?![\d$\w])/g, (m, t) => put(t, false));
+    return { text, items };
   }
 
   /* ───────── markdown → page HTML ───────── */
@@ -3045,6 +3174,8 @@ if (location.pathname.endsWith(".html")) {
       .replace(/\[([^\]\n]{1,80})\]/g, '<span style="background:#fff3b0;">[$1]</span>');
   }
   function mdToHtml(md, styled) {
+    const ex = extractMath(String(md));
+    md = ex.text;
     const H = styled
       ? { 1: ' style="font-size:24pt;margin:0 0 12px;"', 2: ' style="font-size:16pt;margin:18px 0 6px;color:#1e3f73;"', 3: ' style="font-size:13pt;margin:14px 0 4px;"', 4: '' }
       : { 1: '', 2: '', 3: '', 4: '' };
@@ -3079,10 +3210,60 @@ if (location.pathname.endsWith(".html")) {
       closeList(); para.push(ln);
     }
     flush(); closeList();
-    return out.join('');
+    let html = out.join('');
+    if (ex.items.length) {
+      const fill = i => { const it = ex.items[+i]; return it ? renderMath(it.tex, it.display) : ''; };
+      html = html
+        .replace(/<p>@@M(\d+)@@<\/p>/g, (m, i) => ex.items[+i] && ex.items[+i].display ? fill(i) : m)
+        .replace(/@@M(\d+)@@/g, (m, i) => fill(i));
+    }
+    return html;
   }
+
+  /* ───────── Instant mode: formula library ───────── */
+  const FORMULAS = [
+    { k: /quadratic|\bax\^?2|discriminant/, name: 'Quadratic formula', intro: 'For a quadratic equation in standard form, the roots are found with the quadratic formula.',
+      eqs: [R`ax^2 + bx + c = 0, \quad a \neq 0`, R`x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}`], note: R`The discriminant $D = b^2 - 4ac$ decides the roots: $D > 0$ gives two real roots, $D = 0$ gives one repeated root, and $D < 0$ gives two complex roots.` },
+    { k: /pythag|right.?angle|hypotenuse/, name: 'Pythagorean theorem', intro: 'In a right-angled triangle, the square of the hypotenuse equals the sum of the squares of the other two sides.',
+      eqs: [R`a^2 + b^2 = c^2`], note: R`Here $c$ is the hypotenuse and $a$, $b$ are the legs.` },
+    { k: /circle|circumference|sphere|cylinder|\bcone\b/, name: 'Circle and sphere', intro: 'Standard measures for a circle of radius $r$ and a sphere of radius $r$.',
+      eqs: [R`A = \pi r^2, \qquad C = 2\pi r`, R`V = \frac{4}{3}\pi r^3, \qquad S = 4\pi r^2`], note: '' },
+    { k: /distance formula|coordinate geometry|straight line|slope|gradient/, name: 'Coordinate geometry', intro: 'Distance between two points, slope of a line, and the line equation.',
+      eqs: [R`d = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}`, R`m = \frac{y_2 - y_1}{x_2 - x_1}, \qquad y - y_1 = m(x - x_1)`], note: '' },
+    { k: /derivative|differentiat|calculus|\bslope of a curve/, name: 'Derivatives', intro: 'The derivative measures the instantaneous rate of change of a function.',
+      eqs: [R`f'(x) = \lim_{h \to 0} \frac{f(x+h) - f(x)}{h}`, R`\frac{d}{dx}\left(x^n\right) = n x^{n-1}`, R`\frac{d}{dx}(uv) = u\frac{dv}{dx} + v\frac{du}{dx}`], note: '' },
+    { k: /integra|antiderivative|calculus|area under/, name: 'Integration', intro: 'Integration reverses differentiation and gives the area under a curve.',
+      eqs: [R`\int x^n\,dx = \frac{x^{n+1}}{n+1} + C, \quad n \neq -1`, R`\int_a^b f(x)\,dx = F(b) - F(a)`, R`\int u\,dv = uv - \int v\,du`], note: '' },
+    { k: /trigonometr|sine|cosine|identit/, name: 'Trigonometric identities', intro: 'Core identities used in solving trigonometric problems.',
+      eqs: [R`\sin^2\theta + \cos^2\theta = 1`, R`\sin(A \pm B) = \sin A\cos B \pm \cos A\sin B`, R`\cos 2\theta = \cos^2\theta - \sin^2\theta`], note: '' },
+    { k: /logarithm|\blog\b|exponent/, name: 'Laws of logarithms', intro: 'Logarithm rules for any valid base $b$.',
+      eqs: [R`\log_b(xy) = \log_b x + \log_b y`, R`\log_b\!\left(\frac{x}{y}\right) = \log_b x - \log_b y`, R`\log_b(x^n) = n\log_b x`], note: '' },
+    { k: /series|progression|\bap\b|\bgp\b|arithmetic|geometric/, name: 'Arithmetic and geometric series', intro: 'Sum of the first $n$ terms of an arithmetic and a geometric progression.',
+      eqs: [R`S_n = \frac{n}{2}\left[2a + (n-1)d\right]`, R`S_n = \frac{a(r^n - 1)}{r - 1}, \quad r \neq 1`], note: '' },
+    { k: /binomial|combinat|permutation/, name: 'Binomial theorem', intro: 'Expansion of a binomial power, and the number of combinations.',
+      eqs: [R`(a+b)^n = \sum_{k=0}^{n} \binom{n}{k} a^{n-k} b^{k}`, R`\binom{n}{k} = \frac{n!}{k!\,(n-k)!}`], note: '' },
+    { k: /matri|determinant|linear algebra|eigen/, name: 'Matrices', intro: 'Determinant and inverse of a $2 \\times 2$ matrix.',
+      eqs: [R`A = \begin{bmatrix} a & b \\ c & d \end{bmatrix}, \quad \det A = ad - bc`, R`A^{-1} = \frac{1}{ad - bc}\begin{bmatrix} d & -b \\ -c & a \end{bmatrix}`], note: '' },
+    { k: /statistic|mean|variance|standard deviation|normal distribution|probabilit/, name: 'Statistics and probability', intro: 'Mean, standard deviation, the normal distribution and Bayes\' theorem.',
+      eqs: [R`\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i, \qquad \sigma = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(x_i - \bar{x})^2}`, R`f(x) = \frac{1}{\sigma\sqrt{2\pi}}\, e^{-\frac{(x-\mu)^2}{2\sigma^2}}`, R`P(A \mid B) = \frac{P(B \mid A)\,P(A)}{P(B)}`], note: '' },
+    { k: /projectile|kinematic|equations of motion|motion under/, name: 'Equations of motion', intro: 'For constant acceleration $a$, with initial velocity $u$ and time $t$.',
+      eqs: [R`v = u + at`, R`s = ut + \frac{1}{2}at^2`, R`v^2 = u^2 + 2as`], note: R`For a projectile launched at angle $\theta$: range $R = \frac{u^2 \sin 2\theta}{g}$ and maximum height $H = \frac{u^2 \sin^2\theta}{2g}$.` },
+    { k: /newton|force|momentum|kinetic|potential energy|work.?energy/, name: 'Force and energy', intro: 'Newton\'s second law, work, and mechanical energy.',
+      eqs: [R`F = ma`, R`W = Fd\cos\theta`, R`KE = \frac{1}{2}mv^2, \qquad PE = mgh`], note: '' },
+    { k: /\bohm|circuit|resistor|electric current|electricity/, name: 'Ohm\'s law and power', intro: 'Relations between voltage $V$, current $I$, resistance $R$ and power $P$.',
+      eqs: [R`V = IR`, R`P = VI = I^2R = \frac{V^2}{R}`, R`R_{\text{series}} = R_1 + R_2 + \cdots, \qquad \frac{1}{R_{\text{parallel}}} = \frac{1}{R_1} + \frac{1}{R_2} + \cdots`], note: '' },
+    { k: /relativity|einstein|mass.?energy|e\s*=\s*mc/, name: 'Mass–energy equivalence', intro: 'Einstein\'s relation between mass and energy.',
+      eqs: [R`E = mc^2`, R`E^2 = (pc)^2 + (mc^2)^2`], note: R`Here $c \approx 3 \times 10^8\ \text{m/s}$ is the speed of light.` },
+    { k: /compound interest|simple interest|interest|finance|annuity/, name: 'Interest', intro: 'Simple and compound interest on principal $P$ at rate $r$ for $t$ years.',
+      eqs: [R`SI = \frac{P r t}{100}`, R`A = P\left(1 + \frac{r}{100n}\right)^{nt}`], note: '' },
+    { k: /euler|complex number|imaginary/, name: 'Complex numbers', intro: 'Euler\'s formula links exponentials and trigonometry.',
+      eqs: [R`e^{i\theta} = \cos\theta + i\sin\theta`, R`e^{i\pi} + 1 = 0`, R`z = a + bi, \qquad |z| = \sqrt{a^2 + b^2}`], note: '' },
+    { k: /taylor|maclaurin|power series/, name: 'Taylor series', intro: 'A smooth function can be written as an infinite sum of its derivatives at a point.',
+      eqs: [R`f(x) = \sum_{n=0}^{\infty} \frac{f^{(n)}(a)}{n!}(x-a)^n`, R`e^x = 1 + x + \frac{x^2}{2!} + \frac{x^3}{3!} + \cdots`], note: '' }
+  ];
+
   /* ───────── Instant mode: template writer ───────── */
-  const TYPE_WORDS = 'report|essay|letter|application|resume|cv|curriculum vitae|minutes|meeting notes|proposal|notice|circular|lesson plan|assignment|lab report|project report|case study|article|blog post|blog|summary|analysis|review|document|paragraph|newsletter|agenda';
+  const TYPE_WORDS = 'report|essay|letter|application|resume|cv|curriculum vitae|minutes|meeting notes|proposal|notice|circular|lesson plan|assignment|lab report|project report|case study|article|blog post|blog|summary|analysis|review|document|paragraph|newsletter|agenda|notes|worksheet|explanation';
 
   function detectType(raw) {
     const r = raw.toLowerCase();
@@ -3091,6 +3272,7 @@ if (location.pathname.endsWith(".html")) {
     if (/\b(proposal|pitch|business plan)\b/.test(r)) return 'proposal';
     if (/\b(notice|circular|announcement)\b/.test(r)) return 'notice';
     if (/\blesson( plan)?\b/.test(r)) return 'lesson';
+    if (/\b(equations?|formulas?|formulae|derive|derivation|proof|prove|theorem|integral|integration|derivative|calculus|algebra|trigonometry|geometry|maths?|mathematics|physics|solve|solved|numericals?|quadratic)\b/.test(r)) return 'math';
     if (/\b(letter|application|leave|resignation|complaint)\b/.test(r)) return 'letter';
     if (/\b(assignment|lab report|practical|project report|seminar|term paper|case study)\b/.test(r)) return 'assignment';
     if (/\b(essay|paragraph)\b/.test(r)) return 'essay';
@@ -3102,13 +3284,36 @@ if (location.pathname.endsWith(".html")) {
   function extractTopic(raw) {
     let s = raw.trim().replace(/\s+/g, ' ').replace(/[.?!]+$/, '');
     s = s.replace(/^(please\s+|kindly\s+|can you\s+|could you\s+|i (?:want|need) (?:you )?(?:to )?)/i, '');
-    s = s.replace(/^(write|create|make|generate|draft|prepare|compose|build|give me|help me (?:write|create|make))\s+(?:me\s+)?/i, '');
+    s = s.replace(/^(write|create|make|generate|draft|prepare|compose|build|explain|summarise|summarize|give me|help me (?:write|create|make))\s+(?:me\s+)?/i, '');
     s = s.replace(/^(a|an|the|some|my)\s+/i, '');
     const lead = s.match(new RegExp('^(?:[a-z-]+\\s+){0,3}?(?:' + TYPE_WORDS + ')s?\\s+(?:on|about|regarding|for|of|to|titled|called|in)\\s+(.+)$', 'i'));
     let topic;
     if (lead) topic = lead[1];
     else topic = s.replace(new RegExp('\\b(?:' + TYPE_WORDS + ')s?\\b', 'gi'), '').replace(/^\s*(on|about|regarding)\s+/i, '').replace(/\s+/g, ' ').trim();
     return topic.replace(/^(a|an|the)\s+/i, '').trim();
+  }
+
+  function buildMath(raw, topic, date) {
+    const T = topic ? cap(topic) : '[Title]';
+    const t = topic || '[topic]';
+    const r = raw.toLowerCase();
+    const hits = FORMULAS.filter(f => f.k.test(r));
+    const seen = new Set();
+    const uniq = hits.filter(f => !seen.has(f.name) && seen.add(f.name)).slice(0, 4);
+    let md = `# ${T}\n\n**Prepared by:** [Your name]  \n**Date:** ${date}\n\n## Overview\n[Explain in two or three sentences what ${t} is and where it is used.]\n`;
+    if (uniq.length) {
+      uniq.forEach((f, i) => {
+        md += `\n## ${i + 1}. ${f.name}\n${f.intro}\n`;
+        f.eqs.forEach(e => { md += `\n$$${e}$$\n`; });
+        if (f.note) md += `\n${f.note}\n`;
+        md += `\n**Where:** [Define each symbol used above.]\n`;
+      });
+      md += `\n## Worked Example\n**Problem.** [State a problem on ${t}, for example with given values.]\n\n**Step 1.** [Write the relevant formula.]\n\n$$[\\text{formula}]$$\n\n**Step 2.** [Substitute the given values.]\n\n$$[\\text{substitution}]$$\n\n**Step 3.** [Simplify and state the final answer with units.]\n`;
+    } else {
+      md += `\n## Definitions\n[State the key terms and symbols used in ${t}.]\n\n## Key Equations\n[Introduce the main result.]\n\n$$y = f(x)$$\n\n[Explain each term, and add more equations here with the editor.]\n\n## Derivation\n**Step 1.** [Starting point.]\n\n$$[\\text{equation}]$$\n\n**Step 2.** [Manipulation.]\n\n$$[\\text{equation}]$$\n\n## Worked Example\n**Problem.** [State a problem.]\n\n**Solution.** [Show each step.]\n`;
+    }
+    md += `\n## Practice Problems\n1. [Problem 1]\n2. [Problem 2]\n3. [Problem 3]\n\n## Summary\n- [Key formula or idea 1]\n- [Key formula or idea 2]`;
+    return md;
   }
 
   function buildTemplate(raw, typeKey) {
@@ -3119,6 +3324,9 @@ if (location.pathname.endsWith(".html")) {
     const k = typeKey === 'auto' ? detectType(raw) : typeKey;
 
     switch (k) {
+      case 'math':
+        return buildMath(raw, topic, date);
+
       case 'report':
         return `# ${T}\n\n**Prepared by:** [Your name]  \n**Date:** ${date}\n\n## 1. Introduction\nThis report looks at ${t}. It explains the background, sets out the main points and ends with conclusions. [Add one or two sentences on why this topic matters.]\n\n## 2. Background\n[Describe the context of ${t}: history, key terms and current situation.]\n\n## 3. Key Findings\n- [Finding 1]\n- [Finding 2]\n- [Finding 3]\n\n## 4. Discussion\n[Explain what the findings mean and how they relate to ${t}.]\n\n## 5. Conclusion\n[Summarise the main points in three or four sentences.]\n\n## 6. Recommendations\n1. [Recommendation 1]\n2. [Recommendation 2]\n\n## References\n- [Source 1]\n- [Source 2]`;
 
@@ -3156,9 +3364,10 @@ if (location.pathname.endsWith(".html")) {
         return `# ${T}\n\n## Introduction\n[Introduce ${t} and explain why it matters.]\n\n## Main Points\n- [Point 1]\n- [Point 2]\n- [Point 3]\n\n## Details\n[Expand on each point with facts, examples or explanations.]\n\n## Conclusion\n[Summarise the key takeaways.]`;
     }
   }
+
   /* ───────── Smart mode: WebLLM in the browser ───────── */
   const FAMILIES = {
-    fast:     ['Qwen2\\.5-0\\.5B-Instruct', 'SmolLM2-360M-Instruct', 'Llama-3\\.2-1B-Instruct'],
+    fast:     ['Qwen2\\.5-Math-1\\.5B-Instruct', 'Qwen2\\.5-0\\.5B-Instruct', 'SmolLM2-360M-Instruct', 'Llama-3\\.2-1B-Instruct'],
     balanced: ['Qwen2\\.5-1\\.5B-Instruct', 'Llama-3\\.2-1B-Instruct', 'SmolLM2-1\\.7B-Instruct'],
     best:     ['Qwen2\\.5-3B-Instruct', 'Llama-3\\.2-3B-Instruct', 'Phi-3\\.5-mini-instruct']
   };
@@ -3170,7 +3379,8 @@ if (location.pathname.endsWith(".html")) {
   const TYPE_LABEL = {
     auto: 'document', report: 'report', essay: 'essay', letter: 'letter or application', resume: 'resume',
     assignment: 'assignment or lab report', proposal: 'proposal', minutes: 'set of meeting minutes',
-    notice: 'notice', lesson: 'lesson plan', article: 'article'
+    notice: 'notice', lesson: 'lesson plan', article: 'article',
+    math: 'mathematics or science document (notes, derivations and worked solutions)'
   };
 
   function loadWebLLM() {
@@ -3193,12 +3403,20 @@ if (location.pathname.endsWith(".html")) {
     return null;
   }
 
+  const MATH_RULES =
+    ' Write every mathematical expression in LaTeX: inline as $...$ and standalone equations on their own lines as $$...$$. ' +
+    'Use only standard commands such as \\frac, \\sqrt, \\sum, \\int, \\lim, \\cdot, \\times, \\leq, \\geq, \\pm, Greek letters, and ^ and _ with braces. ' +
+    'Never use \\( \\) or \\[ \\] delimiters and never put equations inside code blocks. ' +
+    'When solving a problem, number the steps, show the substitution and the arithmetic, and state the final answer with units. Check each calculation before moving on. ' +
+    'Do not invent theorems or constants; if unsure of a formula, say so in the text.';
+
   function buildMessages(prompt, o) {
     const system =
       'You are a writing assistant inside a word processor. Write the complete document the user asks for, in Markdown. ' +
       'Use "# " for the title, "## " for section headings, short paragraphs, and bullet or numbered lists where they help. ' +
       'Write in the same language as the request. Do not add any commentary before or after the document. ' +
-      'If a specific fact such as a name, date or number is not given, write it as a [bracketed placeholder] instead of inventing it.';
+      'If a specific fact such as a name, date or number is not given, write it as a [bracketed placeholder] instead of inventing it.' +
+      (o.math ? MATH_RULES : '');
     const user =
       'Write a ' + (TYPE_LABEL[o.type] || 'document') + '. Tone: ' + o.tone + '. Length: ' + LENGTH[o.length].words + '.\n\nRequest: ' + prompt;
     return [{ role: 'system', content: system }, { role: 'user', content: user }];
@@ -3247,7 +3465,7 @@ if (location.pathname.endsWith(".html")) {
     try {
       const stream = await S.engine.chat.completions.create({
         messages: buildMessages(prompt, o),
-        stream: true, temperature: 0.7, top_p: 0.9, max_tokens: LENGTH[o.length].tokens
+        stream: true, temperature: o.math ? 0.4 : 0.7, top_p: 0.9, max_tokens: LENGTH[o.length].tokens + (o.math ? 400 : 0)
       });
       for await (const chunk of stream) {
         const d = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
@@ -3286,7 +3504,8 @@ if (location.pathname.endsWith(".html")) {
   }
   function updateMeta() {
     const w = countWords(S.md);
-    $('laiMeta').textContent = w ? w + ' words · ' + Math.max(1, Math.round(w / 200)) + ' min read' : '';
+    const eq = extractMath(S.md).items.length;
+    $('laiMeta').textContent = w ? w + ' words' + (eq ? ' · ' + eq + ' eq.' : '') + ' · ' + Math.max(1, Math.round(w / 200)) + ' min read' : '';
   }
   function renderPreview() {
     const pv = $('laiPreview');
@@ -3309,24 +3528,60 @@ if (location.pathname.endsWith(".html")) {
   }
   function syncButtons() {
     const has = !!S.md.trim();
+    const eq = !!$('laiEq').value.trim();
     $('laiGen').disabled = S.busy;
     $('laiStop').disabled = !S.streaming;
     $('laiInsert').disabled = S.busy || !has;
     $('laiUndo').disabled = !S.undoNodes;
     $('laiCopy').disabled = S.busy || !has;
     $('laiRegen').disabled = S.busy || !$('laiPrompt').value.trim();
+    $('laiEqInsert').disabled = !eq;
+    $('laiEqDraft').disabled = !eq || S.busy;
     $('laiEdit').readOnly = S.busy;
     updateChip();
   }
-  function openPanel() {
+  function openPanel(focusEq) {
     if (readOnly()) { flash('This document is view-only.'); return; }
     panel.classList.add('open');
     refreshNote();
     renderHistory();
     updateCount();
-    $('laiPrompt').focus();
+    loadKatex().then(() => { renderPreview(); updateEqPreview(); }).catch(() => {});
+    if (focusEq === true) { $('laiEqBox').open = true; $('laiEq').focus(); }
+    else $('laiPrompt').focus();
   }
   function closePanel() { panel.classList.remove('open'); }
+
+  /* ───────── equation editor ───────── */
+  function updateEqPreview() {
+    const tex = $('laiEq').value.trim();
+    $('laiEqPrev').innerHTML = tex ? renderMath(tex, true) : '';
+    syncButtons();
+  }
+  async function insertEquation() {
+    if (readOnly()) { flash('This document is view-only.'); return; }
+    const tex = $('laiEq').value.trim();
+    if (!tex) return;
+    if (typeof pages === 'undefined' || !pages[currentPage]) { flash('Open a page first.'); return; }
+    await loadKatex().catch(() => {});
+    const page = pages[currentPage];
+    if (typeof clearImageHandles === 'function') clearImageHandles();
+    S.undoPage = page;
+    S.undoNodes = Array.from(page.childNodes);
+    page.insertAdjacentHTML('beforeend', renderMath(tex, true));
+    page.dispatchEvent(new Event('input'));
+    syncButtons();
+    flash('Equation inserted at the end of the page.');
+    setState('Equation inserted into page ' + (currentPage + 1) + '.', 'ok');
+  }
+  function addEquationToDraft() {
+    const tex = $('laiEq').value.trim();
+    if (!tex || S.busy) return;
+    S.md = (S.md.trim() ? S.md.replace(/\s+$/, '') + '\n\n' : '') + '$$' + tex + '$$\n';
+    if (S.view === 'edit') $('laiEdit').value = S.md;
+    renderPreview(); syncButtons();
+    setState('Equation added to the draft.', 'ok');
+  }
 
   async function generate() {
     if (S.busy) return;
@@ -3337,10 +3592,13 @@ if (location.pathname.endsWith(".html")) {
 
     const o = {
       type: $('laiType').value, tone: $('laiTone').value, length: $('laiLength').value,
-      quality: $('laiQuality').value, engine: $('laiEngine').value
+      quality: $('laiQuality').value, engine: $('laiEngine').value, math: $('laiMath').checked
     };
+    if (o.type === 'auto' && detectType(prompt) === 'math') { o.type = 'math'; o.math = true; }
+    if (o.type === 'math') o.math = true;
     S.busy = true; S.stop = false; S.md = ''; S.started = Date.now();
     if (S.view !== 'preview') setView('preview');
+    loadKatex().catch(() => {});
     renderPreview(); syncButtons(); setState('Starting…'); setStep(0, o.engine === 'instant');
 
     let note = '', failed = false;
@@ -3367,19 +3625,20 @@ if (location.pathname.endsWith(".html")) {
     const secs = ((Date.now() - S.started) / 1000).toFixed(1);
     if (note) setState(note, 'err');
     else if (S.stop) setState('Stopped. You can still insert what was written.');
-    else setState('Done · ' + words + ' words in ' + secs + 's', 'ok');
+    else setState('Done · ' + words + ' words in ' + secs + 's' + (o.math && o.engine !== 'instant' ? ' · check the maths' : ''), 'ok');
     if (S.md.trim() && !S.stop && $('laiAuto').checked) insertResult();
   }
 
   function isBlank(page) {
     const t = (page.innerText || '').replace(/\s+/g, ' ').trim();
-    return (!t || /^start typing here\.{0,3}$/i.test(t)) && !page.querySelector('table, img:not(.draggable)');
+    return (!t || /^start typing here\.{0,3}$/i.test(t)) && !page.querySelector('table, img:not(.draggable), .lai-math');
   }
 
-  function insertResult() {
+  async function insertResult() {
     if (readOnly()) { flash('This document is view-only.'); return; }
     if (!S.md.trim()) return;
     if (typeof pages === 'undefined' || !pages[currentPage]) { flash('Open a page first.'); return; }
+    if (/\$|\\\[|\\\(/.test(S.md)) await loadKatex().catch(() => {});
     const page = pages[currentPage];
     const html = mdToHtml(S.md, true);
     const mode = $('laiMode').value;
@@ -3415,19 +3674,19 @@ if (location.pathname.endsWith(".html")) {
   async function copyDraft() {
     const text = S.md.trim();
     if (!text) return;
-    const plain = $('laiPreview').innerText || text;
-    try { await navigator.clipboard.writeText(plain); }
+    try { await navigator.clipboard.writeText(text); }
     catch (e) {
       const ta = document.createElement('textarea');
-      ta.value = plain; document.body.appendChild(ta); ta.select();
+      ta.value = text; document.body.appendChild(ta); ta.select();
       try { document.execCommand('copy'); } catch (e2) {}
       ta.remove();
     }
-    setState('Draft copied to the clipboard.', 'ok');
+    setState('Draft copied (Markdown with LaTeX equations).', 'ok');
   }
 
   /* ───────── wiring ───────── */
-  $('laiOpenBtn').addEventListener('click', openPanel);
+  $('laiOpenBtn').addEventListener('click', () => openPanel());
+  $('laiEqBtn').addEventListener('click', () => openPanel(true));
   $('laiClose').addEventListener('click', closePanel);
   $('laiGen').addEventListener('click', generate);
   $('laiRegen').addEventListener('click', generate);
@@ -3435,6 +3694,12 @@ if (location.pathname.endsWith(".html")) {
   $('laiInsert').addEventListener('click', insertResult);
   $('laiUndo').addEventListener('click', undoInsert);
   $('laiCopy').addEventListener('click', copyDraft);
+  $('laiEq').addEventListener('input', updateEqPreview);
+  $('laiEqInsert').addEventListener('click', insertEquation);
+  $('laiEqDraft').addEventListener('click', addEquationToDraft);
+  $('laiEq').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); insertEquation(); }
+  });
   panel.querySelectorAll('.lai-tabs button').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
   $('laiEdit').addEventListener('input', () => { S.md = $('laiEdit').value; updateMeta(); syncButtons(); });
   $('laiPrompt').addEventListener('input', () => { updateCount(); syncButtons(); });
@@ -3452,5 +3717,6 @@ if (location.pathname.endsWith(".html")) {
   detectCaps().then(updateChip);
 })();
 </script>
+
 </body>
 </html>
