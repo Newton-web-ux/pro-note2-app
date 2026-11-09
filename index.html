@@ -15,9 +15,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Contact Us - Pro Document</title>
+<title>Pro Document - Online Document Editor &amp; Contact Us</title>
 
-<meta name="description" content="Contact the Pro Document team for support, billing, feedback or business enquiries. Email documentpro2026@gmail.com or use the contact form.">
+<meta name="description" content="Pro Document is an online document editor and document management software to create, edit, organize and manage documents securely from anywhere. Contact our team for support, billing or feedback at documentpro2026@gmail.com.">
+<meta name="keywords" content="Pro Document, online document editor, document editor, document management software, online word processor, cloud document editor, document workspace, productivity software, create documents online, manage documents online, document organization tool, contact">
 <meta name="author" content="Pro Document">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://prodocument.in/contact.html">
@@ -27,16 +28,16 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="icon" href="/favicon.ico">
 
-<meta property="og:title" content="Contact Us - Pro Document">
-<meta property="og:description" content="Get help with Pro Document. Reach our team for support, billing and feedback.">
+<meta property="og:title" content="Pro Document - Online Document Editor &amp; Contact Us">
+<meta property="og:description" content="Create, edit, organize and manage documents online with Pro Document's intelligent workspace. Get help from our team.">
 <meta property="og:url" content="https://prodocument.in/contact.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Pro Document">
 <meta property="og:image" content="https://prodocument.in/logo.png">
 
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Contact Us - Pro Document">
-<meta name="twitter:description" content="Get help with Pro Document. Reach our team for support, billing and feedback.">
+<meta name="twitter:title" content="Pro Document - Online Document Editor &amp; Contact Us">
+<meta name="twitter:description" content="Create, edit, organize and manage documents online with Pro Document.">
 <meta name="twitter:image" content="https://prodocument.in/logo.png">
 
 <style>
@@ -44,6 +45,10 @@
 *{
 box-sizing:border-box;
 font-family:Inter,Arial,sans-serif;
+}
+
+html{
+scroll-behavior:smooth;
 }
 
 body{
@@ -105,7 +110,159 @@ nav a.active{
 color:#2563eb;
 }
 
-/* HERO */
+/* ===== HOME HERO (from index) ===== */
+
+.hero{
+background:linear-gradient(135deg,#0f3b82,#2563eb);
+color:white;
+padding:90px 8%;
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:50px;
+}
+
+.hero h1{
+font-size:55px;
+margin:0;
+}
+
+.hero h1 span{
+color:#60a5fa;
+}
+
+.hero p{
+font-size:20px;
+line-height:1.7;
+max-width:600px;
+color:#dbeafe;
+}
+
+.btn{
+padding:15px 30px;
+border-radius:12px;
+text-decoration:none;
+display:inline-block;
+margin:10px 5px;
+font-weight:bold;
+}
+
+.btn.primary{
+background:white;
+color:#2563eb;
+}
+
+.btn.secondary{
+border:2px solid white;
+color:white;
+}
+
+.dashboard-box{
+background:white;
+color:#111827;
+padding:30px;
+width:420px;
+max-width:100%;
+border-radius:25px;
+box-shadow:0 20px 50px #0005;
+}
+
+.dashboard-box h2{
+margin-top:0;
+}
+
+.box{
+background:#eef2ff;
+padding:18px;
+margin:12px;
+border-radius:12px;
+font-weight:bold;
+}
+
+/* ===== HOME SECTIONS (from index) ===== */
+
+.home-section{
+padding:70px 8%;
+}
+
+.title{
+text-align:center;
+font-size:40px;
+margin:0 0 30px;
+}
+
+.cards{
+display:flex;
+flex-wrap:wrap;
+justify-content:center;
+gap:25px;
+}
+
+.card{
+background:white;
+width:280px;
+padding:30px;
+border-radius:20px;
+box-shadow:0 10px 30px #ddd;
+}
+
+.card h2{
+color:#2563eb;
+}
+
+.preview-card{
+background:white;
+width:520px;
+max-width:100%;
+padding:24px;
+border-radius:20px;
+box-shadow:0 10px 30px #ddd;
+}
+
+.preview-card h2{
+color:#2563eb;
+margin-top:0;
+}
+
+.preview-frame{
+width:100%;
+height:320px;
+object-fit:cover;
+object-position:top;
+display:block;
+border-radius:12px;
+margin-top:14px;
+box-shadow:0 15px 35px #0003;
+border:1px solid #e5e7eb;
+background:white;
+}
+
+.pro{
+background:#020617;
+color:white;
+text-align:center;
+}
+
+.pro-card{
+background:#111827;
+padding:30px;
+margin:20px;
+border-radius:20px;
+display:inline-block;
+width:280px;
+vertical-align:top;
+}
+
+.pro-card h2{
+color:#60a5fa;
+}
+
+.start{
+text-align:center;
+background:#eff6ff;
+}
+
+/* ===== CONTACT SECTION ===== */
 
 .page-hero{
 background:linear-gradient(135deg,#0f3b82,#2563eb);
@@ -114,7 +271,7 @@ padding:70px 8% 90px;
 text-align:center;
 }
 
-.page-hero h1{
+.page-hero h2{
 font-size:46px;
 margin:0 0 14px;
 }
@@ -126,8 +283,6 @@ max-width:640px;
 margin:0 auto;
 color:#dbeafe;
 }
-
-/* LAYOUT */
 
 .wrap{
 padding:0 8% 70px;
@@ -409,7 +564,23 @@ nav a.link:first-of-type{
 margin-left:0;
 }
 
-.page-hero h1{
+.hero{
+flex-direction:column;
+}
+
+.hero h1{
+font-size:38px;
+}
+
+.dashboard-box{
+width:100%;
+}
+
+.preview-card{
+width:100%;
+}
+
+.page-hero h2{
 font-size:34px;
 }
 
@@ -447,23 +618,163 @@ align-items:flex-start;
 </a>
 
 <div>
-<a class="link" href="index.html#features">Features</a>
-<a class="link" href="index.html#preview">Preview</a>
+<a class="link" href="#features">Features</a>
+<a class="link" href="#preview">Preview</a>
+<a class="link" href="#pricing">Pricing</a>
 <a class="link" href="dashboard.html">Dashboard</a>
 <a class="link" href="document-editor.html">Document Editor</a>
-<a class="link active" href="contact.html" aria-current="page">Contact</a>
+<a class="link active" href="#contact" aria-current="page">Contact</a>
 </div>
 
 </nav>
 
 
-<header class="page-hero">
-<h1>We're here to help</h1>
-<p>Questions about your documents, billing or the Pro plan? Send us a message and our team will get back to you by email.</p>
+<!-- ===== HERO ===== -->
+<header class="hero">
+
+<div>
+
+<h1>
+Pro Document -
+<span>Your Intelligent Document Workspace</span>
+</h1>
+
+<p>
+Your intelligent workspace for creating, organizing and managing documents online. A powerful online document editor and document management software built for speed, security and simplicity.
+</p>
+
+<a class="btn primary" href="dashboard.html">Open Dashboard</a>
+<a class="btn secondary" href="document-editor.html">Open Editor</a>
+
+</div>
+
+<div class="dashboard-box">
+
+<h2>Workspace Dashboard</h2>
+
+<div class="box">📄 All Documents</div>
+<div class="box">⭐ Starred Documents</div>
+<div class="box">🕒 Recent Files</div>
+<div class="box">🗑 Trash Management</div>
+<div class="box">📊 Session History</div>
+
+</div>
+
 </header>
 
 
-<main class="wrap">
+<main>
+
+<!-- ===== CORE WORKSPACE ===== -->
+<section id="features" class="home-section">
+
+<h2 class="title">Core Workspace</h2>
+
+<div class="cards">
+
+<div class="card">
+<h2>📁 Organization</h2>
+<p>Manage documents, folders and files from one place with an intuitive document management system.</p>
+</div>
+
+<div class="card">
+<h2>📄 Document Management</h2>
+<p>Create and edit professional documents easily with a modern online document editor.</p>
+</div>
+
+<div class="card">
+<h2>🗑 Trash System</h2>
+<p>Recover deleted documents before permanent removal.</p>
+</div>
+
+<div class="card">
+<h2>📈 History Tracking</h2>
+<p>Monitor workspace activity and usage.</p>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ===== PREVIEW ===== -->
+<!--
+  NOTE: the original index page embedded these two screenshots as base64 data URIs.
+  Save them as dashboard-preview.png and editor-preview.png next to this file,
+  or paste your original data:image/png;base64,... strings into the src attributes.
+-->
+<section id="preview" class="home-section" style="background:white;">
+
+<h2 class="title">See Pro Document in Action</h2>
+
+<div class="cards" style="align-items:flex-start;">
+
+<div class="preview-card">
+<h2>📊 Workspace Dashboard</h2>
+<p>Get a clear overview of every document, folder and trash item, all from a single organized dashboard.</p>
+<img src="dashboard-preview.png" alt="Pro Document dashboard showing all documents, folders and plan details" class="preview-frame">
+</div>
+
+<div class="preview-card">
+<h2>📝 Document Editor</h2>
+<p>Write and format documents with a clean, distraction-free editor that includes version history and export tools.</p>
+<img src="editor-preview.png" alt="Pro Document editor with formatting toolbar and export options" class="preview-frame">
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ===== UPGRADE TO PRO ===== -->
+<section id="pricing" class="home-section pro">
+
+<h2 class="title">✨ Upgrade to Pro</h2>
+
+<h2>₹199 / month</h2>
+
+<div class="pro-card">
+<h2>Unlimited Workspace</h2>
+<p>✔ Unlimited Documents<br>✔ Unlimited Folders</p>
+</div>
+
+<div class="pro-card">
+<h2>Advanced Export</h2>
+<p>✔ PDF Export<br>✔ Word Export</p>
+</div>
+
+<div class="pro-card">
+<h2>Version Control</h2>
+<p>✔ 20 Step History<br>✔ Restore Versions</p>
+</div>
+
+<div class="pro-card">
+<h2>Priority Sync</h2>
+<p>Faster updates and performance.</p>
+</div>
+
+</section>
+
+
+<!-- ===== START CREATING ===== -->
+<section class="home-section start">
+
+<h2 class="title">Start Creating Today</h2>
+
+<a class="btn primary" style="background:#2563eb;color:white" href="document-editor.html">Launch Pro Document</a>
+
+</section>
+
+
+<!-- ===== CONTACT ===== -->
+<section id="contact">
+
+<div class="page-hero">
+<h2>We're here to help</h2>
+<p>Questions about your documents, billing or the Pro plan? Send us a message and our team will get back to you by email.</p>
+</div>
+
+<div class="wrap">
 
 <div class="contact-grid">
 
@@ -597,6 +908,10 @@ By contacting us you agree to our <a href="privacy.html">Privacy Policy</a>.
 
 </section>
 
+</div>
+
+</section>
+
 </main>
 
 
@@ -617,17 +932,17 @@ By contacting us you agree to our <a href="privacy.html">Privacy Policy</a>.
 
 <div class="contact">
 
-<h3>
-Contact
-</h3>
+<h3>Contact</h3>
 
 📧 documentpro2026@gmail.com
 
 <br>
 
-<a href="terms.html">
-Terms
-</a>
+<a href="#contact">Contact Page</a>
+
+<br>
+
+<a href="terms.html">Terms</a>
 
 </div>
 
