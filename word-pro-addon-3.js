@@ -241,7 +241,7 @@ a{color:#2b579a}blockquote{border-left:4px solid #2b579a;margin:12px 0;padding:4
   tb.innerHTML = [
     ['Paste code', b('📋', 'Paste HTML', 'WP3.paste()', 'Paste HTML/CSS/JS and insert it as a web block or editable content') + b('🧾', 'Page Source', 'WP3.source()', 'View and edit this page\u2019s HTML')],
     ['Build', sl('Add block', [['navbar', 'Navbar'], ['hero', 'Hero section'], ['columns', '3 columns'], ['card', 'Card'], ['button', 'Button'], ['footer', 'Footer']], 'WP3.block', 110) + sl('Starter site', [['landing', 'Landing page'], ['portfolio', 'Portfolio'], ['blog', 'Blog post']], 'WP3.site', 110)],
-    ['Publish', b('👁', 'Preview', 'WP3.preview()', 'Preview as a website (desktop / tablet / mobile)') + b('🌐', 'Export .html', 'WP3.exp("html")', 'One self-contained web page') + b('🗂', 'Export site .zip', 'WP3.exp("zip")', 'Multi-page website: index.html, page-2.html… + style.css')]
+    ['Publish', b('👁', 'Preview', 'WP3.preview()', 'Preview as a website (desktop / tablet / mobile)') + b('🌐', 'Export .html', "WP3.exp('html')", 'One self-contained web page') + b('🗂', 'Export site .zip', "WP3.exp('zip')", 'Multi-page website: index.html, page-2.html… + style.css')]
   ].map(g => `<div class="ribbon-group"><div class="ribbon-group-row">${g[1]}</div><div class="ribbon-group-label">${g[0]}</div></div>`).join('');
   document.querySelector('.find-bar').before(tb);
 
