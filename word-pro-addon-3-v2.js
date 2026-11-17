@@ -333,9 +333,15 @@ footer.sf{text-align:center;color:var(--muted);padding:22px 12px;font-size:13px}
     return u.getIdToken();
   }
   async function api(action, extra) {
-    if (!SITE_API_URL || /PASTE_YOUR/.test(SITE_API_URL)) throw new Error('Set SITE_API_URL (top of the Publish section in word-pro-addon-3-v2.js) to your Apps Script web-app URL.');
+    const okUrl = u => /^https:\/\/script\.google\.com\/.+\/exec$/.test(u || '');
+    let url = SITE_API_URL; if (!okUrl(url)) { try { url = localStorage.getItem('pd.siteApi') || ''; } catch (e) { url = ''; } }
+    if (!okUrl(url)) {
+      url = (prompt('Paste your website publishing backend URL.\nIt is the Apps Script Web app URL that ends with /exec (not the document-saving one).') || '').trim();
+      if (!okUrl(url)) throw new Error('No valid backend URL entered. Click Publish again and paste the Apps Script web-app URL ending in /exec.');
+      try { localStorage.setItem('pd.siteApi', url); } catch (e) {}
+    }
     const token = await getToken();
-    const r = await fetch(SITE_API_URL, { method: 'POST', body: JSON.stringify({ action, token, ...extra }) });   // no custom headers → no CORS preflight
+    const r = await fetch(url, { method: 'POST', body: JSON.stringify({ action, token, ...extra }) });   // no custom headers → no CORS preflight
     let j; try { j = await r.json(); } catch (e) { throw new Error('The publishing server did not answer correctly. Check the web-app deployment (access: Anyone).'); }
     if (!j.ok) throw new Error(j.error || 'Request failed.'); return j;
   }
