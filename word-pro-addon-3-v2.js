@@ -317,7 +317,7 @@ footer.sf{text-align:center;color:var(--muted);padding:22px 12px;font-size:13px}
   }
 
   /* ── Publish to a live link: Apps Script backend (Drive storage + Firebase login check) ── */
-  const SITE_API_URL = 'PASTE_YOUR_WEBSITE_BACKEND_EXEC_URL_HERE';   // Apps Script ▸ Deploy ▸ Web app URL (ends with /exec)
+  const SITE_API_URL = 'https://script.google.com/macros/s/AKfycbzg1Wn8mx7mLM2ZsV1g8GeVTnrYxhqwrmbSaWcWWrdK7VYFCypjy_6POBXmsJwzVJEO/exec';   // ◀◀ OWNER: paste your Apps Script web-app URL here ONCE (Deploy ▸ Manage deployments ▸ Web app, ends with /exec). Users never see this.
   const FB_CFG = { apiKey: 'AIzaSyBjM_4W6DsCfOOrcUW-BoTfttU0ZBAngUQ', authDomain: 'pro-document-1723a.firebaseapp.com', projectId: 'pro-document-1723a', storageBucket: 'pro-document-1723a.firebasestorage.app', messagingSenderId: '358645984079', appId: '1:358645984079:web:6be4b45228f5f35fa0333a' };
   const MAX_HTML = 2 * 1024 * 1024, RESERVED = ['api', 'admin', 'login', 'dashboard', 'settings', 'support', 'help', 'www', 'root'];
   let authP = null;
@@ -333,15 +333,12 @@ footer.sf{text-align:center;color:var(--muted);padding:22px 12px;font-size:13px}
     return u.getIdToken();
   }
   async function api(action, extra) {
-    const okUrl = u => /^https:\/\/script\.google\.com\/.+\/exec$/.test(u || '');
-    let url = SITE_API_URL; if (!okUrl(url)) { try { url = localStorage.getItem('pd.siteApi') || ''; } catch (e) { url = ''; } }
-    if (!okUrl(url)) {
-      url = (prompt('Paste your website publishing backend URL.\nIt is the Apps Script Web app URL that ends with /exec (not the document-saving one).') || '').trim();
-      if (!okUrl(url)) throw new Error('No valid backend URL entered. Click Publish again and paste the Apps Script web-app URL ending in /exec.');
-      try { localStorage.setItem('pd.siteApi', url); } catch (e) {}
+    if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(SITE_API_URL)) {
+      console.error('Pro Document: SITE_API_URL is not set. Paste your Apps Script web-app URL (ending in /exec) into word-pro-addon-3-v2.js.');
+      throw new Error('Publishing is not available right now. Please try again later.');   // end users never see or enter a URL
     }
     const token = await getToken();
-    const r = await fetch(url, { method: 'POST', body: JSON.stringify({ action, token, ...extra }) });   // no custom headers → no CORS preflight
+    const r = await fetch(SITE_API_URL, { method: 'POST', body: JSON.stringify({ action, token, ...extra }) });   // no custom headers → no CORS preflight
     let j; try { j = await r.json(); } catch (e) { throw new Error('The publishing server did not answer correctly. Check the web-app deployment (access: Anyone).'); }
     if (!j.ok) throw new Error(j.error || 'Request failed.'); return j;
   }
