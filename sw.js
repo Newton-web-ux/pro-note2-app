@@ -1,22 +1,14 @@
 // Pro Document — service worker
-// Required for installability: a page needs a registered SW with a
-// fetch handler before Chrome/Edge/Android will fire beforeinstallprompt.
+const CACHE_NAME = 'pro-document-shell-v2'; // bumped so the old cache is deleted
 
-const CACHE_NAME = 'pro-document-shell-v1';
-
-// Only cache same-origin static shell assets — never HTML pages that
-// depend on live Firestore auth/session state.
-const SHELL_ASSETS = [
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
-];
+// Only these rarely-changing files use cache-first.
+const SHELL_ASSETS = ['./manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(SHELL_ASSETS))
-      .catch(() => {}) // don't block install if an asset is missing yet
+      .catch(() => {})
   );
   self.skipWaiting();
 });
@@ -24,11 +16,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
     )
   );
   self.clients.claim();
@@ -36,24 +24,28 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
+  const url = new URL(req.url);
+  if (req.method !== 'GET' || url.origin !== self.location.origin) return;
 
-  // Only handle GET requests for same-origin shell assets.
-  // Everything else (Firestore, auth, cross-origin) passes straight through.
-  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) {
+  const isShell = SHELL_ASSETS.some((a) => url.pathname.endsWith(a.replace('./', '/')));
+
+  if (isShell) {
+    // Icons and manifest: cache-first is fine.
+    event.respondWith(caches.match(req).then((c) => c || fetch(req)));
     return;
   }
 
+  // HTML, JS, CSS: always try the network first so updates show up.
+  // Use the cache only when offline.
   event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached;
-      return fetch(req).then((res) => {
-        // Cache successful same-origin responses for next time
+    fetch(req)
+      .then((res) => {
         if (res && res.status === 200) {
-          const resClone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone));
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(req, copy));
         }
         return res;
-      }).catch(() => cached); // offline fallback if we have something cached
-    })
+      })
+      .catch(() => caches.match(req))
   );
 });
