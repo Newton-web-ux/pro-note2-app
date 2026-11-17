@@ -918,6 +918,16 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const googleProvider = new firebase.auth.GoogleAuthProvider();
+// Website Publisher — Firebase ID Token Bridge
+window.PRODOCUMENT_GET_ID_TOKEN = async function () {
+    const user = auth.currentUser;
+
+    if (!user || user.isAnonymous) {
+        throw new Error("Please sign in to publish your website.");
+    }
+
+    return await user.getIdToken();
+};
 // Keep users signed in across visits/tabs (default is already 'local', set explicitly for clarity)
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
 
