@@ -316,6 +316,74 @@ footer.sf{text-align:center;color:var(--muted);padding:22px 12px;font-size:13px}
     modal('How to publish your site', `<ol style="line-height:1.8;margin:0;padding-left:20px"><li>Click <b>Export site .zip</b> and unzip it.</li><li><b>Netlify Drop</b> (free): open <i>app.netlify.com/drop</i> and drag the unzipped folder in. You get a live link in seconds.</li><li><b>GitHub Pages</b> (free): create a repository, upload the files, then turn on Pages in Settings.</li><li><b>Firebase Hosting</b> (you already use Firebase): run <code>firebase init hosting</code>, set the folder as the public directory, then <code>firebase deploy</code>.</li></ol><div style="color:var(--muted)">Tip: <b>Export .html</b> gives a single self-contained page you can email or open from a USB stick.</div>`, 520);
   }
 
+  /* ── Publish to a live link: Apps Script backend (Drive storage + Firebase login check) ── */
+  const SITE_API_URL = 'PASTE_YOUR_WEBSITE_BACKEND_EXEC_URL_HERE';   // Apps Script ▸ Deploy ▸ Web app URL (ends with /exec)
+  const FB_CFG = { apiKey: 'AIzaSyBjM_4W6DsCfOOrcUW-BoTfttU0ZBAngUQ', authDomain: 'pro-document-1723a.firebaseapp.com', projectId: 'pro-document-1723a', storageBucket: 'pro-document-1723a.firebasestorage.app', messagingSenderId: '358645984079', appId: '1:358645984079:web:6be4b45228f5f35fa0333a' };
+  const MAX_HTML = 2 * 1024 * 1024, RESERVED = ['api', 'admin', 'login', 'dashboard', 'settings', 'support', 'help', 'www', 'root'];
+  let authP = null;
+  const loadScript = u => new Promise((ok, no) => { const s = document.createElement('script'); s.src = u; s.onload = ok; s.onerror = () => no(new Error('Could not load Firebase (needs internet)')); document.head.appendChild(s); });
+  async function getToken() {
+    if (typeof window.PRODOCUMENT_GET_ID_TOKEN === 'function') return window.PRODOCUMENT_GET_ID_TOKEN();   // same bridge the Dashboard exposes
+    authP = authP || (async () => {
+      if (!window.firebase) { const B = 'https://www.gstatic.com/firebasejs/10.13.0/'; await loadScript(B + 'firebase-app-compat.js'); await loadScript(B + 'firebase-auth-compat.js'); }
+      if (!firebase.apps.length) firebase.initializeApp(FB_CFG);
+      return new Promise(r => { const off = firebase.auth().onAuthStateChanged(u => { off(); r(u); }); });
+    })();
+    const u = await authP; if (!u) { authP = null; throw new Error('Please sign in on the Dashboard first, then reopen this page.'); }
+    return u.getIdToken();
+  }
+  async function api(action, extra) {
+    if (!SITE_API_URL || /PASTE_YOUR/.test(SITE_API_URL)) throw new Error('Set SITE_API_URL (top of the Publish section in word-pro-addon-3-v2.js) to your Apps Script web-app URL.');
+    const token = await getToken();
+    const r = await fetch(SITE_API_URL, { method: 'POST', body: JSON.stringify({ action, token, ...extra }) });   // no custom headers → no CORS preflight
+    let j; try { j = await r.json(); } catch (e) { throw new Error('The publishing server did not answer correctly. Check the web-app deployment (access: Anyone).'); }
+    if (!j.ok) throw new Error(j.error || 'Request failed.'); return j;
+  }
+  function cleanSlug(v) {   // mirrors the backend rules so errors show before upload
+    const s = String(v || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    if (s.length < 3 || s.length > 50) throw new Error('Website address name must be 3–50 letters, numbers or hyphens.');
+    if (RESERVED.includes(s)) throw new Error('That address name is reserved — choose another.');
+    return s;
+  }
+  async function publishDlg() {
+    if (ro()) return say('This document is view-only.');
+    modal('Publish website', '<div id="pb">Connecting…</div>', 600); const box = $('pb');
+    let sites = [], cur = null;
+    const load = async () => { const c = getCfg(); sites = (await api('list')).websites || []; cur = sites.find(w => w.siteId === c.siteId) || sites.find(w => c.slug && w.slug === c.slug) || null; };
+    try { await load(); } catch (e) { box.textContent = e.message; return; }
+    const msg = (t, ok) => { const el = $('pb_st'); if (el) { el.style.color = ok === false ? '#c0392b' : ok ? '#2e7d4f' : 'var(--muted)'; el.innerHTML = t; } };
+    const draw = () => {
+      const live = cur && cur.status === 'published', c = getCfg(), others = sites.filter(w => !cur || w.siteId !== cur.siteId);
+      box.innerHTML = `<div style="color:var(--muted)">Your site goes live at a public link anyone can open. Publish again at any time to update the same link.</div>
+        <label class="f">Website address name<input type="text" id="pb_s" value="${esc(cur ? cur.slug : (c.slug || slugify(c.name).slice(0, 50)))}" maxlength="50" ${cur ? 'readonly title="The address is fixed once published"' : ''}></label>
+        ${cur ? `<div style="background:${live ? '#eaf7ef' : '#f3f3f3'};border:1px solid ${live ? '#b8e0c8' : '#ddd'};border-radius:6px;padding:8px 10px;overflow-wrap:anywhere">${live ? '🟢 <b>Live</b>' : '⚪ <b>Unpublished</b>'} · <a href="${esc(cur.url)}" target="_blank" rel="noopener">${esc(cur.url)}</a></div>` : ''}
+        <div id="pb_st" style="min-height:18px"></div>
+        <div class="wp3-row"><button class="pri" data-a="pub">${cur ? (live ? '🔄 Update live site' : '🚀 Update &amp; republish') : '🚀 Publish'}</button>${cur ? `<button data-a="copy">📋 Copy link</button><button data-a="open">↗ Open</button><button data-a="${live ? 'un' : 're'}">${live ? 'Unpublish' : 'Republish'}</button><button data-a="del" style="color:#c0392b">Delete</button>` : ''}</div>
+        ${others.length ? `<details><summary>Your other websites (${others.length})</summary>${others.map(w => `<div style="padding:3px 0">${w.status === 'published' ? '🟢' : '⚪'} <a href="${esc(w.url)}" target="_blank" rel="noopener">${esc(w.name || w.slug)}</a> <span style="color:var(--muted)">· ${esc(w.slug)}</span></div>`).join('')}</details>` : ''}`;
+    };
+    draw();
+    box.onclick = async e => {
+      const a = e.target.dataset.a; if (!a) return;
+      const btns = box.querySelectorAll('button');
+      try {
+        if (a === 'copy') { await navigator.clipboard.writeText(cur.url); return msg('Link copied.', true); }
+        if (a === 'open') return void window.open(cur.url, '_blank', 'noopener');
+        btns.forEach(x => x.disabled = true);
+        if (a === 'un' || a === 're') { await api(a === 'un' ? 'unpublish' : 'republish', { siteId: cur.siteId }); await load(); draw(); return msg(a === 'un' ? 'Site unpublished.' : 'Site is live again.', true); }
+        if (a === 'del') {
+          if (!confirm('Delete this website permanently? The link will stop working.')) { btns.forEach(x => x.disabled = false); return; }
+          await api('delete', { siteId: cur.siteId }); const c = getCfg(); delete c.siteId; delete c.slug; delete c.url; setCfg(c); await load(); draw(); return msg('Site deleted.', true);
+        }
+        const html = singleSite(); if (html.length > MAX_HTML) throw new Error('The site is ' + (html.length / 1048576).toFixed(1) + ' MB — the limit is 2 MB. Remove or shrink large images.');
+        msg('Publishing…'); let r;
+        if (cur) { r = await api('update', { siteId: cur.siteId, html }); if (cur.status !== 'published') await api('republish', { siteId: cur.siteId }); }
+        else r = await api('publish', { name: getCfg().name, slug: cleanSlug($('pb_s').value), html });
+        setCfg({ ...getCfg(), siteId: r.siteId, slug: r.slug || (cur && cur.slug), url: r.url });
+        await load(); draw(); msg('✅ Published! Your site is live.', true); say('Website published.');
+      } catch (err) { console.warn(err); btns.forEach(x => x.disabled = false); msg(esc(err.message || err), false); }
+    };
+  }
+
   /* ── ribbon tab ── */
   const b = (ic, l, fn, t) => `<button class="tb-btn" onmousedown="event.preventDefault()" onclick="${fn}" title="${t || l}"><span class="tb-icon">${ic}</span>${l}</button>`;
   const sl = (label, opts, fn, w) => `<select class="tb-select" style="width:${w}px" onchange="${fn}(this.value);this.selectedIndex=0"><option value="">${label}</option>${opts.map(o => `<option value="${o[0]}">${o[1]}</option>`).join('')}</select>`;
@@ -327,12 +395,12 @@ footer.sf{text-align:center;color:var(--muted);padding:22px 12px;font-size:13px}
     ['Site', b('⚙', 'Site Settings', 'WP3.settings()', 'Name, logo, theme, fonts, menu, footer, SEO') + b('🗂', 'Pages & Menu', 'WP3.pagesMenu()', 'Rename, hide and reorder pages') + b('🔗', 'Page Link', 'WP3.link()', 'Link text to another page')],
     ['Add content', sl('Add block', [['hero', 'Hero'], ['columns', '3 columns'], ['card', 'Card'], ['gallery', 'Photo gallery'], ['testimonial', 'Testimonial'], ['pricing', 'Pricing'], ['faq', 'FAQ'], ['contact', 'Contact'], ['social', 'Social links'], ['stats', 'Stats'], ['button', 'Button']], 'WP3.block', 110) + sl('Starter site', [['business', 'Business'], ['portfolio', 'Portfolio'], ['blog', 'Blog post'], ['event', 'Event'], ['classroom', 'Class / club']], 'WP3.site', 110),
       b('▶', 'Video', "WP3.embed('video')", 'Embed a YouTube video') + b('📍', 'Map', "WP3.embed('map')", 'Embed a Google map')],
-    ['Publish', b('👁', 'Preview', 'WP3.preview()') + b('🌐', 'Export .html', "WP3.exp('html')", 'One self-contained page') + b('📦', 'Export site .zip', "WP3.exp('zip')", 'Multi-page site: index.html, pages, style.css, 404.html') + b('❓', 'How to Publish', 'WP3.help()')]
+    ['Publish', b('👁', 'Preview', 'WP3.preview()') + b('🌐', 'Export .html', "WP3.exp('html')", 'One self-contained page') + b('📦', 'Export site .zip', "WP3.exp('zip')", 'Multi-page site: index.html, pages, style.css, 404.html') + b('🚀', 'Publish', 'WP3.publish()', 'Publish to a live web link') + b('❓', 'How to Publish', 'WP3.help()')]
   ].map(g => `<div class="ribbon-group"><div class="ribbon-group-row">${g[1]}</div>${g[2] ? `<div class="ribbon-group-row">${g[2]}</div>` : ''}<div class="ribbon-group-label">${g[0]}</div></div>`).join('');
   document.querySelector('.find-bar').before(tb);
 
   window.WP3 = {
-    paste: () => pasteDlg(), source: sourceDlg, preview, settings: siteDlg, pagesMenu: pagesDlg, link: linkDlg, embed, help: helpDlg,
+    publish: publishDlg, paste: () => pasteDlg(), source: sourceDlg, preview, settings: siteDlg, pagesMenu: pagesDlg, link: linkDlg, embed, help: helpDlg,
     block: k => addHtml(BLOCKS[k]), site: k => { addHtml(SITES[k]); say('Starter inserted — replace the [placeholders]. Menu & theme: Site Settings.'); },
     async exp(kind) {
       try {
