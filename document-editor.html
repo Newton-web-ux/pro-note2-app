@@ -1171,7 +1171,7 @@ const sharedOwnerUid   = urlParams.get('ownerUid') || null;
 const sharedOwnerEmail = urlParams.get('ownerEmail') || null;
 const sharedRole       = urlParams.get('role') || null;      // 'view' | 'edit' | null (null = own document)
 const isSharedSession  = !!(sharedOwnerUid && sharedOwnerEmail);
-// Plan lock: free-plan documents beyond the first 3 open in read mode
+// Plan lock: free-plan users who have created 3 documents open them in read mode
 // (the dashboard appends ?mode=read for them). Own documents only.
 const planReadOnly     = !isSharedSession && urlParams.get('mode') === 'read';
 const isReadOnly       = (isSharedSession && sharedRole !== 'edit') || planReadOnly;
@@ -1236,7 +1236,7 @@ function applySharedModeUI() {
     const pb = document.getElementById('sharedBanner');
     pb.classList.add('show');
     document.body.classList.add('read-only-mode');
-    pb.textContent = '🔒 Read-only: the free plan lets you edit your first 3 documents. Upgrade to Pro on the dashboard to edit this one.';
+    pb.textContent = '🔒 Read-only: the free plan is limited to 3 documents, after which editing is locked. Upgrade to Pro on the dashboard to keep editing.';
     return;
   }
   if (!isSharedSession) return;
