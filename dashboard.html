@@ -995,7 +995,6 @@ let currentUser = null;
 let authStateKnown = false;
 let lastAuthUser = null;
 let unsubProfile = null, unsubDocs = null, unsubFolders = null, unsubSharedWithMe = null;
-let profileLoaded = false, claimingSlots = false;
 
 auth.onAuthStateChanged(user => {
   authStateKnown = true;
@@ -1246,10 +1245,8 @@ function attachRealtimeListeners() {
     currentUser.planExpiresAt = data.planExpiresAt
       ? (data.planExpiresAt.toDate ? data.planExpiresAt.toDate().toISOString() : data.planExpiresAt)
       : null;
-    profileLoaded = true;
     updatePlanPanel();
     render();
-    ensureSlots();
   }, err => console.warn('profile listener error', err));
 
   unsubDocs = userRef.collection('docs').onSnapshot(snap => {
@@ -1264,7 +1261,6 @@ function attachRealtimeListeners() {
     });
     cacheIndexLocally();
     render(); updatePlanPanel();
-    ensureSlots();
   }, err => { console.warn('docs listener error', err); setStatus('Could not sync documents.'); });
 
   unsubFolders = userRef.collection('folders').onSnapshot(snap => {
@@ -1301,7 +1297,6 @@ function detachRealtimeListeners() {
   if (unsubFolders) unsubFolders();
   if (unsubSharedWithMe) unsubSharedWithMe();
   unsubProfile = unsubDocs = unsubFolders = unsubSharedWithMe = null;
-  profileLoaded = false;
   cachedIndex = { docs: {}, folders: {} };
   cachedSharedWithMe = {};
 }
@@ -1425,41 +1420,12 @@ function isProUser() {
   return !currentUser.planExpiresAt || new Date(currentUser.planExpiresAt) > new Date();
 }
 
-/* ── Edit slots ──────────────────────────────────────────────
-   Free plan: the first 3 documents hold slots "1".."3" and stay
-   editable. Every document beyond those opens in read mode until
-   the user upgrades. Slots are claimed in a single batch
-   (doc.slot + slots/{n}) exactly as firestore.rules requires. */
-function hasEditAccess(d) { return isProUser() || !!(d && ['1','2','3'].includes(String(d.slot))); }
-function getEditableCount() { return Object.values(readIndex().docs).filter(d => d.slot).length; }
-function freeSlots() {
-  const used = new Set(Object.values(readIndex().docs).map(d => d.slot && String(d.slot)).filter(Boolean));
-  return ['1','2','3'].filter(s => !used.has(s));
-}
-async function claimSlotFor(docId, slot) {
-  const uref = db.collection('users').doc(currentUser.uid);
-  const batch = db.batch();
-  batch.update(uref.collection('docs').doc(docId), { slot });
-  batch.set(uref.collection('slots').doc(slot), {
-    docId, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
-  await batch.commit();
-}
-// Oldest slotless documents take the free slots, so the first 3 stay editable.
-async function ensureSlots() {
-  if (claimingSlots || !profileLoaded || !currentUser || isProUser()) return;
-  const free = freeSlots();
-  const candidates = Object.values(cachedIndex.docs)
-    .filter(d => !d.slot && !d.deleted)
-    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-  if (!free.length || !candidates.length) return;
-  claimingSlots = true;
-  try {
-    for (let i = 0; i < Math.min(free.length, candidates.length); i++) {
-      await claimSlotFor(candidates[i].id, free[i]);
-    }
-  } catch (e) { console.warn('slot claim failed', e); }
-  finally { claimingSlots = false; }
+/* ── Free-plan edit lock ─────────────────────────────────────
+   Free users can create up to FREE_MAX_DOCS documents. Once that
+   many exist, every document opens in read mode until the user
+   upgrades to Pro or deletes one. Pro users are never locked. */
+function hasEditAccess() {
+  return isProUser() || getActiveDocCount() < FREE_MAX_DOCS;
 }
 
 function updatePlanPanel() {
@@ -1605,16 +1571,9 @@ async function confirmRename() {
 /* ─────────────────────────────────────────────
    OPEN DOCUMENT (owned by the current user)
 ───────────────────────────────────────────── */
-async function openDoc(id) {
-  let d = readIndex().docs[id];
+function openDoc(id) {
+  const d = readIndex().docs[id];
   if (!d || d.deleted) return;
-
-  // A slot claim for a just-created document may still be in flight.
-  if (!hasEditAccess(d) && freeSlots().length) {
-    await ensureSlots();
-    await new Promise(r => setTimeout(r, 400));
-    d = readIndex().docs[id] || d;
-  }
 
   db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1624,7 +1583,7 @@ async function openDoc(id) {
   sessionStorage.setItem('pd_active_uid', currentUser.uid);
   sessionStorage.setItem('pd_active_user', currentUser.email);
   window.location.href = 'document-editor.html?id=' + encodeURIComponent(id) +
-    (hasEditAccess(d) ? '' : '&mode=read');
+    (hasEditAccess() ? '' : '&mode=read');
 }
 
 /* ─────────────────────────────────────────────
@@ -2177,7 +2136,7 @@ function render() {
                <button class="doc-action-btn danger" onclick="deletePermanent('${d.id}')">Delete</button>`
              :`<button class="doc-action-btn danger" onclick="trashDoc('${d.id}')">Trash</button>`}`;
       el.innerHTML=`
-        ${(!d.shared && currentFilter !== 'trash' && !hasEditAccess(d)) ? `<span class="shared-badge" style="background:#7a5d00;margin-right:6px" title="Upgrade to Pro to edit">🔒 Read only</span>` : ''}${d.shared ? `<span class="shared-badge">🤝 Shared</span>` : `<button class="star-btn ${d.starred?'on':''}" onclick="event.stopPropagation();toggleStar('${d.id}')" title="${d.starred?'Unstar':'Star'}">★</button>`}
+        ${(!d.shared && currentFilter !== 'trash' && !hasEditAccess()) ? `<span class="shared-badge" style="background:#7a5d00;margin-right:6px" title="Upgrade to Pro to edit documents">🔒 Read only</span>` : ''}${d.shared ? `<span class="shared-badge">🤝 Shared</span>` : `<button class="star-btn ${d.starred?'on':''}" onclick="event.stopPropagation();toggleStar('${d.id}')" title="${d.starred?'Unstar':'Star'}">★</button>`}
         <div class="doc-card-preview" onclick="${openAction}">
           <div class="doc-lines"><div class="doc-line"></div><div class="doc-line"></div><div class="doc-line"></div></div>
         </div>
