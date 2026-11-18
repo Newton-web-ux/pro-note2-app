@@ -317,9 +317,11 @@ footer.sf{text-align:center;color:var(--muted);padding:22px 12px;font-size:13px}
   }
 
   /* ── Publish to a live link: Apps Script backend (Drive storage + Firebase login check) ── */
-  const SITE_API_URL = 'https://script.google.com/macros/s/AKfycbzg1Wn8mx7mLM2ZsV1g8GeVTnrYxhqwrmbSaWcWWrdK7VYFCypjy_6POBXmsJwzVJEO/exec';   // ◀◀ OWNER: paste your Apps Script web-app URL here ONCE (Deploy ▸ Manage deployments ▸ Web app, ends with /exec). Users never see this.
+  const SITE_API_URL = 'PASTE_YOUR_WEBSITE_BACKEND_EXEC_URL_HERE';   // ◀◀ OWNER: paste your Apps Script web-app URL here ONCE (Deploy ▸ Manage deployments ▸ Web app, ends with /exec). Users never see this.
   const FB_CFG = { apiKey: 'AIzaSyBjM_4W6DsCfOOrcUW-BoTfttU0ZBAngUQ', authDomain: 'pro-document-1723a.firebaseapp.com', projectId: 'pro-document-1723a', storageBucket: 'pro-document-1723a.firebasestorage.app', messagingSenderId: '358645984079', appId: '1:358645984079:web:6be4b45228f5f35fa0333a' };
   const MAX_HTML = 2 * 1024 * 1024, RESERVED = ['api', 'admin', 'login', 'dashboard', 'settings', 'support', 'help', 'www', 'root'];
+  const PRETTY_URLS = false;   // false → https://YOURSITE/site.html?s=name (works immediately) · true → https://YOURSITE/s/name (needs the Firebase Hosting rewrite, see setup notes)
+  const pub = slug => PRETTY_URLS ? location.origin + '/s/' + slug : new URL('site.html', location.href).href.split(/[?#]/)[0] + '?s=' + slug;   // the link people see: your own domain, not Google's
   let authP = null;
   const loadScript = u => new Promise((ok, no) => { const s = document.createElement('script'); s.src = u; s.onload = ok; s.onerror = () => no(new Error('Could not load Firebase (needs internet)')); document.head.appendChild(s); });
   async function getToken() {
@@ -359,18 +361,18 @@ footer.sf{text-align:center;color:var(--muted);padding:22px 12px;font-size:13px}
       const live = cur && cur.status === 'published', c = getCfg(), others = sites.filter(w => !cur || w.siteId !== cur.siteId);
       box.innerHTML = `<div style="color:var(--muted)">Your site goes live at a public link anyone can open. Publish again at any time to update the same link.</div>
         <label class="f">Website address name<input type="text" id="pb_s" value="${esc(cur ? cur.slug : (c.slug || slugify(c.name).slice(0, 50)))}" maxlength="50" ${cur ? 'readonly title="The address is fixed once published"' : ''}></label>
-        ${cur ? `<div style="background:${live ? '#eaf7ef' : '#f3f3f3'};border:1px solid ${live ? '#b8e0c8' : '#ddd'};border-radius:6px;padding:8px 10px;overflow-wrap:anywhere">${live ? '🟢 <b>Live</b>' : '⚪ <b>Unpublished</b>'} · <a href="${esc(cur.url)}" target="_blank" rel="noopener">${esc(cur.url)}</a></div>` : ''}
+        ${cur ? `<div style="background:${live ? '#eaf7ef' : '#f3f3f3'};border:1px solid ${live ? '#b8e0c8' : '#ddd'};border-radius:6px;padding:8px 10px;overflow-wrap:anywhere">${live ? '🟢 <b>Live</b>' : '⚪ <b>Unpublished</b>'} · <a href="${esc(pub(cur.slug))}" target="_blank" rel="noopener">${esc(pub(cur.slug))}</a></div>` : ''}
         <div id="pb_st" style="min-height:18px"></div>
         <div class="wp3-row"><button class="pri" data-a="pub">${cur ? (live ? '🔄 Update live site' : '🚀 Update &amp; republish') : '🚀 Publish'}</button>${cur ? `<button data-a="copy">📋 Copy link</button><button data-a="open">↗ Open</button><button data-a="${live ? 'un' : 're'}">${live ? 'Unpublish' : 'Republish'}</button><button data-a="del" style="color:#c0392b">Delete</button>` : ''}</div>
-        ${others.length ? `<details><summary>Your other websites (${others.length})</summary>${others.map(w => `<div style="padding:3px 0">${w.status === 'published' ? '🟢' : '⚪'} <a href="${esc(w.url)}" target="_blank" rel="noopener">${esc(w.name || w.slug)}</a> <span style="color:var(--muted)">· ${esc(w.slug)}</span></div>`).join('')}</details>` : ''}`;
+        ${others.length ? `<details><summary>Your other websites (${others.length})</summary>${others.map(w => `<div style="padding:3px 0">${w.status === 'published' ? '🟢' : '⚪'} <a href="${esc(pub(w.slug))}" target="_blank" rel="noopener">${esc(w.name || w.slug)}</a> <span style="color:var(--muted)">· ${esc(w.slug)}</span></div>`).join('')}</details>` : ''}`;
     };
     draw();
     box.onclick = async e => {
       const a = e.target.dataset.a; if (!a) return;
       const btns = box.querySelectorAll('button');
       try {
-        if (a === 'copy') { await navigator.clipboard.writeText(cur.url); return msg('Link copied.', true); }
-        if (a === 'open') return void window.open(cur.url, '_blank', 'noopener');
+        if (a === 'copy') { await navigator.clipboard.writeText(pub(cur.slug)); return msg('Link copied.', true); }
+        if (a === 'open') return void window.open(pub(cur.slug), '_blank', 'noopener');
         btns.forEach(x => x.disabled = true);
         if (a === 'un' || a === 're') { await api(a === 'un' ? 'unpublish' : 'republish', { siteId: cur.siteId }); await load(); draw(); return msg(a === 'un' ? 'Site unpublished.' : 'Site is live again.', true); }
         if (a === 'del') {
@@ -381,7 +383,7 @@ footer.sf{text-align:center;color:var(--muted);padding:22px 12px;font-size:13px}
         msg('Publishing…'); let r;
         if (cur) { r = await api('update', { siteId: cur.siteId, html }); if (cur.status !== 'published') await api('republish', { siteId: cur.siteId }); }
         else r = await api('publish', { name: getCfg().name, slug: cleanSlug($('pb_s').value), html });
-        setCfg({ ...getCfg(), siteId: r.siteId, slug: r.slug || (cur && cur.slug), url: r.url });
+        setCfg({ ...getCfg(), siteId: r.siteId, slug: r.slug || (cur && cur.slug), url: pub(r.slug || (cur && cur.slug)) });
         await load(); draw(); msg('✅ Published! Your site is live.', true); say('Website published.');
       } catch (err) { console.warn(err); btns.forEach(x => x.disabled = false); msg(esc(err.message || err), false); }
     };
