@@ -853,7 +853,7 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
 
       <ul class="up-features">
         <li>Unlimited folders</li>
-        <li>Unlimited editable documents</li>
+        <li>Unlimited documents</li>
         <li>Advanced PDF & Word export</li>
         <li>20-step version history</li>
         <li>Priority cloud sync</li>
@@ -1484,14 +1484,12 @@ function updatePlanPanel() {
   } else {
     tag.textContent = 'FREE'; tag.classList.remove('pro');
     if (ddItem) ddItem.style.display = 'flex';
-    const editable  = getEditableCount();
-    const docPct    = Math.min(100, (editable / FREE_MAX_DOCS) * 100);
+    const docPct    = Math.min(100, (docCount / FREE_MAX_DOCS) * 100);
     const folderPct = Math.min(100, (folderCount / FREE_MAX_FOLDERS) * 100);
     panel.innerHTML = `
       <div class="plan-panel-title">Plan <span class="plan-pill free">FREE</span></div>
-      <div class="usage-row"><span>Editable documents</span><span>${editable}/${FREE_MAX_DOCS}</span></div>
-      <div class="usage-bar"><div class="usage-fill ${editable>=FREE_MAX_DOCS?'full':''}" style="width:${docPct}%"></div></div>
-      ${docCount>editable ? `<div class="plan-expiry">${docCount-editable} read-only document${docCount-editable!==1?'s':''}</div>` : ''}
+      <div class="usage-row"><span>Documents</span><span>${docCount}/${FREE_MAX_DOCS}</span></div>
+      <div class="usage-bar"><div class="usage-fill ${docCount>=FREE_MAX_DOCS?'full':''}" style="width:${docPct}%"></div></div>
       <div class="usage-row"><span>Folders</span><span>${folderCount}/${FREE_MAX_FOLDERS}</span></div>
       <div class="usage-bar"><div class="usage-fill ${folderCount>=FREE_MAX_FOLDERS?'full':''}" style="width:${folderPct}%"></div></div>
       <button class="plan-upgrade-btn" onclick="openUpgradeModal()">✨ Upgrade to Pro</button>`;
@@ -1511,7 +1509,10 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 });
 
 function openCreateDocModal() {
-  // Documents can always be created; free users edit the first 3, the rest open read-only.
+  if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents.`);
+    return;
+  }
   openModal('createDocModal');
 }
 function openCreateFolderModal(parent = null) {
@@ -1529,6 +1530,11 @@ function openCreateFolderModal(parent = null) {
    listeners above pick up every write and re-render.
 ───────────────────────────────────────────── */
 async function confirmCreateDoc() {
+  if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
+    closeModal('createDocModal');
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents.`);
+    return;
+  }
   const title = document.getElementById('docNameInput').value.trim() || 'Untitled Document';
   closeModal('createDocModal');
   setStatus('Creating document…');
@@ -1680,6 +1686,10 @@ async function trashDoc(id) {
 }
 
 async function restoreDoc(id) {
+  if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
+    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents. Upgrade to restore this one.`);
+    return;
+  }
   try {
     await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
       deleted: false, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
