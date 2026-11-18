@@ -853,7 +853,7 @@ body { font-family:'Space Grotesk',system-ui,sans-serif; background:var(--bg); c
 
       <ul class="up-features">
         <li>Unlimited folders</li>
-        <li>Unlimited documents</li>
+        <li>Unlimited editable documents</li>
         <li>Advanced PDF & Word export</li>
         <li>20-step version history</li>
         <li>Priority cloud sync</li>
@@ -918,16 +918,6 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const googleProvider = new firebase.auth.GoogleAuthProvider();
-// Website Publisher — Firebase ID Token Bridge
-window.PRODOCUMENT_GET_ID_TOKEN = async function () {
-    const user = auth.currentUser;
-
-    if (!user || user.isAnonymous) {
-        throw new Error("Please sign in to publish your website.");
-    }
-
-    return await user.getIdToken();
-};
 // Keep users signed in across visits/tabs (default is already 'local', set explicitly for clarity)
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
 
@@ -1005,6 +995,7 @@ let currentUser = null;
 let authStateKnown = false;
 let lastAuthUser = null;
 let unsubProfile = null, unsubDocs = null, unsubFolders = null, unsubSharedWithMe = null;
+let profileLoaded = false, claimingSlots = false;
 
 auth.onAuthStateChanged(user => {
   authStateKnown = true;
@@ -1255,7 +1246,10 @@ function attachRealtimeListeners() {
     currentUser.planExpiresAt = data.planExpiresAt
       ? (data.planExpiresAt.toDate ? data.planExpiresAt.toDate().toISOString() : data.planExpiresAt)
       : null;
+    profileLoaded = true;
     updatePlanPanel();
+    render();
+    ensureSlots();
   }, err => console.warn('profile listener error', err));
 
   unsubDocs = userRef.collection('docs').onSnapshot(snap => {
@@ -1270,6 +1264,7 @@ function attachRealtimeListeners() {
     });
     cacheIndexLocally();
     render(); updatePlanPanel();
+    ensureSlots();
   }, err => { console.warn('docs listener error', err); setStatus('Could not sync documents.'); });
 
   unsubFolders = userRef.collection('folders').onSnapshot(snap => {
@@ -1306,6 +1301,7 @@ function detachRealtimeListeners() {
   if (unsubFolders) unsubFolders();
   if (unsubSharedWithMe) unsubSharedWithMe();
   unsubProfile = unsubDocs = unsubFolders = unsubSharedWithMe = null;
+  profileLoaded = false;
   cachedIndex = { docs: {}, folders: {} };
   cachedSharedWithMe = {};
 }
@@ -1424,7 +1420,47 @@ function getActiveDocCount() {
 function getActiveFolderCount() {
   return Object.values(readIndex().folders).filter(f => !f.deleted).length;
 }
-function isProUser() { return !!(currentUser && currentUser.isPro); }
+function isProUser() {
+  if (!currentUser || !currentUser.isPro) return false;
+  return !currentUser.planExpiresAt || new Date(currentUser.planExpiresAt) > new Date();
+}
+
+/* ── Edit slots ──────────────────────────────────────────────
+   Free plan: the first 3 documents hold slots "1".."3" and stay
+   editable. Every document beyond those opens in read mode until
+   the user upgrades. Slots are claimed in a single batch
+   (doc.slot + slots/{n}) exactly as firestore.rules requires. */
+function hasEditAccess(d) { return isProUser() || !!(d && ['1','2','3'].includes(String(d.slot))); }
+function getEditableCount() { return Object.values(readIndex().docs).filter(d => d.slot).length; }
+function freeSlots() {
+  const used = new Set(Object.values(readIndex().docs).map(d => d.slot && String(d.slot)).filter(Boolean));
+  return ['1','2','3'].filter(s => !used.has(s));
+}
+async function claimSlotFor(docId, slot) {
+  const uref = db.collection('users').doc(currentUser.uid);
+  const batch = db.batch();
+  batch.update(uref.collection('docs').doc(docId), { slot });
+  batch.set(uref.collection('slots').doc(slot), {
+    docId, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  await batch.commit();
+}
+// Oldest slotless documents take the free slots, so the first 3 stay editable.
+async function ensureSlots() {
+  if (claimingSlots || !profileLoaded || !currentUser || isProUser()) return;
+  const free = freeSlots();
+  const candidates = Object.values(cachedIndex.docs)
+    .filter(d => !d.slot && !d.deleted)
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  if (!free.length || !candidates.length) return;
+  claimingSlots = true;
+  try {
+    for (let i = 0; i < Math.min(free.length, candidates.length); i++) {
+      await claimSlotFor(candidates[i].id, free[i]);
+    }
+  } catch (e) { console.warn('slot claim failed', e); }
+  finally { claimingSlots = false; }
+}
 
 function updatePlanPanel() {
   const panel = document.getElementById('planPanel');
@@ -1448,12 +1484,14 @@ function updatePlanPanel() {
   } else {
     tag.textContent = 'FREE'; tag.classList.remove('pro');
     if (ddItem) ddItem.style.display = 'flex';
-    const docPct    = Math.min(100, (docCount / FREE_MAX_DOCS) * 100);
+    const editable  = getEditableCount();
+    const docPct    = Math.min(100, (editable / FREE_MAX_DOCS) * 100);
     const folderPct = Math.min(100, (folderCount / FREE_MAX_FOLDERS) * 100);
     panel.innerHTML = `
       <div class="plan-panel-title">Plan <span class="plan-pill free">FREE</span></div>
-      <div class="usage-row"><span>Documents</span><span>${docCount}/${FREE_MAX_DOCS}</span></div>
-      <div class="usage-bar"><div class="usage-fill ${docCount>=FREE_MAX_DOCS?'full':''}" style="width:${docPct}%"></div></div>
+      <div class="usage-row"><span>Editable documents</span><span>${editable}/${FREE_MAX_DOCS}</span></div>
+      <div class="usage-bar"><div class="usage-fill ${editable>=FREE_MAX_DOCS?'full':''}" style="width:${docPct}%"></div></div>
+      ${docCount>editable ? `<div class="plan-expiry">${docCount-editable} read-only document${docCount-editable!==1?'s':''}</div>` : ''}
       <div class="usage-row"><span>Folders</span><span>${folderCount}/${FREE_MAX_FOLDERS}</span></div>
       <div class="usage-bar"><div class="usage-fill ${folderCount>=FREE_MAX_FOLDERS?'full':''}" style="width:${folderPct}%"></div></div>
       <button class="plan-upgrade-btn" onclick="openUpgradeModal()">✨ Upgrade to Pro</button>`;
@@ -1473,10 +1511,7 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 });
 
 function openCreateDocModal() {
-  if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
-    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents.`);
-    return;
-  }
+  // Documents can always be created; free users edit the first 3, the rest open read-only.
   openModal('createDocModal');
 }
 function openCreateFolderModal(parent = null) {
@@ -1494,11 +1529,6 @@ function openCreateFolderModal(parent = null) {
    listeners above pick up every write and re-render.
 ───────────────────────────────────────────── */
 async function confirmCreateDoc() {
-  if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
-    closeModal('createDocModal');
-    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents.`);
-    return;
-  }
   const title = document.getElementById('docNameInput').value.trim() || 'Untitled Document';
   closeModal('createDocModal');
   setStatus('Creating document…');
@@ -1569,9 +1599,16 @@ async function confirmRename() {
 /* ─────────────────────────────────────────────
    OPEN DOCUMENT (owned by the current user)
 ───────────────────────────────────────────── */
-function openDoc(id) {
-  const idx = readIndex();
-  if (!idx.docs[id] || idx.docs[id].deleted) return;
+async function openDoc(id) {
+  let d = readIndex().docs[id];
+  if (!d || d.deleted) return;
+
+  // A slot claim for a just-created document may still be in flight.
+  if (!hasEditAccess(d) && freeSlots().length) {
+    await ensureSlots();
+    await new Promise(r => setTimeout(r, 400));
+    d = readIndex().docs[id] || d;
+  }
 
   db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1580,7 +1617,8 @@ function openDoc(id) {
 
   sessionStorage.setItem('pd_active_uid', currentUser.uid);
   sessionStorage.setItem('pd_active_user', currentUser.email);
-  window.location.href = 'document-editor.html?id=' + encodeURIComponent(id);
+  window.location.href = 'document-editor.html?id=' + encodeURIComponent(id) +
+    (hasEditAccess(d) ? '' : '&mode=read');
 }
 
 /* ─────────────────────────────────────────────
@@ -1642,10 +1680,6 @@ async function trashDoc(id) {
 }
 
 async function restoreDoc(id) {
-  if (!isProUser() && getActiveDocCount() >= FREE_MAX_DOCS) {
-    openUpgradeModal(`You've reached the free plan limit of ${FREE_MAX_DOCS} documents. Upgrade to restore this one.`);
-    return;
-  }
   try {
     await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).update({
       deleted: false, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1660,7 +1694,13 @@ async function restoreDoc(id) {
 async function deletePermanent(id) {
   if (!confirm('Permanently delete this document? This cannot be undone.')) return;
   try {
-    await db.collection('users').doc(currentUser.uid).collection('docs').doc(id).delete();
+    const uref = db.collection('users').doc(currentUser.uid);
+    const d = cachedIndex.docs[id];
+    const batch = db.batch();
+    batch.delete(uref.collection('docs').doc(id));
+    // Deleting a slotted document frees its slot for the next one.
+    if (d && d.slot) batch.delete(uref.collection('slots').doc(String(d.slot)));
+    await batch.commit();
     // Best-effort: also retire any share link that pointed at it.
     db.collection('shares').doc(id).get().then(snap => {
       if (snap.exists && snap.data().ownerUid === currentUser.uid) {
@@ -1681,7 +1721,11 @@ async function emptyTrash() {
   try {
     const batch = db.batch();
     const docsRef = db.collection('users').doc(currentUser.uid).collection('docs');
-    toDelete.forEach(d => batch.delete(docsRef.doc(d.id)));
+    const slotsRef = db.collection('users').doc(currentUser.uid).collection('slots');
+    toDelete.forEach(d => {
+      batch.delete(docsRef.doc(d.id));
+      if (d.slot) batch.delete(slotsRef.doc(String(d.slot)));
+    });
     await batch.commit();
     setStatus('Trash emptied.');
   } catch (e) {
@@ -2123,7 +2167,7 @@ function render() {
                <button class="doc-action-btn danger" onclick="deletePermanent('${d.id}')">Delete</button>`
              :`<button class="doc-action-btn danger" onclick="trashDoc('${d.id}')">Trash</button>`}`;
       el.innerHTML=`
-        ${d.shared ? `<span class="shared-badge">🤝 Shared</span>` : `<button class="star-btn ${d.starred?'on':''}" onclick="event.stopPropagation();toggleStar('${d.id}')" title="${d.starred?'Unstar':'Star'}">★</button>`}
+        ${(!d.shared && currentFilter !== 'trash' && !hasEditAccess(d)) ? `<span class="shared-badge" style="background:#7a5d00;margin-right:6px" title="Upgrade to Pro to edit">🔒 Read only</span>` : ''}${d.shared ? `<span class="shared-badge">🤝 Shared</span>` : `<button class="star-btn ${d.starred?'on':''}" onclick="event.stopPropagation();toggleStar('${d.id}')" title="${d.starred?'Unstar':'Star'}">★</button>`}
         <div class="doc-card-preview" onclick="${openAction}">
           <div class="doc-lines"><div class="doc-line"></div><div class="doc-line"></div><div class="doc-line"></div></div>
         </div>
