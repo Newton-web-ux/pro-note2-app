@@ -313,7 +313,30 @@ footer.sf{text-align:center;color:var(--muted);padding:22px 12px;font-size:13px}
     $('wp3pv').srcdoc = singleSite(); m.onclick = e => { const d = e.target.dataset.d; if (d) $('wp3pv').style.width = d; };
   }
   function helpDlg() {
-    modal('How to publish your site', `<ol style="line-height:1.8;margin:0;padding-left:20px"><li>Click <b>Export site .zip</b> and unzip it.</li><li><b>Netlify Drop</b> (free): open <i>app.netlify.com/drop</i> and drag the unzipped folder in. You get a live link in seconds.</li><li><b>GitHub Pages</b> (free): create a repository, upload the files, then turn on Pages in Settings.</li><li><b>Firebase Hosting</b> (you already use Firebase): run <code>firebase init hosting</code>, set the folder as the public directory, then <code>firebase deploy</code>.</li></ol><div style="color:var(--muted)">Tip: <b>Export .html</b> gives a single self-contained page you can email or open from a USB stick.</div>`, 520);
+    modal('How to publish your website', `<div style="line-height:1.7">
+      <b>Publish to a live link (recommended)</b>
+      <ol style="margin:4px 0 10px;padding-left:20px">
+        <li>Open <b>⚙ Site Settings</b> and set the site name, logo, theme, menu and footer.</li>
+        <li>Open <b>🗂 Pages &amp; Menu</b> to name, order or hide pages. Page 1 is the home page.</li>
+        <li>Click <b>👁 Preview</b> and check it on Desktop, Tablet and Mobile.</li>
+        <li>Click <b>🚀 Publish</b>, choose an address name (3–50 letters, numbers or hyphens, e.g. <i>my-portfolio</i>) and press <b>Publish</b>.</li>
+        <li>Your link looks like <code>${esc(pub('my-portfolio'))}</code>. Use <b>Copy link</b> or <b>Open</b> to share it.</li>
+      </ol>
+      <b>After publishing</b>
+      <ul style="margin:4px 0 10px;padding-left:20px">
+        <li><b>Update live site</b>: change your document, click Publish again, and the same link shows the new version.</li>
+        <li><b>Unpublish</b> hides the site (the address stays yours). <b>Republish</b> brings it back. <b>Delete</b> removes it for good.</li>
+        <li>The address name cannot be changed once published. To use another, delete the site and publish again.</li>
+        <li>You must be signed in to publish. Visitors do not need to sign in.</li>
+      </ul>
+      <b>Good to know</b>
+      <ul style="margin:4px 0 10px;padding-left:20px">
+        <li>All your pages are published as one website, with the menu and page links working inside it.</li>
+        <li>The size limit is 2 MB, so shrink or remove very large images if you see a size message.</li>
+        <li>Pasted HTML shown as a <i>Web block</i> runs in a safe sandbox on the published site.</li>
+      </ul>
+      <b>Host it yourself instead</b>
+      <div style="color:var(--muted)"><b>Export .html</b> gives one self-contained page; <b>Export site .zip</b> gives separate pages (index.html, page files, style.css, 404.html) for Netlify, GitHub Pages or Firebase Hosting.</div></div>`, 600);
   }
 
   /* ── Publish to a live link: Apps Script backend (Drive storage + Firebase login check) ── */
