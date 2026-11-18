@@ -317,7 +317,7 @@ footer.sf{text-align:center;color:var(--muted);padding:22px 12px;font-size:13px}
   }
 
   /* ── Publish to a live link: Apps Script backend (Drive storage + Firebase login check) ── */
-  const SITE_API_URL = 'PASTE_YOUR_WEBSITE_BACKEND_EXEC_URL_HERE';   // ◀◀ OWNER: paste your Apps Script web-app URL here ONCE (Deploy ▸ Manage deployments ▸ Web app, ends with /exec). Users never see this.
+  const SITE_API_URL = 'https://script.google.com/macros/s/AKfycbxQhtNiPY7evhP83lZDaDaFOetrh_EpUfcgvwRIhNamNeBJbva-2YHXrFuFaMEdrzJX/exec';   // ◀◀ OWNER: paste your Apps Script web-app URL here ONCE (Deploy ▸ Manage deployments ▸ Web app, ends with /exec). Users never see this.
   const FB_CFG = { apiKey: 'AIzaSyBjM_4W6DsCfOOrcUW-BoTfttU0ZBAngUQ', authDomain: 'pro-document-1723a.firebaseapp.com', projectId: 'pro-document-1723a', storageBucket: 'pro-document-1723a.firebasestorage.app', messagingSenderId: '358645984079', appId: '1:358645984079:web:6be4b45228f5f35fa0333a' };
   const MAX_HTML = 2 * 1024 * 1024, RESERVED = ['api', 'admin', 'login', 'dashboard', 'settings', 'support', 'help', 'www', 'root'];
   const PRETTY_URLS = false;   // false → https://YOURSITE/site.html?s=name (works immediately) · true → https://YOURSITE/s/name (needs the Firebase Hosting rewrite, see setup notes)
