@@ -12,49 +12,123 @@
   gtag('config', 'G-3WLNZW7S7B');
 </script>
 
+<script>
+  /* Marks that JavaScript is available (scroll animations only hide content when this is set) and applies the saved / system theme before first paint. */
+  (function () {
+    var d = document.documentElement;
+    d.classList.add('js');
+    try {
+      var t = localStorage.getItem('proDocTheme');
+      if (!t && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) t = 'dark';
+      if (t === 'dark') d.setAttribute('data-theme', 'dark');
+    } catch (e) {}
+  })();
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#2563eb">
 
-<title>Pro Document - Online Document Editor &amp; Contact Us</title>
+<title>Pro Document - Online Document Editor, Document Management &amp; Website Builder</title>
 
-<meta name="description" content="Pro Document is an online document editor and document management software to create, edit, organize and manage documents securely from anywhere. Contact our team for support, billing or feedback at documentpro2026@gmail.com.">
-<meta name="keywords" content="Pro Document, online document editor, document editor, document management software, online word processor, cloud document editor, document workspace, productivity software, create documents online, manage documents online, document organization tool, contact">
+<meta name="description" content="Pro Document is an online document editor and document management software with Word-style editing, track changes, real .docx export, smart tools and a built-in website builder. Create, edit, organize and publish from anywhere. Contact us at documentpro2026@gmail.com.">
+<meta name="keywords" content="Pro Document, online document editor, document editor, document management software, online word processor, cloud document editor, document workspace, productivity software, create documents online, manage documents online, document organization tool, track changes online, docx export, website builder from document, contact">
 <meta name="author" content="Pro Document">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://prodocument.in/contact.html">
+<link rel="canonical" href="https://prodocument.in/">
 
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="icon" href="/favicon.ico">
 
-<meta property="og:title" content="Pro Document - Online Document Editor &amp; Contact Us">
-<meta property="og:description" content="Create, edit, organize and manage documents online with Pro Document's intelligent workspace. Get help from our team.">
-<meta property="og:url" content="https://prodocument.in/contact.html">
+<meta property="og:title" content="Pro Document - Online Document Editor, Document Management &amp; Website Builder">
+<meta property="og:description" content="Word-style editing, track changes, real .docx export, smart tools and a built-in website builder - all in one intelligent document workspace.">
+<meta property="og:url" content="https://prodocument.in/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Pro Document">
 <meta property="og:image" content="https://prodocument.in/logo.png">
 
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Pro Document - Online Document Editor &amp; Contact Us">
-<meta name="twitter:description" content="Create, edit, organize and manage documents online with Pro Document.">
+<meta name="twitter:title" content="Pro Document - Online Document Editor, Document Management &amp; Website Builder">
+<meta name="twitter:description" content="Create, edit, organize, export and publish documents online with Pro Document.">
 <meta name="twitter:image" content="https://prodocument.in/logo.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Pro Document",
+  "url": "https://prodocument.in/",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "description": "Online document editor and document management software with Word-style editing, track changes, real .docx export and a built-in website builder.",
+  "offers": { "@type": "Offer", "price": "199", "priceCurrency": "INR" }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "How do I recover a deleted document?", "acceptedAnswer": { "@type": "Answer", "text": "Open the Dashboard and go to Trash. Deleted documents stay there until they are permanently removed, and you can restore them from that page." } },
+    { "@type": "Question", "name": "What is included in the Pro plan?", "acceptedAnswer": { "@type": "Answer", "text": "Pro is ₹199 per month and includes unlimited documents and folders, PDF and Word export, a 20 step version history with restore, and priority sync." } },
+    { "@type": "Question", "name": "Can I open and save Word files?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. You can import .docx files and export a real Word .docx, as well as .doc, PDF, HTML, Markdown, plain text and a JSON backup. Imported files are added as a new page." } },
+    { "@type": "Question", "name": "Can I turn my document into a website?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. The Website tab lets you build pages from ready-made blocks and starter sites, check them, preview them on desktop, tablet and mobile, export them as HTML or a .zip, or publish them to a live link when you are signed in." } },
+    { "@type": "Question", "name": "Does the AI writer send my text to a server?", "acceptedAnswer": { "@type": "Answer", "text": "Smart mode runs a small AI model inside your browser using WebGPU, so your prompt stays on your device. The model is downloaded once on first use. If your browser does not support WebGPU, instant templates are used instead. Always check AI-written content, especially maths." } },
+    { "@type": "Question", "name": "Can I work with other people?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. You can share a document with a link that gives view-only or edit access, and use Track Changes and Comments to review work together." } },
+    { "@type": "Question", "name": "How do I report a bug?", "acceptedAnswer": { "@type": "Answer", "text": "Use the contact form and choose Report a problem. Tell us which page you were on, what you expected to happen and what happened instead. Your browser and device also help us fix it faster." } },
+    { "@type": "Question", "name": "How can I ask about my data?", "acceptedAnswer": { "@type": "Answer", "text": "Email documentpro2026@gmail.com with the subject Privacy or data request. You can also read how we handle data in our Privacy Policy." } }
+  ]
+}
+</script>
 
 <style>
 
 *{
 box-sizing:border-box;
-font-family:Inter,Arial,sans-serif;
+font-family:Inter,"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+}
+
+:root{
+--bg:#f8fafc;
+--surface:#ffffff;
+--text:#111827;
+--muted:#6b7280;
+--line:#e5e7eb;
+--brand:#2563eb;
+--brand-d:#1d4ed8;
+--navy:#0f3b82;
+--ink:#020617;
+--soft:#eff6ff;
+--soft2:#eef2ff;
+--shadow:0 10px 30px rgba(15,23,42,.09);
+--nav-h:84px;
+}
+
+[data-theme="dark"]{
+--bg:#0b1220;
+--surface:#111a2e;
+--text:#e6ebf5;
+--muted:#9aa7c0;
+--line:#22304a;
+--soft:#0f1b33;
+--soft2:#15213b;
+--shadow:0 10px 30px rgba(0,0,0,.45);
 }
 
 html{
 scroll-behavior:smooth;
+scroll-padding-top:var(--nav-h);
 }
 
 body{
 margin:0;
-background:#f8fafc;
-color:#111827;
+background:var(--bg);
+color:var(--text);
+line-height:1.6;
+-webkit-font-smoothing:antialiased;
 }
 
 a:focus-visible,
@@ -62,20 +136,54 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
-summary:focus-visible{
+summary:focus-visible,
+[role="tab"]:focus-visible{
 outline:3px solid #93c5fd;
 outline-offset:2px;
 }
 
+.skip{
+position:absolute;
+left:-999px;
+top:8px;
+background:#fff;
+color:#111827;
+padding:10px 16px;
+border-radius:8px;
+font-weight:700;
+z-index:2000;
+}
+
+.skip:focus{
+left:8px;
+}
+
+#progress{
+position:fixed;
+top:0;
+left:0;
+height:3px;
+width:0;
+background:linear-gradient(90deg,#60a5fa,#2563eb);
+z-index:1500;
+}
+
 /* NAV */
 
-nav{
+.site-nav{
+position:sticky;
+top:0;
+z-index:1000;
+background:var(--surface);
+box-shadow:0 5px 20px rgba(15,23,42,.08);
+}
+
+.site-nav nav{
 display:flex;
 justify-content:space-between;
 align-items:center;
-padding:18px 8%;
-background:white;
-box-shadow:0 5px 20px #ddd;
+gap:20px;
+padding:14px 8%;
 }
 
 .brand{
@@ -95,48 +203,57 @@ object-fit:cover;
 .logo{
 font-size:28px;
 font-weight:800;
-color:#2563eb;
+color:var(--brand);
+}
+
+.nav-links{
+display:flex;
+align-items:center;
+gap:4px;
+flex-wrap:wrap;
+justify-content:flex-end;
 }
 
 nav a.link{
 text-decoration:none;
-margin-left:22px;
-color:#374151;
+margin-left:18px;
+color:var(--muted);
 font-weight:600;
+font-size:15px;
+padding:6px 0;
+border-bottom:2px solid transparent;
 }
 
 nav a.link:hover,
-nav a.active{
-color:#2563eb;
+nav a.link.active{
+color:var(--brand);
+border-bottom-color:var(--brand);
 }
 
-/* ===== HOME HERO (from index) ===== */
-
-.hero{
-background:linear-gradient(135deg,#0f3b82,#2563eb);
-color:white;
-padding:90px 8%;
-display:flex;
-justify-content:space-between;
-align-items:center;
-gap:50px;
+.theme-btn,
+.menu-btn{
+border:1px solid var(--line);
+background:var(--surface);
+color:var(--text);
+border-radius:10px;
+width:42px;
+height:42px;
+font-size:18px;
+cursor:pointer;
+margin-left:18px;
 }
 
-.hero h1{
-font-size:55px;
-margin:0;
+.theme-btn:hover,
+.menu-btn:hover{
+border-color:var(--brand);
 }
 
-.hero h1 span{
-color:#60a5fa;
+.menu-btn{
+display:none;
+margin-left:0;
 }
 
-.hero p{
-font-size:20px;
-line-height:1.7;
-max-width:600px;
-color:#dbeafe;
-}
+/* BUTTONS */
 
 .btn{
 padding:15px 30px;
@@ -145,6 +262,11 @@ text-decoration:none;
 display:inline-block;
 margin:10px 5px;
 font-weight:bold;
+transition:transform .15s,box-shadow .15s;
+}
+
+.btn:hover{
+transform:translateY(-2px);
 }
 
 .btn.primary{
@@ -155,6 +277,90 @@ color:#2563eb;
 .btn.secondary{
 border:2px solid white;
 color:white;
+}
+
+.btn.solid{
+background:var(--brand);
+color:#fff;
+box-shadow:0 8px 22px rgba(37,99,235,.35);
+}
+
+.btn.ghost{
+border:2px solid var(--brand);
+color:var(--brand);
+}
+
+/* HERO */
+
+.hero{
+background:linear-gradient(135deg,#0f3b82,#2563eb);
+color:white;
+padding:90px 8% 100px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:50px;
+position:relative;
+overflow:hidden;
+}
+
+.hero::before,
+.hero::after{
+content:"";
+position:absolute;
+border-radius:50%;
+background:rgba(255,255,255,.06);
+pointer-events:none;
+}
+
+.hero::before{width:520px;height:520px;right:-140px;top:-200px}
+.hero::after{width:340px;height:340px;left:-120px;bottom:-180px}
+
+.hero > div{position:relative;z-index:1}
+
+.eyebrow{
+display:inline-block;
+background:rgba(255,255,255,.14);
+border:1px solid rgba(255,255,255,.28);
+padding:6px 14px;
+border-radius:999px;
+font-size:13px;
+font-weight:700;
+letter-spacing:.3px;
+margin-bottom:18px;
+}
+
+.hero h1{
+font-size:55px;
+margin:0;
+line-height:1.12;
+}
+
+.hero h1 span{
+color:#93c5fd;
+}
+
+.hero p{
+font-size:20px;
+line-height:1.7;
+max-width:600px;
+color:#dbeafe;
+}
+
+.hero-chips{
+display:flex;
+flex-wrap:wrap;
+gap:8px;
+margin-top:18px;
+}
+
+.hero-chips span{
+background:rgba(255,255,255,.12);
+border-radius:999px;
+padding:6px 13px;
+font-size:13px;
+font-weight:600;
+color:#e0ecff;
 }
 
 .dashboard-box{
@@ -179,16 +385,70 @@ border-radius:12px;
 font-weight:bold;
 }
 
-/* ===== HOME SECTIONS (from index) ===== */
+/* STATS */
+
+.stats{
+margin:-46px 8% 0;
+position:relative;
+z-index:2;
+background:var(--surface);
+border-radius:22px;
+box-shadow:var(--shadow);
+display:grid;
+grid-template-columns:repeat(5,1fr);
+padding:26px 10px;
+}
+
+.stat{
+text-align:center;
+padding:6px 10px;
+border-right:1px solid var(--line);
+}
+
+.stat:last-child{border-right:none}
+
+.stat b{
+display:block;
+font-size:36px;
+color:var(--brand);
+line-height:1.1;
+}
+
+.stat span{
+color:var(--muted);
+font-size:14px;
+font-weight:600;
+}
+
+/* SECTIONS */
 
 .home-section{
-padding:70px 8%;
+padding:80px 8%;
 }
 
 .title{
 text-align:center;
 font-size:40px;
-margin:0 0 30px;
+margin:0 0 14px;
+}
+
+.lead{
+text-align:center;
+color:var(--muted);
+font-size:18px;
+max-width:760px;
+margin:0 auto 40px;
+}
+
+.kicker{
+display:block;
+text-align:center;
+color:var(--brand);
+font-weight:800;
+letter-spacing:1.5px;
+font-size:13px;
+text-transform:uppercase;
+margin-bottom:10px;
 }
 
 .cards{
@@ -199,16 +459,630 @@ gap:25px;
 }
 
 .card{
-background:white;
+background:var(--surface);
 width:280px;
 padding:30px;
 border-radius:20px;
-box-shadow:0 10px 30px #ddd;
+box-shadow:var(--shadow);
+border:1px solid var(--line);
 }
 
 .card h2{
-color:#2563eb;
+color:var(--brand);
 }
+
+/* ADD-ON CARDS */
+
+.addon-grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:26px;
+max-width:1200px;
+margin:0 auto;
+}
+
+.addon{
+background:var(--surface);
+border:1px solid var(--line);
+border-radius:22px;
+padding:32px;
+box-shadow:var(--shadow);
+display:flex;
+flex-direction:column;
+position:relative;
+overflow:hidden;
+}
+
+.addon::before{
+content:"";
+position:absolute;
+left:0;
+right:0;
+top:0;
+height:5px;
+background:linear-gradient(90deg,#2563eb,#60a5fa);
+}
+
+.addon:nth-child(2)::before{background:linear-gradient(90deg,#0f8b8d,#34d399)}
+.addon:nth-child(3)::before{background:linear-gradient(90deg,#6c4fc2,#c2447a)}
+
+.tag{
+display:inline-block;
+align-self:flex-start;
+background:var(--soft);
+color:var(--brand);
+font-size:12px;
+font-weight:800;
+padding:4px 11px;
+border-radius:999px;
+letter-spacing:.5px;
+}
+
+.addon h3{
+margin:14px 0 6px;
+font-size:24px;
+}
+
+.addon > p{
+margin:0 0 16px;
+color:var(--muted);
+}
+
+.addon ul{
+list-style:none;
+padding:0;
+margin:0 0 22px;
+flex:1;
+}
+
+.addon li{
+padding:7px 0 7px 28px;
+position:relative;
+font-size:15px;
+border-top:1px solid var(--line);
+}
+
+.addon li:first-child{border-top:none}
+
+.addon li::before{
+content:"✓";
+position:absolute;
+left:0;
+top:7px;
+width:20px;
+height:20px;
+border-radius:50%;
+background:var(--soft);
+color:var(--brand);
+font-size:12px;
+font-weight:800;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.addon .btn{
+margin:0;
+text-align:center;
+font-size:15px;
+padding:12px 20px;
+cursor:pointer;
+}
+
+/* RIBBON EXPLORER */
+
+.ribbon-wrap{
+max-width:1200px;
+margin:0 auto;
+background:var(--surface);
+border:1px solid var(--line);
+border-radius:22px;
+box-shadow:var(--shadow);
+overflow:hidden;
+}
+
+.ribbon-bar{
+background:#1f4e9c;
+display:flex;
+gap:3px;
+padding:10px 12px 0;
+overflow-x:auto;
+scrollbar-width:thin;
+}
+
+.ribbon-bar button{
+background:rgba(255,255,255,.12);
+color:rgba(255,255,255,.9);
+border:none;
+border-radius:8px 8px 0 0;
+padding:9px 16px;
+font-weight:600;
+font-size:14px;
+cursor:pointer;
+white-space:nowrap;
+}
+
+.ribbon-bar button:hover{background:rgba(255,255,255,.24)}
+
+.ribbon-bar button[aria-selected="true"]{
+background:var(--surface);
+color:var(--text);
+}
+
+.ribbon-panel{
+padding:24px 26px 28px;
+min-height:250px;
+}
+
+.ribbon-meta{
+display:flex;
+align-items:center;
+gap:12px;
+flex-wrap:wrap;
+margin-bottom:18px;
+}
+
+.ribbon-meta h3{
+margin:0;
+font-size:22px;
+}
+
+.src{
+font-size:12px;
+font-weight:800;
+padding:4px 11px;
+border-radius:999px;
+background:var(--soft);
+color:var(--brand);
+}
+
+.src.s1{background:#e8f1fd;color:#2b579a}
+.src.s2{background:#e3f6f4;color:#0f766e}
+.src.s3{background:#f1ecfc;color:#6c4fc2}
+.src.s0{background:#fef3c7;color:#92400e}
+
+[data-theme="dark"] .src.s1{background:#17294a;color:#93b4ee}
+[data-theme="dark"] .src.s2{background:#0d2f2e;color:#6ee0d3}
+[data-theme="dark"] .src.s3{background:#261c47;color:#c5b2f5}
+[data-theme="dark"] .src.s0{background:#3b2a08;color:#fcd34d}
+
+.group-grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+gap:14px;
+}
+
+.group{
+background:var(--soft);
+border:1px solid var(--line);
+border-radius:14px;
+padding:14px 16px;
+}
+
+.group h4{
+margin:0 0 8px;
+font-size:12px;
+letter-spacing:.8px;
+text-transform:uppercase;
+color:var(--muted);
+}
+
+.group ul{
+list-style:none;
+margin:0;
+padding:0;
+}
+
+.group li{
+font-size:14px;
+padding:3px 0;
+}
+
+/* SPOTLIGHTS */
+
+.spot{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:50px;
+align-items:center;
+max-width:1150px;
+margin:0 auto 70px;
+}
+
+.spot:last-child{margin-bottom:0}
+.spot.rev .spot-text{order:2}
+
+.spot-text h3{
+font-size:32px;
+margin:8px 0 12px;
+}
+
+.spot-text p{
+color:var(--muted);
+font-size:17px;
+}
+
+.spot-text ul{
+padding-left:20px;
+margin:14px 0 0;
+}
+
+.spot-text li{margin:5px 0}
+
+.mock{
+background:var(--surface);
+border:1px solid var(--line);
+border-radius:20px;
+box-shadow:var(--shadow);
+overflow:hidden;
+}
+
+.mock-bar{
+background:#1f4e9c;
+color:#fff;
+padding:9px 14px;
+font-size:13px;
+font-weight:600;
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:10px;
+}
+
+.mock-body{
+padding:26px 28px;
+}
+
+.paper{
+background:#fff;
+color:#111;
+border-radius:6px;
+padding:26px 28px;
+box-shadow:0 6px 22px rgba(0,0,0,.14);
+font-family:Calibri,"Segoe UI",sans-serif;
+line-height:1.7;
+}
+
+.paper h4{margin:0 0 8px;font-size:20px;color:#2b579a}
+
+ins.tc{color:#1a7f37;text-decoration:underline;background:rgba(26,127,55,.1)}
+del.tc{color:#c0392b;text-decoration:line-through;background:rgba(192,57,43,.1)}
+
+.demo-btns{
+display:flex;
+flex-wrap:wrap;
+gap:8px;
+margin-top:16px;
+}
+
+.demo-btns button{
+border:1px solid var(--line);
+background:var(--surface);
+color:var(--text);
+padding:8px 14px;
+border-radius:9px;
+font-weight:600;
+cursor:pointer;
+}
+
+.demo-btns button:hover{border-color:var(--brand);color:var(--brand)}
+
+.flow{
+display:grid;
+gap:14px;
+}
+
+.flow-step{
+display:flex;
+gap:14px;
+align-items:flex-start;
+background:var(--soft);
+border:1px solid var(--line);
+border-radius:14px;
+padding:14px 16px;
+}
+
+.flow-step b.n{
+flex:0 0 34px;
+height:34px;
+border-radius:50%;
+background:var(--brand);
+color:#fff;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.flow-step div b{display:block}
+.flow-step div span{color:var(--muted);font-size:14px}
+
+.urlbar{
+background:var(--soft2);
+border:1px solid var(--line);
+border-radius:999px;
+padding:8px 16px;
+font-size:14px;
+margin-top:6px;
+overflow-wrap:anywhere;
+}
+
+.urlbar b{color:#16a34a}
+
+.fmt{
+display:flex;
+flex-wrap:wrap;
+gap:9px;
+}
+
+.fmt span{
+background:var(--soft);
+border:1px solid var(--line);
+border-radius:10px;
+padding:8px 14px;
+font-weight:700;
+font-size:14px;
+}
+
+.fmt-label{
+display:block;
+font-size:12px;
+letter-spacing:1px;
+text-transform:uppercase;
+font-weight:800;
+color:var(--muted);
+margin:14px 0 8px;
+}
+
+.fmt-label:first-child{margin-top:0}
+
+/* CATALOG */
+
+.catalog-tools{
+max-width:1100px;
+margin:0 auto 18px;
+display:flex;
+gap:14px;
+flex-wrap:wrap;
+align-items:center;
+}
+
+.search{
+flex:1 1 320px;
+position:relative;
+}
+
+.search input{
+width:100%;
+padding:14px 16px 14px 46px;
+border:1.5px solid var(--line);
+border-radius:14px;
+font-size:16px;
+background:var(--surface);
+color:var(--text);
+}
+
+.search input:focus{border-color:var(--brand)}
+
+.search::before{
+content:"🔍";
+position:absolute;
+left:16px;
+top:50%;
+transform:translateY(-50%);
+}
+
+.chips{
+display:flex;
+flex-wrap:wrap;
+gap:8px;
+}
+
+.chips button,
+.tool-btn{
+border:1.5px solid var(--line);
+background:var(--surface);
+color:var(--text);
+padding:9px 16px;
+border-radius:999px;
+font-weight:700;
+font-size:14px;
+cursor:pointer;
+}
+
+.chips button:hover,
+.tool-btn:hover{border-color:var(--brand);color:var(--brand)}
+
+.chips button[aria-pressed="true"]{
+background:var(--brand);
+border-color:var(--brand);
+color:#fff;
+}
+
+.count-line{
+max-width:1100px;
+margin:0 auto 22px;
+color:var(--muted);
+font-weight:600;
+}
+
+#featGrid{
+max-width:1100px;
+margin:0 auto;
+display:grid;
+gap:22px;
+}
+
+.cat{
+background:var(--surface);
+border:1px solid var(--line);
+border-radius:20px;
+box-shadow:var(--shadow);
+overflow:hidden;
+}
+
+.cat-head{
+display:flex;
+align-items:center;
+gap:14px;
+padding:18px 24px;
+background:var(--soft);
+border-bottom:1px solid var(--line);
+}
+
+.cat-head .ic{
+font-size:28px;
+}
+
+.cat-head h3{
+margin:0;
+font-size:21px;
+}
+
+.cat-head p{
+margin:0;
+color:var(--muted);
+font-size:14px;
+}
+
+.cat-head .n{
+margin-left:auto;
+font-weight:800;
+color:var(--brand);
+white-space:nowrap;
+}
+
+.cat details{
+border-top:1px solid var(--line);
+}
+
+.cat details:first-of-type{border-top:none}
+
+.cat summary{
+cursor:pointer;
+padding:15px 24px;
+font-weight:700;
+display:flex;
+justify-content:space-between;
+gap:12px;
+list-style:none;
+}
+
+.cat summary::-webkit-details-marker{display:none}
+
+.cat summary::after{
+content:"+";
+font-size:20px;
+color:var(--brand);
+line-height:1;
+}
+
+.cat details[open] summary::after{content:"−"}
+
+.cat summary small{
+color:var(--muted);
+font-weight:600;
+margin-left:auto;
+margin-right:8px;
+}
+
+.feat{
+list-style:none;
+margin:0;
+padding:2px 24px 20px;
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:6px 34px;
+}
+
+.feat li{
+font-size:14.5px;
+padding:6px 0 6px 20px;
+position:relative;
+border-bottom:1px dashed var(--line);
+}
+
+.feat li::before{
+content:"•";
+position:absolute;
+left:4px;
+color:var(--brand);
+font-weight:900;
+}
+
+.feat li b{font-weight:700}
+.feat li span{color:var(--muted)}
+
+mark{
+background:#fde68a;
+color:#111;
+border-radius:3px;
+padding:0 2px;
+}
+
+.empty{
+text-align:center;
+color:var(--muted);
+padding:40px 10px;
+font-size:18px;
+}
+
+/* SHORTCUTS */
+
+.keys{
+max-width:1100px;
+margin:0 auto;
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:14px;
+}
+
+.key{
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:10px;
+background:var(--surface);
+border:1px solid var(--line);
+border-radius:12px;
+padding:12px 16px;
+font-size:14.5px;
+}
+
+kbd{
+background:var(--soft2);
+border:1px solid var(--line);
+border-bottom-width:3px;
+border-radius:7px;
+padding:2px 8px;
+font-family:Consolas,"Courier New",monospace;
+font-size:12.5px;
+font-weight:700;
+white-space:nowrap;
+}
+
+/* USE CASES */
+
+.uses{
+max-width:1150px;
+margin:0 auto;
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:22px;
+}
+
+.use{
+background:var(--surface);
+border:1px solid var(--line);
+border-radius:20px;
+padding:26px;
+box-shadow:var(--shadow);
+}
+
+.use .ic{font-size:34px}
+.use h3{margin:10px 0 6px}
+.use p{margin:0;color:var(--muted);font-size:15px}
+
+/* PRO */
 
 .pro{
 background:#020617;
@@ -232,10 +1106,10 @@ color:#60a5fa;
 
 .start{
 text-align:center;
-background:#eff6ff;
+background:var(--soft);
 }
 
-/* ===== CONTACT SECTION ===== */
+/* CONTACT SECTION */
 
 .page-hero{
 background:linear-gradient(135deg,#0f3b82,#2563eb);
@@ -272,31 +1146,30 @@ align-items:start;
 }
 
 .panel{
-background:white;
+background:var(--surface);
 border-radius:20px;
 padding:32px;
-box-shadow:0 10px 30px #ddd;
+box-shadow:var(--shadow);
+border:1px solid var(--line);
 }
 
 .panel h2{
 margin:0 0 6px;
-color:#2563eb;
+color:var(--brand);
 font-size:24px;
 }
 
 .panel .sub{
 margin:0 0 24px;
-color:#6b7280;
+color:var(--muted);
 line-height:1.6;
 }
-
-/* CONTACT INFO */
 
 .info-item{
 display:flex;
 gap:14px;
 padding:16px 0;
-border-top:1px solid #e5e7eb;
+border-top:1px solid var(--line);
 }
 
 .info-item:first-of-type{
@@ -307,7 +1180,7 @@ border-top:none;
 flex:0 0 44px;
 height:44px;
 border-radius:12px;
-background:#eef2ff;
+background:var(--soft2);
 display:flex;
 align-items:center;
 justify-content:center;
@@ -321,13 +1194,13 @@ font-size:16px;
 
 .info-item p{
 margin:0;
-color:#4b5563;
+color:var(--muted);
 line-height:1.6;
 font-size:15px;
 }
 
 .info-item a{
-color:#2563eb;
+color:var(--brand);
 font-weight:600;
 text-decoration:none;
 word-break:break-word;
@@ -336,8 +1209,6 @@ word-break:break-word;
 .info-item a:hover{
 text-decoration:underline;
 }
-
-/* FORM */
 
 .field{
 margin-bottom:18px;
@@ -348,7 +1219,7 @@ display:block;
 font-weight:600;
 font-size:14px;
 margin-bottom:7px;
-color:#374151;
+color:var(--text);
 }
 
 .field input,
@@ -356,11 +1227,11 @@ color:#374151;
 .field textarea{
 width:100%;
 padding:13px 14px;
-border:1.5px solid #d1d5db;
+border:1.5px solid var(--line);
 border-radius:10px;
 font-size:15px;
-background:white;
-color:#111827;
+background:var(--surface);
+color:var(--text);
 }
 
 .field textarea{
@@ -372,7 +1243,7 @@ line-height:1.6;
 .field input:focus,
 .field select:focus,
 .field textarea:focus{
-border-color:#2563eb;
+border-color:var(--brand);
 }
 
 .row{
@@ -382,7 +1253,7 @@ gap:16px;
 }
 
 .submit{
-background:#2563eb;
+background:var(--brand);
 color:white;
 border:none;
 padding:15px 32px;
@@ -393,18 +1264,23 @@ cursor:pointer;
 }
 
 .submit:hover{
-background:#1d4ed8;
+background:var(--brand-d);
+}
+
+.submit:disabled{
+opacity:.7;
+cursor:wait;
 }
 
 .form-note{
 font-size:13px;
-color:#6b7280;
+color:var(--muted);
 margin:14px 0 0;
 line-height:1.6;
 }
 
 .form-note a{
-color:#2563eb;
+color:var(--brand);
 }
 
 .status{
@@ -437,11 +1313,12 @@ margin:0 0 28px;
 }
 
 .faq details{
-background:white;
+background:var(--surface);
 border-radius:14px;
 padding:20px 24px;
 margin-bottom:14px;
-box-shadow:0 6px 18px #e5e7eb;
+box-shadow:var(--shadow);
+border:1px solid var(--line);
 }
 
 .faq summary{
@@ -452,12 +1329,12 @@ font-size:17px;
 
 .faq details p{
 margin:14px 0 0;
-color:#4b5563;
+color:var(--muted);
 line-height:1.7;
 }
 
 .faq details a{
-color:#2563eb;
+color:var(--brand);
 font-weight:600;
 }
 
@@ -501,7 +1378,7 @@ justify-content:space-between;
 align-items:center;
 gap:20px;
 flex-wrap:wrap;
-z-index:999;
+z-index:1600;
 box-shadow:0 -5px 25px #0006;
 }
 
@@ -524,17 +1401,88 @@ cursor:pointer;
 white-space:nowrap;
 }
 
+#toTop{
+position:fixed;
+right:20px;
+bottom:20px;
+width:46px;
+height:46px;
+border:none;
+border-radius:50%;
+background:var(--brand);
+color:#fff;
+font-size:20px;
+cursor:pointer;
+box-shadow:0 6px 18px rgba(0,0,0,.3);
+display:none;
+z-index:900;
+}
+
+/* SCROLL REVEAL */
+
+.js .reveal{
+opacity:0;
+transform:translateY(22px);
+transition:opacity .7s ease,transform .7s ease;
+}
+
+.js .reveal.in{
+opacity:1;
+transform:none;
+}
+
+@media (prefers-reduced-motion:reduce){
+html{scroll-behavior:auto}
+.js .reveal{opacity:1;transform:none;transition:none}
+.btn:hover{transform:none}
+}
+
 /* RESPONSIVE */
+
+@media(max-width:1000px){
+
+.addon-grid{grid-template-columns:1fr}
+.uses{grid-template-columns:repeat(2,1fr)}
+.keys{grid-template-columns:repeat(2,1fr)}
+.stats{grid-template-columns:repeat(2,1fr);row-gap:18px}
+.stat{border-right:none}
+.spot{grid-template-columns:1fr;gap:28px}
+.spot.rev .spot-text{order:0}
+
+}
 
 @media(max-width:900px){
 
-nav{
-flex-direction:column;
-gap:20px;
+.site-nav nav{
+flex-wrap:wrap;
 }
 
-nav a.link:first-of-type{
+.menu-btn{
+display:inline-block;
+}
+
+.nav-links{
+display:none;
+width:100%;
+flex-direction:column;
+align-items:stretch;
+gap:0;
+padding-top:10px;
+}
+
+.site-nav.open .nav-links{
+display:flex;
+}
+
+nav a.link{
 margin-left:0;
+padding:12px 4px;
+border-bottom:1px solid var(--line);
+}
+
+.theme-btn{
+margin:12px 0 0;
+align-self:flex-start;
 }
 
 .hero{
@@ -571,6 +1519,21 @@ flex-direction:column;
 align-items:flex-start;
 }
 
+.feat{grid-template-columns:1fr}
+
+}
+
+@media(max-width:560px){
+
+.uses,.keys{grid-template-columns:1fr}
+.title{font-size:32px}
+.stat b{font-size:28px}
+.home-section{padding:60px 6%}
+
+}
+
+@media print{
+.site-nav,.cookie-banner,#toTop,#progress{display:none}
 }
 
 </style>
@@ -579,28 +1542,41 @@ align-items:flex-start;
 
 <body>
 
-<nav>
+<a class="skip" href="#main">Skip to main content</a>
+<div id="progress" aria-hidden="true"></div>
+
+<header class="site-nav" id="siteNav">
+
+<nav aria-label="Main navigation">
 
 <a class="brand" href="index.html">
 <img src="logo.png" alt="Pro Document Logo">
 <div class="logo">Pro Document</div>
 </a>
 
-<div>
+<button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">☰</button>
+
+<div class="nav-links" id="navLinks">
 <a class="link" href="#features">Features</a>
+<a class="link" href="#catalog">All Features</a>
 <a class="link" href="#pricing">Pricing</a>
 <a class="link" href="dashboard.html">Dashboard</a>
 <a class="link" href="document-editor.html">Document Editor</a>
-<a class="link active" href="#contact" aria-current="page">Contact</a>
+<a class="link" href="#contact">Contact</a>
+<button class="theme-btn" id="themeBtn" aria-label="Switch colour theme" title="Switch colour theme">🌓</button>
 </div>
 
 </nav>
+
+</header>
 
 
 <!-- ===== HERO ===== -->
 <header class="hero">
 
 <div>
+
+<span class="eyebrow">New · Track Changes · Real .docx export · Website Builder</span>
 
 <h1>
 Pro Document -
@@ -613,6 +1589,14 @@ Your intelligent workspace for creating, organizing and managing documents onlin
 
 <a class="btn primary" href="dashboard.html">Open Dashboard</a>
 <a class="btn secondary" href="document-editor.html">Open Editor</a>
+
+<div class="hero-chips" aria-label="Highlights">
+<span>✍️ Word-style editing</span>
+<span>📝 Track changes</span>
+<span>📘 Real Word .docx</span>
+<span>🌐 Publish a website</span>
+<span>✨ Private AI writer</span>
+</div>
 
 </div>
 
@@ -631,7 +1615,17 @@ Your intelligent workspace for creating, organizing and managing documents onlin
 </header>
 
 
-<main>
+<main id="main">
+
+<!-- ===== STATS ===== -->
+<section class="stats reveal" aria-label="Pro Document at a glance">
+<div class="stat"><b data-to="15">15</b><span>Ribbon tabs</span></div>
+<div class="stat"><b data-to="190" id="statFeatures">190</b><span>Features to explore</span></div>
+<div class="stat"><b data-to="35">35</b><span>Ready-made templates</span></div>
+<div class="stat"><b data-to="28">28</b><span>Website blocks</span></div>
+<div class="stat"><b data-to="52">52</b><span>One-search commands</span></div>
+</section>
+
 
 <!-- ===== CORE WORKSPACE ===== -->
 <section id="features" class="home-section">
@@ -640,24 +1634,294 @@ Your intelligent workspace for creating, organizing and managing documents onlin
 
 <div class="cards">
 
-<div class="card">
+<div class="card reveal">
 <h2>📁 Organization</h2>
 <p>Manage documents, folders and files from one place with an intuitive document management system.</p>
 </div>
 
-<div class="card">
+<div class="card reveal">
 <h2>📄 Document Management</h2>
 <p>Create and edit professional documents easily with a modern online document editor.</p>
 </div>
 
-<div class="card">
+<div class="card reveal">
 <h2>🗑 Trash System</h2>
 <p>Recover deleted documents before permanent removal.</p>
 </div>
 
-<div class="card">
+<div class="card reveal">
 <h2>📈 History Tracking</h2>
 <p>Monitor workspace activity and usage.</p>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ===== THREE ADD-ONS ===== -->
+<section id="addons" class="home-section" style="background:var(--soft)">
+
+<span class="kicker">Inside the editor</span>
+<h2 class="title">Three power add-ons, one workspace</h2>
+<p class="lead">On top of the core editor, Pro Document ships three add-ons that turn it into a full Word-style processor, a productivity toolkit and a website builder.</p>
+
+<div class="addon-grid">
+
+<article class="addon reveal">
+<span class="tag">ADD-ON 1 · WORD PRO</span>
+<h3>Familiar, Word-style editing</h3>
+<p>The tabs and shortcuts you already know, right in your browser.</p>
+<ul>
+<li>Styles gallery, Format Painter and change-case</li>
+<li>Layout: columns, watermark, page border, drop cap</li>
+<li>Table tab: styles, merge, shading, rows and columns</li>
+<li>References: contents, footnotes, bookmarks, captions</li>
+<li>Review: comments, spell check, read aloud</li>
+<li>Ruler, focus mode, print layout and autosave</li>
+</ul>
+<button class="btn solid" type="button" data-filter="word">Browse Word Pro features</button>
+</article>
+
+<article class="addon reveal">
+<span class="tag">ADD-ON 2 · TOOLS &amp; FILE</span>
+<h3>Power tools and every file format</h3>
+<p>Work faster, review properly and move documents anywhere.</p>
+<ul>
+<li>Find &amp; Replace with regex, Go To and command palette</li>
+<li>Track changes, readability score and document check</li>
+<li>Table formulas, sorting and text↔table conversion</li>
+<li>Markdown shortcuts, smart quotes and voice dictation</li>
+<li>Real .docx export plus import of docx, md, csv and more</li>
+<li>Image filters, crop shapes and a signature pad</li>
+</ul>
+<button class="btn solid" type="button" data-filter="tools">Browse Tools &amp; File features</button>
+</article>
+
+<article class="addon reveal">
+<span class="tag">ADD-ON 3 · WEBSITE BUILDER</span>
+<h3>Publish a website from a document</h3>
+<p>Your pages become a responsive, SEO-ready site.</p>
+<ul>
+<li>28 building blocks and 10 starter sites</li>
+<li>9 themes, custom colour, fonts and dark mode</li>
+<li>SEO, share image, Google Analytics and sitemap</li>
+<li>Embed videos, maps, calendars and Google Forms</li>
+<li>Contact form that emails you</li>
+<li>Site Check, device preview and one-click publish</li>
+</ul>
+<button class="btn solid" type="button" data-filter="web">Browse Website Builder features</button>
+</article>
+
+</div>
+
+</section>
+
+
+<!-- ===== RIBBON EXPLORER ===== -->
+<section id="ribbon" class="home-section">
+
+<span class="kicker">Explore the interface</span>
+<h2 class="title">Fifteen ribbon tabs. Every tool where you expect it.</h2>
+<p class="lead">Click a tab to see the groups and tools inside it. The coloured badge shows whether a tab comes from the core editor or one of the three add-ons.</p>
+
+<div class="ribbon-wrap reveal">
+<div class="ribbon-bar" role="tablist" aria-label="Editor ribbon tabs" id="ribbonTabs"></div>
+<div class="ribbon-panel" role="tabpanel" id="ribbonPanel" aria-live="polite"></div>
+</div>
+
+</section>
+
+
+<!-- ===== SPOTLIGHTS ===== -->
+<section id="spotlights" class="home-section" style="background:var(--soft)">
+
+<span class="kicker">See it in action</span>
+<h2 class="title">Built for real work</h2>
+<p class="lead">A closer look at three things people ask for most.</p>
+
+<div class="spot reveal">
+
+<div class="spot-text">
+<span class="tag">REVIEW</span>
+<h3>Track changes, comments and readability</h3>
+<p>Edit with confidence. Every insertion and deletion is marked with the author and time, and you decide what stays.</p>
+<ul>
+<li>Accept or reject one change or all of them</li>
+<li>Jump to the next change in a click (Ctrl+Shift+E to toggle)</li>
+<li>Comment list with go-to, edit and delete</li>
+<li>Flesch reading score, grade level and reading time</li>
+</ul>
+</div>
+
+<div class="mock">
+<div class="mock-bar"><span>Review ▸ Track changes</span><span id="tcState">● Tracking changes</span></div>
+<div class="mock-body">
+<div class="paper" id="tcPaper">
+<h4>Quarterly report</h4>
+<p>Sales <del class="tc">shows</del><ins class="tc">highlight</ins> strong growth across all regions, with the <del class="tc">biggest</del><ins class="tc">largest</ins> gains in the east.</p>
+</div>
+<div class="demo-btns">
+<button type="button" data-tc="accept">✅ Accept all</button>
+<button type="button" data-tc="reject">❌ Reject all</button>
+<button type="button" data-tc="reset">↺ Reset demo</button>
+</div>
+</div>
+</div>
+
+</div>
+
+<div class="spot rev reveal">
+
+<div class="spot-text">
+<span class="tag">WEBSITE BUILDER</span>
+<h3>From document to live website</h3>
+<p>Write your pages once. Pro Document turns them into a fast, mobile-friendly site with a menu, themes, SEO tags and a footer.</p>
+<ul>
+<li>Pick a starter site or build with 28 blocks</li>
+<li>Check for missing alt text, placeholders and broken links</li>
+<li>Preview on desktop, tablet and mobile</li>
+<li>Publish to a live link, then update, unpublish or delete anytime</li>
+</ul>
+</div>
+
+<div class="mock">
+<div class="mock-bar"><span>🌐 Website tab</span><span>Publish ▸ Live</span></div>
+<div class="mock-body">
+<div class="flow">
+<div class="flow-step"><b class="n">1</b><div><b>Write &amp; design</b><span>Starter site, blocks, themes and fonts</span></div></div>
+<div class="flow-step"><b class="n">2</b><div><b>Set up SEO &amp; pages</b><span>Titles, descriptions, share image, analytics</span></div></div>
+<div class="flow-step"><b class="n">3</b><div><b>Run Site Check</b><span>Catch problems before visitors do</span></div></div>
+<div class="flow-step"><b class="n">4</b><div><b>Publish</b><span>Sign in, choose an address name, go live</span></div></div>
+</div>
+<div class="urlbar"><b>🟢 Live</b> · your public link · <i>my-portfolio</i></div>
+</div>
+</div>
+
+</div>
+
+<div class="spot reveal">
+
+<div class="spot-text">
+<span class="tag">FILES</span>
+<h3>Open anything. Export everything.</h3>
+<p>Bring in the files you already have and send out the format each person needs, including a genuine Word .docx with headings, tables, lists and images.</p>
+<ul>
+<li>Drag a file onto the page to import it</li>
+<li>Paste from Word or the web with clean formatting</li>
+<li>Paste screenshots straight into your document</li>
+<li>Back up and restore with a JSON file</li>
+</ul>
+</div>
+
+<div class="mock">
+<div class="mock-bar"><span>File tab</span><span>Import &amp; export</span></div>
+<div class="mock-body">
+<span class="fmt-label">Export as</span>
+<div class="fmt"><span>📘 Word .docx</span><span>📝 Word .doc</span><span>📄 PDF</span><span>🖼 PNG</span><span>📊 PowerPoint</span><span>🌐 HTML</span><span>Ⓜ Markdown</span><span>🗒 Text</span><span>💾 JSON backup</span><span>📦 Website .zip</span></div>
+<span class="fmt-label">Import from</span>
+<div class="fmt"><span>.docx</span><span>.html</span><span>.md</span><span>.txt</span><span>.csv</span><span>.tsv</span><span>JSON backup</span></div>
+</div>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ===== FEATURE CATALOG ===== -->
+<section id="catalog" class="home-section">
+
+<span class="kicker">The complete list</span>
+<h2 class="title">Every feature, in one place</h2>
+<p class="lead">Search or filter the full catalog: the core editor plus all three add-ons.</p>
+
+<div class="catalog-tools">
+<div class="search">
+<label for="featSearch" class="skip" style="position:absolute">Search features</label>
+<input type="search" id="featSearch" placeholder="Search features, e.g. track changes, docx, table, SEO…" autocomplete="off">
+</div>
+<div class="chips" id="featChips" role="group" aria-label="Filter by area">
+<button type="button" data-f="all" aria-pressed="true">All</button>
+<button type="button" data-f="core" aria-pressed="false">Core editor</button>
+<button type="button" data-f="word" aria-pressed="false">Word Pro</button>
+<button type="button" data-f="tools" aria-pressed="false">Tools &amp; File</button>
+<button type="button" data-f="web" aria-pressed="false">Website Builder</button>
+</div>
+<button type="button" class="tool-btn" id="expandBtn">Expand all</button>
+</div>
+
+<div class="count-line" id="featCount" aria-live="polite"></div>
+
+<div id="featGrid"></div>
+
+<noscript><p class="empty">Turn on JavaScript to browse and search the full feature catalog. The sections above summarise everything.</p></noscript>
+
+</section>
+
+
+<!-- ===== SHORTCUTS ===== -->
+<section id="shortcuts" class="home-section" style="background:var(--soft)">
+
+<span class="kicker">Work faster</span>
+<h2 class="title">Keyboard shortcuts</h2>
+<p class="lead">Word-style shortcuts plus a few of our own. Press <kbd>Ctrl</kbd>+<kbd>/</kbd> in the editor to open the command palette and search every action.</p>
+
+<div class="keys">
+<div class="key"><span>Find &amp; Replace</span><span><kbd>Ctrl</kbd>+<kbd>H</kbd></span></div>
+<div class="key"><span>Go to page or heading</span><span><kbd>Ctrl</kbd>+<kbd>G</kbd></span></div>
+<div class="key"><span>Command palette</span><span><kbd>Ctrl</kbd>+<kbd>/</kbd></span></div>
+<div class="key"><span>Toggle track changes</span><span><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd></span></div>
+<div class="key"><span>Insert page after this one</span><span><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span></div>
+<div class="key"><span>Next [placeholder]</span><span><kbd>Alt</kbd>+<kbd>]</kbd></span></div>
+<div class="key"><span>New comment</span><span><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>M</kbd></span></div>
+<div class="key"><span>Insert link</span><span><kbd>Ctrl</kbd>+<kbd>K</kbd></span></div>
+<div class="key"><span>Align centre / left / right / justify</span><span><kbd>Ctrl</kbd>+<kbd>E L R J</kbd></span></div>
+<div class="key"><span>Grow / shrink font</span><span><kbd>Ctrl</kbd>+<kbd>]</kbd> <kbd>[</kbd></span></div>
+<div class="key"><span>Heading 1 / 2 / 3</span><span><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>1 2 3</kbd></span></div>
+<div class="key"><span>Bulleted list</span><span><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd></span></div>
+<div class="key"><span>Strikethrough</span><span><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd></span></div>
+<div class="key"><span>Save</span><span><kbd>Ctrl</kbd>+<kbd>S</kbd></span></div>
+<div class="key"><span>Zoom the page</span><span><kbd>Ctrl</kbd>+<kbd>Wheel</kbd></span></div>
+<div class="key"><span>Next table cell / list indent</span><span><kbd>Tab</kbd></span></div>
+<div class="key"><span>Print</span><span><kbd>Ctrl</kbd>+<kbd>P</kbd></span></div>
+<div class="key"><span>Undo / redo</span><span><kbd>Ctrl</kbd>+<kbd>Z</kbd> <kbd>Y</kbd></span></div>
+</div>
+
+</section>
+
+
+<!-- ===== USE CASES ===== -->
+<section id="uses" class="home-section">
+
+<span class="kicker">Who it is for</span>
+<h2 class="title">One workspace, many ways to work</h2>
+<p class="lead">&nbsp;</p>
+
+<div class="uses">
+
+<div class="use reveal">
+<div class="ic">🎓</div>
+<h3>Students &amp; researchers</h3>
+<p>Equations, APA citations and bibliography, table of contents, footnotes, readability checks and assignment templates.</p>
+</div>
+
+<div class="use reveal">
+<div class="ic">💼</div>
+<h3>Professionals</h3>
+<p>Invoices, memos, agendas and reports with track changes, comments, tables that calculate and real Word export.</p>
+</div>
+
+<div class="use reveal">
+<div class="ic">🧑‍🏫</div>
+<h3>Teachers &amp; clubs</h3>
+<p>Lesson plans, certificates, weekly planners, a slideshow mode and a class or club website in minutes.</p>
+</div>
+
+<div class="use reveal">
+<div class="ic">🚀</div>
+<h3>Creators &amp; small business</h3>
+<p>Portfolio, restaurant or landing page with pricing, contact form, SEO, analytics and a live public link.</p>
 </div>
 
 </div>
@@ -836,6 +2100,26 @@ By contacting us you agree to our <a href="privacy.html">Privacy Policy</a>.
 </details>
 
 <details>
+<summary>Can I open and save Word files?</summary>
+<p>Yes. You can import .docx files and export a real Word .docx, as well as .doc, PDF, HTML, Markdown, plain text and a JSON backup. Imported files are added as a new page.</p>
+</details>
+
+<details>
+<summary>Can I turn my document into a website?</summary>
+<p>Yes. The Website tab lets you build pages from ready-made blocks and starter sites, check them, preview them on desktop, tablet and mobile, export them as HTML or a .zip, or publish them to a live link when you are signed in.</p>
+</details>
+
+<details>
+<summary>Does the AI writer send my text to a server?</summary>
+<p>Smart mode runs a small AI model inside your browser using WebGPU, so your prompt stays on your device. The model is downloaded once on first use. If your browser does not support WebGPU, instant templates are used instead. Always check AI-written content, especially maths.</p>
+</details>
+
+<details>
+<summary>Can I work with other people?</summary>
+<p>Yes. You can share a document with a link that gives view-only or edit access, and use Track Changes and Comments to review work together.</p>
+</details>
+
+<details>
 <summary>How do I report a bug?</summary>
 <p>Use the form above and choose "Report a problem". Tell us which page you were on, what you expected to happen and what happened instead. Your browser and device also help us fix it faster.</p>
 </details>
@@ -869,6 +2153,13 @@ By contacting us you agree to our <a href="privacy.html">Privacy Policy</a>.
 <a href="privacy.html">Privacy Policy</a>
 </div>
 
+<div>
+<h3>Explore</h3>
+<a href="#features">Core Workspace</a><br>
+<a href="#catalog">All Features</a><br>
+<a href="#pricing">Pricing</a>
+</div>
+
 <div class="contact">
 
 <h3>Contact</h3>
@@ -887,6 +2178,8 @@ By contacting us you agree to our <a href="privacy.html">Privacy Policy</a>.
 
 </footer>
 
+
+<button id="toTop" aria-label="Back to top" title="Back to top">↑</button>
 
 <div class="cookie-banner" id="cookieBanner" style="display:none">
 
@@ -1085,6 +2378,557 @@ document.addEventListener("DOMContentLoaded", function() {
 
 });
 
+</script>
+
+
+<script>
+/* ============================================================
+   FEATURE DATA — mirrors what the editor and its three add-ons
+   (word-pro-addon.js, word-pro-addon-2.js, word-pro-addon-3-v2.js)
+   actually include.
+   ============================================================ */
+
+var CATALOG = [
+
+{ k: "core", name: "Core editor", icon: "📄", blurb: "The foundation every document starts from.", groups: [
+  { t: "Write & format", i: [
+    ["Rich text", "bold, italic, underline, strikethrough, superscript, subscript"],
+    ["Fonts and sizes", "7 font families, 6–96 pt"],
+    ["Colours and highlighter", "font colour and highlight colour"],
+    ["Paragraphs", "left, centre, right, justify, bullets, numbering, indent"],
+    ["Line spacing", "single, 1.5x or double"],
+    ["Headings", "Heading 1–4 and preformatted text"],
+    ["Find and replace bar", "search the document, replace one or all"],
+    ["Undo and redo", "Ctrl+Z and Ctrl+Y"],
+    ["Clear formatting", "one-click reset"]
+  ]},
+  { t: "Pages & design", i: [
+    ["Multi-page documents", "thumbnails and quick page switching"],
+    ["Page sizes", "A3, A4, A5, B4, B5 and Letter"],
+    ["Orientation and margins", "portrait, landscape, Normal, Narrow, Moderate, Wide or custom"],
+    ["14 design templates", "Classic, Modern, Academic, Dark Mode, Professional, Business Letter, Resume, Report, Newsletter, Minimalist, Elegant, Technical, Legal, Creative"],
+    ["Page backgrounds", "colour, 4 gradients and 3 patterns"],
+    ["Zoom", "40% to 200%"]
+  ]},
+  { t: "Insert", i: [
+    ["Tables", "any number of rows and columns"],
+    ["Images", "upload, drag anywhere, resize from the corner handles"],
+    ["Links and horizontal lines", "quick insert"],
+    ["LaTeX equations", "rendered as real maths"],
+    ["Math symbol picker", "basic, Greek, arrows, operators and sets"],
+    ["Graph plotter", "plot functions, zoom, insert as an image"],
+    ["2D shapes", "18 shapes with fill colour and size"],
+    ["3D models", "cube, sphere, cylinder, cone, pyramid, torus; drag to rotate"],
+    ["Icons", "seven categories with size and colour"],
+    ["Charts", "bar, line, pie and doughnut from simple data"],
+    ["Draw", "pen, highlighter and eraser with colour and size"]
+  ]},
+  { t: "AI writer & equations", i: [
+    ["Write with AI", "a small model runs privately in your browser, no API key"],
+    ["Instant templates", "works on any browser when WebGPU is not available"],
+    ["11 document types", "report, essay, maths notes, letter, resume, assignment, proposal, minutes, notice, lesson plan, article"],
+    ["Tone and length", "formal, neutral or friendly; short, medium or long"],
+    ["Equation editor", "live preview, symbol shortcuts, insert into the page"],
+    ["Insert and undo", "add the draft to the page and undo it in one click"]
+  ]},
+  { t: "Save, share & present", i: [
+    ["Cloud save", "documents are saved to Google Drive"],
+    ["Version history", "save, restore and delete versions"],
+    ["Share links", "view-only or edit access"],
+    ["Slideshow", "present pages with automatic timing"],
+    ["Export", "PDF, PNG images and PowerPoint"],
+    ["View-only mode", "shared viewers cannot change your document"]
+  ]}
+]},
+
+{ k: "word", name: "Word Pro", icon: "✍️", blurb: "Add-on 1 · Word-style tabs, styles and shortcuts.", groups: [
+  { t: "Home tab extras", i: [
+    ["Styles gallery", "Normal, Title, Subtitle, Heading 1–3, Quote, Code, No Spacing"],
+    ["Format Painter", "copy formatting from one place to another"],
+    ["Clipboard tools", "cut, copy, select all and paste as plain text"],
+    ["Grow and shrink font", "step the size up or down"],
+    ["Change case", "UPPERCASE, lowercase, Capitalize Each Word, Sentence case"],
+    ["Text shading", "background colour behind text"],
+    ["Horizontal line", "insert a divider"],
+    ["Floating mini toolbar", "appears when you select text"]
+  ]},
+  { t: "Layout tab", i: [
+    ["Columns", "one, two or three columns"],
+    ["Paragraph spacing", "before and after presets"],
+    ["First-line indent", "none, 0.5 inch or 1 inch"],
+    ["Line spacing", "1.0, 1.15, 1.5, 2.0 and 2.5"],
+    ["Indent and outdent", "buttons for quick control"],
+    ["Page break", "start a new page"],
+    ["Watermark", "text such as CONFIDENTIAL on every page"],
+    ["Page border", "frame the page"],
+    ["Drop cap", "large first letter"],
+    ["Formatting marks", "show or hide paragraph guides"]
+  ]},
+  { t: "Table tab", i: [
+    ["New table", "choose rows and columns"],
+    ["4 table styles", "Grid, Striped, Minimal, Blue header"],
+    ["Add rows and columns", "above, below, left and right"],
+    ["Delete", "row, column or whole table"],
+    ["Merge cells", "merge to the right"],
+    ["Cell shading", "pick any colour"],
+    ["Cell alignment", "left, centre, right"]
+  ]},
+  { t: "References tab", i: [
+    ["Table of contents", "built from your headings with page numbers"],
+    ["Footnotes", "numbered notes at the foot of the page"],
+    ["Bookmarks", "mark places in the document"],
+    ["Header and footer", "set text for every page"],
+    ["Page numbers", "show or hide"],
+    ["Captions", "centred caption text"]
+  ]},
+  { t: "Review & view", i: [
+    ["Spelling check", "toggle the browser spell checker"],
+    ["Word count", "pages, words, characters, paragraphs and reading time"],
+    ["Comments", "attach notes to selected text; delete all in one click"],
+    ["Read aloud", "speak the selection or the page"],
+    ["Print", "clean print layout without the interface"],
+    ["Ruler", "show or hide"],
+    ["Print layout", "see all pages at once"],
+    ["Focus mode", "hide the ribbon and panels"]
+  ]},
+  { t: "Everyday comfort", i: [
+    ["Insert extras", "date and time, symbols, text box, hyperlink"],
+    ["Zoom slider", "in the status bar"],
+    ["Unsaved indicator", "see when changes are waiting"],
+    ["Autosave", "saves every minute while you work"],
+    ["Rename in place", "click the title to rename"],
+    ["Word-style shortcuts", "centre, left, right, justify, link, font size, headings, bullets, strikethrough"]
+  ]}
+]},
+
+{ k: "tools", name: "Tools & File", icon: "🧰", blurb: "Add-on 2 · Power tools, proofing and every file format.", groups: [
+  { t: "Find, navigate & commands", i: [
+    ["Find and Replace dialog", "match case, whole words, regex, previous, next, replace all"],
+    ["Highlight all", "mark every match and clear them again"],
+    ["Go To", "jump to a page number or a heading"],
+    ["Command palette", "search 50+ commands with Ctrl+/"],
+    ["Live outline pane", "click a heading in the sidebar to jump to it"],
+    ["Selection counter", "words and characters selected"]
+  ]},
+  { t: "Smart typing", i: [
+    ["Markdown shortcuts", "# heading, - bullet, 1. numbered, > quote, [] checklist"],
+    ["Inline formatting", "**bold**, *italic* and `code` as you type"],
+    ["Symbol autocorrect", "(c), (r), (tm), --, ..., ->, =>, 1/2 and more"],
+    ["Typo fixes", "common misspellings corrected automatically"],
+    ["Automatic capitals", "sentence starts and the word I"],
+    ["Smart quotes", "curly quotes and apostrophes"],
+    ["Voice dictation", "say comma, full stop, new paragraph"],
+    ["Tab key", "next table cell, new row at the end, list indent"],
+    ["Placeholder jump", "move through [placeholders] with Alt+]"],
+    ["Clean paste", "tidy text from Word or the web"],
+    ["Paste screenshots", "images from the clipboard"],
+    ["Drag and drop", "drop files onto the page to import them"]
+  ]},
+  { t: "Text & paragraphs", i: [
+    ["Text effects", "shadow, small caps, bold with caps"],
+    ["Letter spacing", "tight, normal, wide, wider"],
+    ["8 list styles", "disc, circle, square, 1.2.3, a.b.c, A.B.C, i.ii.iii, I.II.III"],
+    ["Checklists", "tick boxes that stay ticked"],
+    ["Paragraph borders", "box, bottom line, left bar"],
+    ["Paragraph shading", "choose any colour"],
+    ["Callout boxes", "Info, Tip, Warning, Success, Note"],
+    ["Sort lines", "A to Z or Z to A for lines and lists"],
+    ["Text direction", "left to right or right to left"],
+    ["5 divider styles", "line, thick, dotted, double, fancy"],
+    ["Symbols panel", "Common, Math, Greek, Arrows, Currency and Emoji"],
+    ["Cover page builder", "title, subtitle, author and date"]
+  ]},
+  { t: "Images & signature", i: [
+    ["Rotate and flip", "quarter turns and mirror"],
+    ["Borders", "add or remove"],
+    ["6 filters", "Grayscale, Sepia, Brighter, Contrast, Invert, Blur"],
+    ["Opacity", "100%, 75%, 50%, 25%"],
+    ["Size presets", "25%, 50%, 75% or full page width"],
+    ["Alignment", "left, centre or right on the page"],
+    ["Crop shapes", "trim 10%, trim 20%, circle, ellipse"],
+    ["Shadow and rounded corners", "one-click styling"],
+    ["Duplicate and reset", "copy an image or clear all effects"],
+    ["Insert from a web address", "paste an image URL"],
+    ["Arrange", "bring to front, send to back"],
+    ["Alt text", "describe images for accessibility"],
+    ["Signature pad", "draw, insert, and remember it on your device"]
+  ]},
+  { t: "Tables, pro level", i: [
+    ["Formulas", "sum, average, minimum, maximum of the cells above or to the left"],
+    ["Sort by column", "text or numbers, up or down"],
+    ["Header row toggle", "turn the first row into a header"],
+    ["Autofit", "to contents, to window or equal columns"],
+    ["Borders", "all, outside, row lines, dashed or none"],
+    ["Vertical alignment", "top, middle, bottom"],
+    ["Text to table", "convert tab, comma, semicolon or pipe separated lines"],
+    ["Table to text", "turn a table back into paragraphs"]
+  ]},
+  { t: "Pages, references & templates", i: [
+    ["Insert page here", "add a page after the current one"],
+    ["Duplicate page", "copy the page with its images"],
+    ["Move pages", "up or down the document"],
+    ["5 page-number styles", "1, Page 1, Page 1 of N, i ii iii, – 1 –"],
+    ["Update table of contents", "refresh after you edit headings"],
+    ["Click-to-jump contents", "Ctrl+click an entry"],
+    ["APA citations", "insert in-text citations"],
+    ["Bibliography", "sorted reference list from your citations"],
+    ["11 document templates", "Invoice, Meeting minutes, Cover letter, Project plan, Memo, Resume, Meeting agenda, Weekly planner, Certificate, Press release, Report outline"]
+  ]},
+  { t: "Review & proofing", i: [
+    ["Track changes", "insertions and deletions marked with author and time"],
+    ["Review changes", "next change, accept or reject one, accept or reject all"],
+    ["Comment list", "go to, edit and delete comments"],
+    ["Readability", "Flesch reading ease, grade level, reading time, most-used words"],
+    ["Check document", "double spaces, repeated words, empty paragraphs, straight quotes"],
+    ["One-click fixes", "fix spaces, remove empty paragraphs, curl quotes"],
+    ["Document info", "pages, words, headings, images, tables, comments, versions"]
+  ]},
+  { t: "Import & export", i: [
+    ["Word .docx export", "real document with headings, lists, tables and images"],
+    ["Word .doc, HTML, Markdown, text", "export in the format you need"],
+    ["JSON backup", "full backup including version history"],
+    ["Import", ".docx, .html, .md, .txt, .csv, .tsv and JSON backups"],
+    ["Print", "from the File tab or Ctrl+P"],
+    ["Save now and save version", "one click from the File tab"]
+  ]}
+]},
+
+{ k: "web", name: "Website Builder", icon: "🌐", blurb: "Add-on 3 · Turn your pages into a live website.", groups: [
+  { t: "Build", i: [
+    ["Paste HTML", "run it as a sandboxed web block or convert it to editable content"],
+    ["Page source editor", "view and edit the page HTML safely"],
+    ["28 building blocks", "Hero light and dark, call-to-action band, notice box, image and text, feature cards, 3 columns, steps, card, card grid, timeline, FAQ, stats, gallery, slide carousel, logo strip, team, testimonial, 3 testimonials, pricing, contact card, social links, button, divider, spacer, tabs, countdown timer, on-this-page contents"],
+    ["10 starter sites", "Business, Product landing page, Agency, Portfolio, Resume, Blog post, Restaurant, Non-profit, Event, Class or club"],
+    ["Style section", "background, text colour, spacing, corners, alignment, width, border, shadow"],
+    ["Embed content", "YouTube, Vimeo, Google Maps, Calendar, Forms, Docs, Slides, Sheets, Drive files or any web page"],
+    ["Contact form", "messages are emailed to you"],
+    ["Page links", "link text to any page; Ctrl+click to jump"]
+  ]},
+  { t: "Site design", i: [
+    ["9 colour themes", "Ocean blue, Forest, Sunset, Rose, Violet, Teal, Gold, Slate, Mono"],
+    ["Custom brand colour", "use your own colour instead of a theme"],
+    ["5 font styles", "modern sans, classic serif, friendly, technical, editorial"],
+    ["Corner roundness and width", "square to extra soft; narrow to extra wide"],
+    ["Light, dark or automatic", "plus an optional dark-mode switch for visitors"],
+    ["Menu layout", "top bar or left sidebar, optionally fixed while scrolling"],
+    ["Scroll fade-in", "content appears as visitors scroll"],
+    ["Announcement bar", "with an optional link"],
+    ["Menu button", "a call-to-action button in the navigation"],
+    ["Social links", "Instagram, Facebook, YouTube, X, LinkedIn, GitHub, WhatsApp, Email"],
+    ["Custom CSS", "fine-tune the whole site"]
+  ]},
+  { t: "Pages, SEO & checks", i: [
+    ["Pages and menu", "name, hide and reorder pages"],
+    ["Page settings", "address, search description and layout: boxed, narrow, wide or full width"],
+    ["Search description", "for the site and for each page"],
+    ["Share image and social tags", "tidy previews when links are shared"],
+    ["Canonical address and favicon", "added automatically"],
+    ["Google Analytics", "enter your ID once"],
+    ["Sitemap and robots.txt", "included in the .zip when you set your website address"],
+    ["Site Check", "alt text, headings, placeholders, broken links, size"]
+  ]},
+  { t: "Preview & publish", i: [
+    ["Device preview", "desktop, tablet and mobile"],
+    ["Export .html", "one self-contained page"],
+    ["Export .zip", "index, pages, style sheet, 404 page, README"],
+    ["Publish to a live link", "sign in and choose an address name"],
+    ["Manage your site", "update, unpublish, republish or delete"],
+    ["Responsive output", "mobile menu, back-to-top button, print styles"],
+    ["Safe by design", "scripts and embeds run in a sandbox"]
+  ]}
+]}
+
+];
+
+var RIBBON = [
+ { id: "Home", s: 0, g: [
+   ["Clipboard", ["Undo, Redo"]],
+   ["Font", ["Family and size", "Bold, italic, underline, strikethrough", "Superscript, subscript", "Font colour, highlight, clear formatting"]],
+   ["Paragraph", ["Heading styles", "Alignment and justify", "Bullets and numbering", "Indent and outdent"]],
+   ["Spacing", ["Single, 1.5x, double"]],
+   ["Editing", ["Find and replace bar"]],
+   ["Added by Word Pro", ["Styles gallery", "Cut, copy, plain paste, Format Painter", "Grow or shrink font, change case", "Text shading, horizontal line"]]
+ ]},
+ { id: "Insert", s: 0, g: [
+   ["Pages", ["Add page", "Delete page"]],
+   ["Objects", ["Table", "Image", "Delete image", "Line"]],
+   ["Math & symbols", ["LaTeX equations", "Symbol picker", "Graph plotter"]],
+   ["Links", ["Hyperlink"]],
+   ["Visuals", ["2D shapes", "3D models", "Icons", "Charts"]],
+   ["Added by Word Pro", ["Date and time", "Symbols", "Text box", "Hyperlink"]]
+ ]},
+ { id: "Draw", s: 0, g: [
+   ["Mode", ["Draw on / off"]],
+   ["Tools", ["Pen", "Highlighter", "Eraser"]],
+   ["Style", ["Colour", "Stroke size"]],
+   ["Actions", ["Clear", "Done: turns ink into a movable image"]]
+ ]},
+ { id: "Design", s: 0, g: [
+   ["Templates", ["14 page designs"]],
+   ["Background", ["Colour", "4 gradients", "3 patterns"]],
+   ["Page setup", ["Page size A3 to Letter", "Portrait or landscape", "Margins and custom padding"]]
+ ]},
+ { id: "Slideshow", s: 0, g: [
+   ["Presentation", ["From start", "From here", "Stop"]],
+   ["Timing", ["Seconds per slide"]],
+   ["Export", ["PowerPoint"]]
+ ]},
+ { id: "History", s: 0, g: [
+   ["Version history", ["Save version", "Restore", "Delete"]]
+ ]},
+ { id: "View", s: 0, g: [
+   ["Zoom", ["Zoom in, zoom out, 100%"]],
+   ["Panels", ["Pages panel"]],
+   ["Added by Word Pro", ["Ruler", "Print layout", "Focus mode"]]
+ ]},
+ { id: "✨ AI", s: 0, g: [
+   ["Assistant", ["Write with AI", "Equation editor"]],
+   ["Local engine", ["Private, in-browser model", "Instant templates fallback"]]
+ ]},
+ { id: "Layout", s: 1, g: [
+   ["Page setup", ["Columns", "Paragraph spacing", "Page break", "Watermark", "Page border"]],
+   ["Paragraph", ["First-line indent", "Line spacing", "Indent, outdent", "Drop cap", "Formatting marks"]],
+   ["Pages · Tools & File", ["Insert page here", "Duplicate page", "Move up or down", "5 page-number styles"]]
+ ]},
+ { id: "Table", s: 1, g: [
+   ["Insert", ["New table", "4 table styles"]],
+   ["Rows & columns", ["Row above or below", "Column left or right"]],
+   ["Delete & merge", ["Delete row, column, table", "Merge right"]],
+   ["Cell", ["Shading", "Alignment"]],
+   ["Calculate & data · Tools & File", ["Sum, average, min, max", "Sort A→Z or Z→A", "Header row", "Autofit, borders, vertical align"]],
+   ["Convert · Tools & File", ["Text to table", "Table to text"]]
+ ]},
+ { id: "References", s: 1, g: [
+   ["Contents", ["Table of contents"]],
+   ["Footnotes", ["Footnote", "Bookmark"]],
+   ["Header & footer", ["Header and footer text", "Page number on or off"]],
+   ["Captions", ["Caption"]],
+   ["Update & cite · Tools & File", ["Update contents", "APA citation", "Bibliography"]]
+ ]},
+ { id: "Review", s: 1, g: [
+   ["Proofing", ["Spelling", "Word count"]],
+   ["Comments", ["New comment", "Delete comments"]],
+   ["Speech", ["Read aloud", "Stop"]],
+   ["Protect", ["Print"]],
+   ["Track changes · Tools & File", ["Track on or off", "Next change", "Accept, reject", "Accept all, reject all"]],
+   ["Insights · Tools & File", ["Readability", "Check document", "Comment list"]]
+ ]},
+ { id: "Tools", s: 2, g: [
+   ["Navigate", ["Outline", "Highlight all", "Find and replace", "Go to", "Commands"]],
+   ["Text effects", ["Effects", "Letter spacing", "8 list styles", "Checklist"]],
+   ["Paragraph", ["Border", "Shading", "5 callouts", "Sort lines", "Direction", "Next placeholder"]],
+   ["Image", ["Rotate", "Flip", "Border", "6 filters", "Opacity"]],
+   ["Image size & style", ["Size", "Align", "Crop", "Shadow, round, duplicate, reset", "From URL"]],
+   ["Arrange", ["Bring front", "Send back", "Alt text"]],
+   ["Productivity", ["Signature", "Dictate", "Autocorrect", "Smart quotes", "Fit width"]],
+   ["Insert", ["Cover page", "Symbols", "5 dividers"]],
+   ["Templates", ["11 document templates"]]
+ ]},
+ { id: "File", s: 2, g: [
+   ["Export", ["Word .docx", "Word .doc", "HTML", "Markdown", "Text"]],
+   ["Backup", ["JSON backup", "Print"]],
+   ["Import", [".docx, .html, .md, .txt, .csv, .tsv, JSON"]],
+   ["Document", ["Save now", "Save version", "Document info", "Dashboard"]]
+ ]},
+ { id: "🌐 Website", s: 3, g: [
+   ["Code", ["Paste HTML", "Page source"]],
+   ["Site", ["Site settings", "Pages and menu", "Page link", "Site check"]],
+   ["Add content", ["28 blocks", "10 starter sites", "Style section", "Embed", "Contact form"]],
+   ["Publish", ["Preview", "Export .html", "Export site .zip", "Publish", "How to publish"]]
+ ]}
+];
+
+var SRC = [["Core editor", "s0"], ["Word Pro · Add-on 1", "s1"], ["Tools & File · Add-on 2", "s2"], ["Website Builder · Add-on 3", "s3"]];
+</script>
+
+<script>
+/* ============================================================
+   PAGE BEHAVIOUR: theme, nav, reveal, counters, ribbon explorer,
+   searchable catalog, track-changes demo, back to top.
+   ============================================================ */
+(function () {
+
+  function $(s, r) { return (r || document).querySelector(s); }
+  function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+
+  /* ---------- theme toggle ---------- */
+  var root = document.documentElement;
+  $("#themeBtn").addEventListener("click", function () {
+    var dark = root.getAttribute("data-theme") === "dark";
+    if (dark) root.removeAttribute("data-theme"); else root.setAttribute("data-theme", "dark");
+    try { localStorage.setItem("proDocTheme", dark ? "light" : "dark"); } catch (e) {}
+  });
+
+  /* ---------- mobile menu ---------- */
+  var nav = $("#siteNav"), menuBtn = $("#menuBtn");
+  menuBtn.addEventListener("click", function () {
+    var open = nav.classList.toggle("open");
+    menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  $$("#navLinks a").forEach(function (a) {
+    a.addEventListener("click", function () { nav.classList.remove("open"); menuBtn.setAttribute("aria-expanded", "false"); });
+  });
+
+  /* ---------- scroll progress + back to top ---------- */
+  var bar = $("#progress"), toTop = $("#toTop");
+  function onScroll() {
+    var h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    toTop.style.display = h.scrollTop > 700 ? "block" : "none";
+  }
+  window.addEventListener("scroll", onScroll, { passive: true }); onScroll();
+  toTop.addEventListener("click", function () { window.scrollTo({ top: 0, behavior: "smooth" }); });
+
+  /* ---------- scroll reveal ---------- */
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if ("IntersectionObserver" in window && !reduce) {
+    var ro = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); ro.unobserve(e.target); } });
+    }, { threshold: 0.1 });
+    $$(".reveal").forEach(function (n) { ro.observe(n); });
+  } else {
+    $$(".reveal").forEach(function (n) { n.classList.add("in"); });
+  }
+
+  /* ---------- nav highlight while scrolling ---------- */
+  var links = {};
+  $$("#navLinks a.link").forEach(function (a) { var h = a.getAttribute("href"); if (h.charAt(0) === "#") links[h.slice(1)] = a; });
+  if ("IntersectionObserver" in window) {
+    var so = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (e.isIntersecting && links[e.target.id]) {
+          Object.keys(links).forEach(function (k) { links[k].classList.remove("active"); links[k].removeAttribute("aria-current"); });
+          links[e.target.id].classList.add("active"); links[e.target.id].setAttribute("aria-current", "true");
+        }
+      });
+    }, { rootMargin: "-40% 0px -55% 0px" });
+    Object.keys(links).forEach(function (id) { var s = document.getElementById(id); if (s) so.observe(s); });
+  }
+
+  /* ---------- catalog totals ---------- */
+  var total = 0;
+  CATALOG.forEach(function (c) { c.n = 0; c.groups.forEach(function (g) { c.n += g.i.length; }); total += c.n; });
+  var statEl = $("#statFeatures");
+  statEl.setAttribute("data-to", total); statEl.textContent = total;
+
+  /* ---------- animated counters ---------- */
+  function runCounter(el) {
+    var to = +el.getAttribute("data-to"), t0 = null;
+    if (reduce || !to) { el.textContent = to; return; }
+    function step(t) {
+      if (!t0) t0 = t;
+      var p = Math.min(1, (t - t0) / 1100);
+      el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  if ("IntersectionObserver" in window) {
+    var co = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { $$("[data-to]", e.target).forEach(runCounter); co.unobserve(e.target); } });
+    }, { threshold: 0.4 });
+    co.observe($(".stats"));
+  }
+
+  /* ---------- ribbon explorer ---------- */
+  var tabsEl = $("#ribbonTabs"), panelEl = $("#ribbonPanel");
+  function showTab(i, focus) {
+    var t = RIBBON[i];
+    $$("button", tabsEl).forEach(function (b, k) {
+      b.setAttribute("aria-selected", k === i ? "true" : "false");
+      b.setAttribute("tabindex", k === i ? "0" : "-1");
+      if (k === i && focus) b.focus();
+    });
+    panelEl.setAttribute("aria-labelledby", "rt" + i);
+    panelEl.innerHTML =
+      '<div class="ribbon-meta"><h3>' + esc(t.id.replace(/^[^A-Za-z]+\s*/, "")) + ' tab</h3><span class="src ' + SRC[t.s][1] + '">' + SRC[t.s][0] + '</span></div>' +
+      '<div class="group-grid">' + t.g.map(function (g) {
+        return '<div class="group"><h4>' + esc(g[0]) + '</h4><ul>' + g[1].map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul></div>";
+      }).join("") + "</div>";
+  }
+  RIBBON.forEach(function (t, i) {
+    var b = document.createElement("button");
+    b.type = "button"; b.id = "rt" + i; b.setAttribute("role", "tab"); b.textContent = t.id;
+    b.addEventListener("click", function () { showTab(i); });
+    b.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowRight") { e.preventDefault(); showTab((i + 1) % RIBBON.length, true); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); showTab((i - 1 + RIBBON.length) % RIBBON.length, true); }
+    });
+    tabsEl.appendChild(b);
+  });
+  showTab(0);
+
+  /* ---------- searchable catalog ---------- */
+  var grid = $("#featGrid"), input = $("#featSearch"), countEl = $("#featCount"), expandBtn = $("#expandBtn");
+  var state = { f: "all", q: "", expanded: false };
+
+  function hl(text, q) {
+    if (!q) return esc(text);
+    var lt = text.toLowerCase(), out = "", pos = 0, i;
+    while ((i = lt.indexOf(q, pos)) !== -1) {
+      out += esc(text.slice(pos, i)) + "<mark>" + esc(text.slice(i, i + q.length)) + "</mark>";
+      pos = i + q.length;
+    }
+    return out + esc(text.slice(pos));
+  }
+
+  function renderCatalog() {
+    var q = state.q.trim().toLowerCase(), shown = 0, html = "";
+    CATALOG.forEach(function (c) {
+      if (state.f !== "all" && state.f !== c.k) return;
+      var gHtml = "", cShown = 0;
+      c.groups.forEach(function (g) {
+        var items = g.i.filter(function (x) { return !q || (x[0] + " " + x[1] + " " + g.t + " " + c.name).toLowerCase().indexOf(q) !== -1; });
+        if (!items.length) return;
+        cShown += items.length;
+        var open = state.expanded || q ? " open" : "";
+        gHtml += "<details" + open + "><summary><span>" + esc(g.t) + "</span><small>" + items.length + "</small></summary><ul class='feat'>" +
+          items.map(function (x) { return "<li><b>" + hl(x[0], q) + "</b> <span>— " + hl(x[1], q) + "</span></li>"; }).join("") + "</ul></details>";
+      });
+      if (!cShown) return;
+      shown += cShown;
+      html += '<section class="cat"><div class="cat-head"><span class="ic" aria-hidden="true">' + c.icon + '</span><div><h3>' + esc(c.name) + '</h3><p>' + esc(c.blurb) + '</p></div><span class="n">' + cShown + ' feature' + (cShown === 1 ? "" : "s") + "</span></div>" + gHtml + "</section>";
+    });
+    grid.innerHTML = html || '<p class="empty">No features match “' + esc(state.q) + '”. Try a shorter word such as table, export or SEO.</p>';
+    countEl.textContent = "Showing " + shown + " of " + total + " features" + (q ? " for “" + state.q.trim() + "”" : "");
+    expandBtn.textContent = state.expanded ? "Collapse all" : "Expand all";
+  }
+
+  function setFilter(f) {
+    state.f = f;
+    $$("#featChips button").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-f") === f ? "true" : "false"); });
+    renderCatalog();
+  }
+
+  $$("#featChips button").forEach(function (b) { b.addEventListener("click", function () { setFilter(b.getAttribute("data-f")); }); });
+  var timer;
+  input.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(function () { state.q = input.value; renderCatalog(); }, 120); });
+  expandBtn.addEventListener("click", function () { state.expanded = !state.expanded; renderCatalog(); });
+
+  $$("[data-filter]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      state.expanded = true; input.value = ""; state.q = "";
+      setFilter(b.getAttribute("data-filter"));
+      $("#catalog").scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+    });
+  });
+
+  renderCatalog();
+
+  /* ---------- track-changes demo ---------- */
+  var paper = $("#tcPaper"), original = paper.innerHTML, tcState = $("#tcState");
+  $$("[data-tc]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var a = b.getAttribute("data-tc");
+      if (a === "reset") { paper.innerHTML = original; tcState.textContent = "● Tracking changes"; return; }
+      $$("ins.tc", paper).forEach(function (n) { if (a === "accept") n.replaceWith.apply(n, n.childNodes); else n.remove(); });
+      $$("del.tc", paper).forEach(function (n) { if (a === "reject") n.replaceWith.apply(n, n.childNodes); else n.remove(); });
+      tcState.textContent = a === "accept" ? "✓ All changes accepted" : "✓ All changes rejected";
+    });
+  });
+
+})();
 </script>
 
 </body>
