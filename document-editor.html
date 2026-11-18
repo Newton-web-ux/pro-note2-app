@@ -1171,7 +1171,10 @@ const sharedOwnerUid   = urlParams.get('ownerUid') || null;
 const sharedOwnerEmail = urlParams.get('ownerEmail') || null;
 const sharedRole       = urlParams.get('role') || null;      // 'view' | 'edit' | null (null = own document)
 const isSharedSession  = !!(sharedOwnerUid && sharedOwnerEmail);
-const isReadOnly       = isSharedSession && sharedRole !== 'edit';
+// Plan lock: free-plan documents beyond the first 3 open in read mode
+// (the dashboard appends ?mode=read for them). Own documents only.
+const planReadOnly     = !isSharedSession && urlParams.get('mode') === 'read';
+const isReadOnly       = (isSharedSession && sharedRole !== 'edit') || planReadOnly;
 
 let pages = [], currentPage = 0;
 let selectedImage = null;
@@ -1229,6 +1232,13 @@ function setStatus(msg) {
    belongs to someone else.
 ───────────────────────────────────────────── */
 function applySharedModeUI() {
+  if (planReadOnly) {
+    const pb = document.getElementById('sharedBanner');
+    pb.classList.add('show');
+    document.body.classList.add('read-only-mode');
+    pb.textContent = '🔒 Read-only: the free plan lets you edit your first 3 documents. Upgrade to Pro on the dashboard to edit this one.';
+    return;
+  }
   if (!isSharedSession) return;
   const banner = document.getElementById('sharedBanner');
   banner.classList.add('show');
@@ -1349,7 +1359,7 @@ function loadDocument() {
 // Re-apply the read-only page lock after pages are (re)built from the
 // loaded document, since addPage() sets contentEditable per-page.
 function finalizeSharedModeAfterLoad() {
-  if (!isSharedSession) return;
+  if (!isSharedSession && !planReadOnly) return;
   if (isReadOnly) {
     pages.forEach(p => { p.contentEditable = 'false'; });
   }
