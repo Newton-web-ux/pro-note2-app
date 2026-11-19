@@ -6,7 +6,8 @@
 
    Use INSTEAD of style.css / editor-icons.css in the editor. In <head>, after
    the page's own <style> block:
-       <link rel="stylesheet" href="word-ribbon.css?v=1">
+       <link rel="stylesheet" href="word-ribbon.css?v=2">
+   and load word-icons.js last (SVG icons + collapsible ribbon).
    ========================================================================== */
 
 :root{
@@ -17,6 +18,11 @@
   --w-hover:#e1e8f4;
   --w-hover-line:#b9cbe8;
   --w-press:#c9d9ef;
+  --w-fill:#dce8f8;        /* SVG icon fill */
+  --w-orange:#e8872a;
+  --w-green:#2f9e5b;
+  --w-red:#c4392b;
+  --w-yellow:#f6c945;
 }
 
 /* ---------- Title bar + tab strip -------------------------------------- */
@@ -123,36 +129,55 @@ body .tb-btn.active{
 
 body .tb-btn.small{ min-width:0; padding:3px 6px; gap:4px; }
 
-/* ---------- Icons: flat, single-colour (Word blue) ---------------------- */
-/* Emoji are shown as flat blue line-style glyphs. Remove the filter lines
-   below if you prefer full-colour emoji. */
+/* ---------- Icons: Word-style flat SVG (word-icons.js) ------------------ */
 
 body .ribbon-toolbar .tb-btn .tb-icon:not(.text){
-  display:block;
-  width:auto;
-  height:auto;
-  border:0;
-  background:none;
-  box-shadow:none;
-  border-radius:0;
-  font-size:24px;
-  line-height:1.1;
+  display:flex; align-items:center; justify-content:center;
+  width:auto; height:auto; border:0; background:none; box-shadow:none; border-radius:0;
+  font-size:24px; line-height:1.1;
+  transition:transform .12s, filter .12s;
+}
+/* any glyph that has no SVG yet keeps a flat blue tint */
+body .ribbon-toolbar .tb-btn .tb-icon:not(.text)[data-wi=""],
+body .ribbon-toolbar .tb-btn .tb-icon:not(.text):not([data-wi]){
   filter:grayscale(1) sepia(1) hue-rotate(178deg) saturate(2.4) brightness(.8) contrast(1.05);
-  transition:filter .12s, transform .12s;
 }
-body .ribbon-toolbar .tb-btn:hover .tb-icon:not(.text){
-  filter:grayscale(1) sepia(1) hue-rotate(178deg) saturate(3.2) brightness(.7) contrast(1.1);
-  transform:translateY(-1px);
-  translate:none;
+body .ribbon-toolbar .tb-btn:hover .tb-icon:not(.text){ transform:translateY(-1px); }
+
+svg.wi{ width:26px; height:26px; display:block; overflow:visible; }
+body .ribbon-toolbar .tb-btn.small .tb-icon:not(.text) svg.wi{ width:16px; height:16px; }
+body .ribbon-toolbar .tb-btn.small .tb-icon:not(.text){ font-size:15px; line-height:1; }
+body .ribbon-toolbar .tb-btn:disabled svg.wi{ filter:grayscale(1); opacity:.5; }
+
+svg.wi .p,svg.wi .f,svg.wi .fy,svg.wi .fo,svg.wi .g,svg.wi .r,svg.wi .o{
+  fill:none; stroke:var(--w-blue); stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round;
 }
-body .ribbon-toolbar .tb-btn.small .tb-icon:not(.text){
-  font-size:15px;
-  line-height:1;
-}
+svg.wi .f { fill:var(--w-fill); }
+svg.wi .fy{ fill:var(--w-yellow); stroke:#b8860b; }
+svg.wi .fo{ fill:#fbd9b4; stroke:var(--w-orange); }
+svg.wi .s { fill:var(--w-blue); stroke:none; }
+svg.wi .g { stroke:var(--w-green); stroke-width:2.2; }
+svg.wi .r { stroke:var(--w-red); }
+svg.wi .o { stroke:var(--w-orange); stroke-width:2; }
+
 /* B  I  U  S  X²  X₂ stay as plain dark text, like Word */
-body .ribbon-toolbar .tb-icon.text{
-  color:#262626;
-  filter:none;
+body .ribbon-toolbar .tb-icon.text{ color:#262626; filter:none; }
+
+/* ---------- Collapse / pin the ribbon (Word's ^ button) ----------------- */
+
+body .rb-collapse{
+  margin-left:auto; align-self:center; width:26px; height:22px; padding:0;
+  display:flex; align-items:center; justify-content:center;
+  background:transparent; border:0; border-radius:2px; cursor:pointer;
+}
+body .rb-collapse:hover{ background:rgba(255,255,255,.2); }
+body .rb-collapse svg.wi{ width:16px; height:16px; }
+body .rb-collapse svg.wi .p{ stroke:#fff; stroke-width:2; }
+
+body.rb-collapsed .ribbon-toolbar{ display:none !important; }
+body.rb-collapsed.rb-peek .ribbon-toolbar.active{
+  display:flex !important; position:absolute; left:0; right:0; z-index:950;
+  box-shadow:0 8px 18px rgba(0,0,0,.22);
 }
 
 /* ---------- Dropdowns, inputs, colour pickers --------------------------- */
