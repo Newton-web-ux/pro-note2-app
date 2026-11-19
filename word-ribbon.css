@@ -1,0 +1,191 @@
+/* ==========================================================================
+   Pro Document — word-ribbon.css
+   A Microsoft Word look for document-editor.html:
+   flat blue title bar, Word-style tabs (File tab first, active tab merges into
+   the ribbon), light-grey ribbon with centred group names, flat blue icons.
+
+   Use INSTEAD of style.css / editor-icons.css in the editor. In <head>, after
+   the page's own <style> block:
+       <link rel="stylesheet" href="word-ribbon.css?v=1">
+   ========================================================================== */
+
+:root{
+  --w-blue:#2b579a;        /* Word blue */
+  --w-blue-dark:#1e3f73;
+  --w-ribbon:#f3f3f3;      /* ribbon surface */
+  --w-line:#d4d4d4;        /* separators */
+  --w-hover:#e1e8f4;
+  --w-hover-line:#b9cbe8;
+  --w-press:#c9d9ef;
+}
+
+/* ---------- Title bar + tab strip -------------------------------------- */
+
+body .title-bar,
+body .ribbon-tabs{ background:var(--w-blue); }
+
+body .title-bar{ padding:5px 14px; }
+body .hdr-btn{ border-radius:2px; background:rgba(255,255,255,.14); }
+body .hdr-btn:hover{ background:rgba(255,255,255,.26); }
+body .hdr-btn.primary{ background:#fff; color:var(--w-blue); }
+
+body .ribbon-tabs{ padding:0 8px 0 12px; gap:0; align-items:flex-end; }
+
+body .tab-btn{
+  background:transparent;
+  color:#fff;
+  border:0;
+  border-radius:0;
+  padding:7px 16px 6px;
+  font-size:12.5px;
+  font-weight:400;
+  letter-spacing:.1px;
+  box-shadow:none;
+}
+body .tab-btn:hover{ background:rgba(255,255,255,.16); }
+
+/* active tab becomes part of the ribbon, like Word */
+body .tab-btn.active{
+  background:var(--w-ribbon);
+  color:var(--w-blue);
+  font-weight:600;
+  box-shadow:none;
+  border-bottom:0;
+}
+
+/* File tab first, in darker blue, as in Word */
+body .tab-btn[data-tab="wp2file"]{
+  order:-1;
+  margin-right:6px;
+  background:var(--w-blue-dark);
+  color:#fff;
+  font-weight:600;
+  padding:7px 20px 6px;
+}
+body .tab-btn[data-tab="wp2file"]:hover{ background:#173560; }
+body .tab-btn[data-tab="wp2file"].active{ background:var(--w-blue-dark); color:#fff; }
+
+/* ---------- Ribbon ------------------------------------------------------ */
+
+body .ribbon-toolbar{
+  background:var(--w-ribbon);
+  border-bottom:1px solid var(--w-line);
+  box-shadow:0 1px 0 #fff inset, 0 1px 3px rgba(0,0,0,.06);
+  padding:5px 8px 3px;
+  min-height:92px;
+  gap:0;
+  align-items:stretch;
+}
+
+body .ribbon-group{
+  padding:0 8px;
+  border-right:1px solid var(--w-line);
+  justify-content:space-between;
+  gap:2px;
+}
+body .ribbon-group:last-child{ border-right:0; }
+
+/* group names: centred, sentence case, like Word */
+body .ribbon-group-label{
+  text-transform:none;
+  letter-spacing:0;
+  font-size:11px;
+  color:#555;
+  text-align:center;
+  margin-top:auto;
+  padding-top:2px;
+}
+
+/* ---------- Buttons ----------------------------------------------------- */
+
+body .tb-btn{
+  border:1px solid transparent;
+  border-radius:2px;
+  background:transparent;
+  color:#262626;
+  font-size:11px;
+  gap:3px;
+  padding:4px 7px;
+  min-width:48px;
+  transition:background .1s, border-color .1s;
+}
+body .tb-btn:hover{
+  background:var(--w-hover);
+  border-color:var(--w-hover-line);
+  color:#1a1a1a;
+}
+body .tb-btn:active,
+body .tb-btn.active{
+  background:var(--w-press);
+  border-color:#8fb0e8;
+  color:#1a1a1a;
+}
+
+body .tb-btn.small{ min-width:0; padding:3px 6px; gap:4px; }
+
+/* ---------- Icons: flat, single-colour (Word blue) ---------------------- */
+/* Emoji are shown as flat blue line-style glyphs. Remove the filter lines
+   below if you prefer full-colour emoji. */
+
+body .ribbon-toolbar .tb-btn .tb-icon:not(.text){
+  display:block;
+  width:auto;
+  height:auto;
+  border:0;
+  background:none;
+  box-shadow:none;
+  border-radius:0;
+  font-size:24px;
+  line-height:1.1;
+  filter:grayscale(1) sepia(1) hue-rotate(178deg) saturate(2.4) brightness(.8) contrast(1.05);
+  transition:filter .12s, transform .12s;
+}
+body .ribbon-toolbar .tb-btn:hover .tb-icon:not(.text){
+  filter:grayscale(1) sepia(1) hue-rotate(178deg) saturate(3.2) brightness(.7) contrast(1.1);
+  transform:translateY(-1px);
+  translate:none;
+}
+body .ribbon-toolbar .tb-btn.small .tb-icon:not(.text){
+  font-size:15px;
+  line-height:1;
+}
+/* B  I  U  S  X²  X₂ stay as plain dark text, like Word */
+body .ribbon-toolbar .tb-icon.text{
+  color:#262626;
+  filter:none;
+}
+
+/* ---------- Dropdowns, inputs, colour pickers --------------------------- */
+
+body .tb-select,
+body .tb-input{
+  height:24px;
+  border:1px solid #adadad;
+  border-radius:2px;
+  background:#fff;
+  font-size:12px;
+}
+body .tb-select:hover,
+body .tb-input:hover{ border-color:#7a7a7a; }
+body .tb-select:focus,
+body .tb-input:focus{ border-color:var(--w-blue); box-shadow:0 0 0 1px var(--w-blue); }
+body .tb-color{ height:24px; border:1px solid #adadad; border-radius:2px; background:#fff; }
+
+/* ---------- Document area, side panel, status bar ----------------------- */
+
+body .canvas-area{ background:#e1e1e1; }
+body .canvas-area::-webkit-scrollbar-track{ background:#e1e1e1; }
+body .canvas-area::-webkit-scrollbar-thumb{ background:#b4b4b4; }
+body .page{ box-shadow:0 1px 3px rgba(0,0,0,.18), 0 6px 18px rgba(0,0,0,.12); }
+
+body .pages-panel{ background:#f3f3f3; border-right:1px solid var(--w-line); }
+body .page-thumb{ border-radius:2px; }
+body .page-thumb.active{ border-color:var(--w-blue); box-shadow:0 0 0 1px var(--w-blue); }
+
+body .status-bar{ background:var(--w-blue); }
+body .find-bar{ background:var(--w-ribbon); border-bottom:1px solid var(--w-line); }
+
+/* ---------- Floating panels use the same flat header -------------------- */
+
+body #studioPanelHeader,
+body #floatingPanelHeader{ background:var(--w-blue); border-radius:0; }
