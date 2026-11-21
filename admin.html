@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Pro Document — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<style>
+:root{--bg:#f2f5fa;--panel:#fff;--ink:#0e1a2b;--mute:#5d6b82;--line:#e0e6ef;--soft:#eaf0fb;--brand:#2b579a;--green:#12a150;--amber:#d98b00;--red:#c0392b;--violet:#6c4fc2;--shadow:0 1px 2px rgba(14,26,43,.06),0 8px 24px rgba(14,26,43,.05)}
+[data-theme=dark]{--bg:#0a1220;--panel:#111c30;--ink:#e8eefb;--mute:#93a2bd;--line:#223250;--soft:#16233d;--brand:#5b8fd9;--green:#34c77b;--amber:#f0b03a;--red:#ef6b5c;--violet:#a18bf0;--shadow:0 1px 2px rgba(0,0,0,.4)}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+h1,h2,.num{font-family:Outfit,sans-serif}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+.hide{display:none!important}
+header{position:sticky;top:0;z-index:10;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:12px 28px;flex-wrap:wrap}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--brand);color:#fff;display:grid;place-items:center}
+header h1{font-size:18px;line-height:1.1}header small{color:var(--mute);display:block;font-size:12px}.sp{flex:1}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:7px 13px;cursor:pointer;font-weight:500}
+.btn:hover{border-color:var(--brand);color:var(--brand)}.btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}.btn.pri:hover{color:#fff;filter:brightness(1.1)}
+.btn.ok{background:var(--green);border-color:var(--green);color:#fff}.btn.ok:hover{color:#fff}.btn.no{color:var(--red)}.btn.no:hover{border-color:var(--red);color:var(--red)}
+.btn.sm{padding:4px 10px;font-size:12.5px}.btn:disabled{opacity:.5;cursor:not-allowed}
+main{max-width:1280px;margin:0 auto;padding:24px 28px 60px;display:grid;gap:20px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:20px 22px}
+.panel h2{font-size:16px}.sub{color:var(--mute);font-size:12.5px;margin-bottom:14px}
+.row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);border-top:3px solid var(--c)}
+.kpi .l{color:var(--mute);font-size:12.5px}.kpi .num{font-size:28px;font-weight:700;line-height:1.15;margin-top:4px}.kpi .h{color:var(--mute);font-size:11.5px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tab{background:none;border:none;border-bottom:3px solid transparent;padding:9px 16px;cursor:pointer;font-weight:600;color:var(--mute)}
+.tab[aria-selected=true]{color:var(--brand);border-bottom-color:var(--brand)}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.tools input,.tools select{border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:7px 11px}.tools input{min-width:240px}
+table{width:100%;border-collapse:collapse}th{text-align:left;font-size:12px;color:var(--mute);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle}tr:last-child td{border-bottom:none}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.tw{overflow:auto;max-height:560px}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;background:color-mix(in srgb,var(--c) 15%,transparent);color:var(--c)}
+.flag{color:var(--red);font-size:11.5px;font-weight:600;display:block}
+code{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;background:var(--soft);padding:2px 6px;border-radius:5px;cursor:pointer}
+.acts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.chartbox{position:relative;height:240px}
+.empty{text-align:center;color:var(--mute);padding:28px}
+.gate{min-height:100vh;display:grid;place-items:center;padding:20px}
+.gcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:34px;max-width:400px;width:100%;text-align:center}
+.gcard h1{font-size:22px;margin:10px 0 6px}.gcard p{color:var(--mute);margin-bottom:18px}
+.msg{margin-top:14px;font-size:13px;color:var(--red)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:10px;font-weight:500;z-index:50}
+@media(max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){main,header{padding-left:14px;padding-right:14px}}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <div class="gcard">
+    <div class="logo" style="margin:0 auto;width:48px;height:48px;font-size:22px" aria-hidden="true">🔐</div>
+    <h1>Pro Document admin</h1>
+    <p id="gateText">Sign in with an administrator account.</p>
+    <button class="btn pri" id="signInBtn">Sign in with Google</button>
+    <button class="btn hide" id="gateOut">Sign out</button>
+    <div class="msg" id="gateMsg"></div>
+  </div>
+</div>
+
+<div id="app" class="hide">
+<header>
+  <div class="logo" aria-hidden="true">📋</div>
+  <div><h1>Admin</h1><small id="who"></small></div>
+  <div class="sp"></div>
+  <button class="btn" id="themeBtn" aria-label="Toggle theme">🌓</button>
+  <button class="btn" id="csvBtn">Export CSV</button>
+  <button class="btn" id="outBtn">Sign out</button>
+</header>
+<main>
+  <section class="kpis" id="kpis"></section>
+
+  <section class="panel">
+    <h2>Approved revenue</h2><p class="sub">Per month, from approved payments.</p>
+    <div class="chartbox"><canvas id="revChart"></canvas></div>
+  </section>
+
+  <section class="panel">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tabPay" aria-selected="true">Payments</button>
+      <button class="tab" role="tab" id="tabUsers" aria-selected="false">Users</button>
+    </div>
+
+    <div id="payView">
+      <div class="tools">
+        <input type="search" id="payQ" placeholder="Search email, name or UTR…" aria-label="Search payments">
+        <select id="payF" aria-label="Filter by status">
+          <option value="pending">Pending</option><option value="">All</option>
+          <option value="approved">Approved</option><option value="rejected">Rejected</option>
+        </select>
+      </div>
+      <div class="tw"><table id="payTable"></table></div>
+    </div>
+
+    <div id="userView" class="hide">
+      <div class="tools">
+        <input type="search" id="userQ" placeholder="Search email or name…" aria-label="Search users">
+        <select id="userF" aria-label="Filter by plan"><option value="">All plans</option><option value="pro">Pro</option><option value="free">Free</option><option value="expiring">Expiring in 7 days</option></select>
+      </div>
+      <div class="tw"><table id="userTable"></table></div>
+    </div>
+  </section>
+</main>
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyBjM_4W6DsCfOOrcUW-BoTfttU0ZBAngUQ",authDomain:"pro-document-1723a.firebaseapp.com",
+  projectId:"pro-document-1723a",storageBucket:"pro-document-1723a.firebasestorage.app",
+  messagingSenderId:"358645984079",appId:"1:358645984079:web:6be4b45228f5f35fa0333a"});
+var auth=firebase.auth(),db=firebase.firestore(),TS=firebase.firestore.Timestamp,FV=firebase.firestore.FieldValue;
+var $=function(i){return document.getElementById(i)};
+var ADMIN_EMAIL='banerjeearnab.live@gmail.com';
+var me=null,payments=[],users={},unsubs=[],chart=null;
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function inr(n){return'₹'+(+n||0).toLocaleString('en-IN')}
+function dt(t){var d=t&&t.toDate?t.toDate():(t?new Date(t):null);return d?d.toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—'}
+function dOnly(t){var d=t&&t.toDate?t.toDate():(t?new Date(t):null);return d?d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—'}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+function toast(m){var t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(function(){t.remove()},2800)}
+
+/* ---------- auth + admin gate ---------- */
+$('signInBtn').onclick=function(){auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(function(e){$('gateMsg').textContent='Sign-in failed: '+e.code})};
+$('gateOut').onclick=$('outBtn').onclick=function(){auth.signOut()};
+auth.onAuthStateChanged(async function(u){
+  unsubs.forEach(function(f){f()});unsubs=[];
+  if(!u){me=null;$('app').classList.add('hide');$('gate').classList.remove('hide');$('signInBtn').classList.remove('hide');$('gateOut').classList.add('hide');return}
+  try{
+    if(!u.emailVerified||(u.email||'').toLowerCase()!==ADMIN_EMAIL)throw new Error('no');
+    me=u;$('who').textContent=u.email;$('gate').classList.add('hide');$('app').classList.remove('hide');start();
+  }catch(e){
+    $('gateText').textContent='Signed in as '+u.email+', but this account is not an administrator.';
+    $('gateMsg').textContent='Sign in with the verified admin email ('+ADMIN_EMAIL+') to continue.';
+    $('signInBtn').classList.add('hide');$('gateOut').classList.remove('hide');
+  }
+});
+
+/* ---------- live data ---------- */
+function start(){
+  unsubs.push(db.collection('payments').orderBy('createdAt','desc').limit(500).onSnapshot(function(s){
+    payments=s.docs.map(function(d){return Object.assign({id:d.id},d.data())});renderAll();
+  },function(e){toast('Payments: '+e.code)}));
+  unsubs.push(db.collection('users').limit(1000).onSnapshot(function(s){
+    users={};s.docs.forEach(function(d){users[d.id]=Object.assign({id:d.id},d.data())});renderAll();
+  },function(e){toast('Users: '+e.code)}));
+}
+function renderAll(){kpis();revenue();pay();usr()}
+
+function kpis(){
+  var pend=payments.filter(function(p){return p.status==='pending'}),ok=payments.filter(function(p){return p.status==='approved'});
+  var m=new Date().getMonth(),y=new Date().getFullYear();
+  var mRev=ok.filter(function(p){var d=(p.approvedAt||p.createdAt);d=d&&d.toDate?d.toDate():null;return d&&d.getMonth()===m&&d.getFullYear()===y}).reduce(function(a,p){return a+(+p.amount||0)},0);
+  var total=ok.reduce(function(a,p){return a+(+p.amount||0)},0);
+  var uu=Object.values(users),pro=uu.filter(function(u){return u.isPro}).length;
+  var soon=uu.filter(function(u){var d=u.planExpiresAt&&u.planExpiresAt.toDate?u.planExpiresAt.toDate():null;return u.isPro&&d&&d-Date.now()<7*864e5}).length;
+  var it=[['Pending review',pend.length,inr(pend.reduce(function(a,p){return a+(+p.amount||0)},0))+' waiting','#d98b00'],
+    ['Revenue this month',inr(mRev),'Approved payments','#12a150'],['Revenue all time',inr(total),ok.length+' approved','#2b579a'],
+    ['Pro users',pro,uu.length+' total users','#6c4fc2'],['Expiring in 7 days',soon,'Pro plans to renew','#c0392b']];
+  $('kpis').innerHTML=it.map(function(i){return'<div class="kpi" style="--c:'+i[3]+'"><div class="l">'+i[0]+'</div><div class="num">'+i[1]+'</div><div class="h">'+i[2]+'</div></div>'}).join('');
+}
+function revenue(){
+  var by={};payments.filter(function(p){return p.status==='approved'}).forEach(function(p){
+    var d=(p.approvedAt||p.createdAt);d=d&&d.toDate?d.toDate():null;if(!d)return;
+    var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');by[k]=(by[k]||0)+(+p.amount||0)});
+  var ks=Object.keys(by).sort().slice(-12);
+  Chart.defaults.font.family="'Space Grotesk',sans-serif";Chart.defaults.color=css('--mute');
+  if(chart)chart.destroy();
+  chart=new Chart($('revChart'),{type:'bar',data:{labels:ks,datasets:[{data:ks.map(function(k){return by[k]}),backgroundColor:css('--green'),borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:css('--line')},ticks:{callback:function(v){return'₹'+v}}},x:{grid:{display:false}}}}});
+}
+
+/* ---------- payments ---------- */
+var SC={pending:'#d98b00',approved:'#12a150',rejected:'#c0392b'};
+function pay(){
+  var q=$('payQ').value.toLowerCase(),f=$('payF').value;
+  var utrCount={};payments.forEach(function(p){var k=(p.utr||'').toUpperCase();if(k)utrCount[k]=(utrCount[k]||0)+1});
+  var rows=payments.filter(function(p){return(!f||p.status===f)&&(!q||((p.email||'')+' '+(p.name||'')+' '+(p.utr||'')).toLowerCase().indexOf(q)!==-1)});
+  $('payTable').innerHTML=rows.length?'<tr><th>Submitted</th><th>User</th><th>Plan</th><th class="n">Amount</th><th>UTR</th><th>Status</th><th></th></tr>'+rows.map(function(p){
+    var dup=utrCount[(p.utr||'').toUpperCase()]>1,wrong=(+p.amount)!==(p.billing==='yearly'?1999:199);
+    return'<tr><td>'+dt(p.createdAt)+'</td><td><b>'+esc(p.name||'—')+'</b><br><span style="color:var(--mute)">'+esc(p.email)+'</span></td>'+
+     '<td>'+esc(p.billing||'')+'</td><td class="n">'+inr(p.amount)+(wrong?'<span class="flag">Unusual amount</span>':'')+'</td>'+
+     '<td><code data-copy="'+esc(p.utr)+'" title="Click to copy">'+esc(p.utr)+'</code>'+(dup?'<span class="flag">UTR used more than once</span>':'')+'</td>'+
+     '<td><span class="badge" style="--c:'+(SC[p.status]||'#5d6b82')+'">'+esc(p.status)+'</span>'+(p.reason?'<br><span style="color:var(--mute);font-size:12px">'+esc(p.reason)+'</span>':'')+'</td>'+
+     '<td><div class="acts">'+(p.status==='pending'?'<button class="btn sm ok" data-a="approve" data-id="'+p.id+'">Approve</button><button class="btn sm no" data-a="reject" data-id="'+p.id+'">Reject</button>':'')+'</div></td></tr>'}).join(''):'<tr><td class="empty">No payments match.</td></tr>';
+}
+$('payTable').onclick=function(e){
+  var b=e.target.closest('button[data-a]'),c=e.target.closest('code[data-copy]');
+  if(c){navigator.clipboard&&navigator.clipboard.writeText(c.dataset.copy);toast('UTR copied');return}
+  if(!b)return;var p=payments.find(function(x){return x.id===b.dataset.id});if(!p)return;
+  if(b.dataset.a==='approve')approve(p,b);else reject(p,b);
+};
+async function approve(p,btn){
+  var utrDup=payments.some(function(x){return x.id!==p.id&&x.status==='approved'&&(x.utr||'').toUpperCase()===(p.utr||'').toUpperCase()});
+  var msg='Approve '+inr(p.amount)+' ('+p.billing+') for '+p.email+'?\nUTR: '+p.utr+'\n\nConfirm you matched this UTR in your bank/UPI statement.'+(utrDup?'\n\nWARNING: this UTR was already used on an approved payment.':'');
+  if(!confirm(msg))return;btn.disabled=true;
+  try{
+    var uref=db.collection('users').doc(p.uid),us=await uref.get(),cur=us.exists&&us.data().planExpiresAt?us.data().planExpiresAt.toDate():null;
+    var from=cur&&cur>new Date()?cur:new Date(),exp=new Date(from.getTime()+(p.billing==='yearly'?365:30)*864e5);
+    var b=db.batch();
+    b.update(db.collection('payments').doc(p.id),{status:'approved',approvedAt:FV.serverTimestamp(),reviewedBy:me.email});
+    b.set(uref,{isPro:true,plan:'pro',planExpiresAt:TS.fromDate(exp)},{merge:true});
+    await b.commit();toast('Approved. Pro active until '+exp.toLocaleDateString('en-IN'));
+  }catch(e){console.warn(e);toast('Approval failed: '+e.code);btn.disabled=false}
+}
+async function reject(p,btn){
+  var r=prompt('Reason for rejecting this payment (shown only to admins):','UTR not found in statement');if(r===null)return;btn.disabled=true;
+  try{await db.collection('payments').doc(p.id).update({status:'rejected',reason:r,reviewedAt:FV.serverTimestamp(),reviewedBy:me.email});toast('Rejected')}
+  catch(e){toast('Failed: '+e.code);btn.disabled=false}
+}
+
+/* ---------- users ---------- */
+function usr(){
+  var q=$('userQ').value.toLowerCase(),f=$('userF').value;
+  var rows=Object.values(users).filter(function(u){
+    var d=u.planExpiresAt&&u.planExpiresAt.toDate?u.planExpiresAt.toDate():null;
+    if(f==='pro'&&!u.isPro)return false;if(f==='free'&&u.isPro)return false;
+    if(f==='expiring'&&!(u.isPro&&d&&d-Date.now()<7*864e5))return false;
+    return!q||((u.email||'')+' '+(u.name||'')).toLowerCase().indexOf(q)!==-1;
+  }).sort(function(a,b){var x=a.lastLoginAt&&a.lastLoginAt.toMillis?a.lastLoginAt.toMillis():0,y=b.lastLoginAt&&b.lastLoginAt.toMillis?b.lastLoginAt.toMillis():0;return y-x});
+  $('userTable').innerHTML=rows.length?'<tr><th>User</th><th>Plan</th><th>Expires</th><th>Joined</th><th>Last login</th><th></th></tr>'+rows.map(function(u){
+    return'<tr><td><b>'+esc(u.name||'—')+'</b><br><span style="color:var(--mute)">'+esc(u.email)+'</span></td>'+
+     '<td><span class="badge" style="--c:'+(u.isPro?'#6c4fc2':'#5d6b82')+'">'+(u.isPro?'Pro':'Free')+'</span></td><td>'+dOnly(u.planExpiresAt)+'</td><td>'+dOnly(u.createdAt)+'</td><td>'+dt(u.lastLoginAt)+'</td>'+
+     '<td><div class="acts">'+(u.isPro?'<button class="btn sm" data-u="extend" data-id="'+u.id+'">+30 days</button><button class="btn sm no" data-u="revoke" data-id="'+u.id+'">Revoke</button>':'<button class="btn sm" data-u="grant" data-id="'+u.id+'">Grant 30 days</button>')+'</div></td></tr>'}).join(''):'<tr><td class="empty">No users match.</td></tr>';
+}
+$('userTable').onclick=async function(e){
+  var b=e.target.closest('button[data-u]');if(!b)return;var u=users[b.dataset.id],a=b.dataset.u;if(!u)return;
+  try{
+    if(a==='revoke'){if(!confirm('Remove Pro from '+u.email+'?'))return;await db.collection('users').doc(u.id).update({isPro:false,plan:'free',planExpiresAt:null});toast('Pro revoked')}
+    else{var cur=u.planExpiresAt&&u.planExpiresAt.toDate?u.planExpiresAt.toDate():null,from=cur&&cur>new Date()?cur:new Date();
+      if(!confirm((a==='grant'?'Grant':'Extend')+' Pro for 30 days: '+u.email+'?'))return;
+      await db.collection('users').doc(u.id).update({isPro:true,plan:'pro',planExpiresAt:TS.fromDate(new Date(from.getTime()+30*864e5))});toast('Updated')}
+  }catch(err){toast('Failed: '+err.code)}
+};
+
+/* ---------- chrome ---------- */
+['payQ','payF'].forEach(function(i){$(i).oninput=$(i).onchange=pay});
+['userQ','userF'].forEach(function(i){$(i).oninput=$(i).onchange=usr});
+function tab(t){$('tabPay').setAttribute('aria-selected',t==='pay');$('tabUsers').setAttribute('aria-selected',t==='users');
+  $('payView').classList.toggle('hide',t!=='pay');$('userView').classList.toggle('hide',t!=='users')}
+$('tabPay').onclick=function(){tab('pay')};$('tabUsers').onclick=function(){tab('users')};
+$('csvBtn').onclick=function(){
+  var l=[['submitted','email','name','billing','amount','utr','status','reason']].concat(payments.map(function(p){
+    return[p.createdAt&&p.createdAt.toDate?p.createdAt.toDate().toISOString():'',p.email,p.name,p.billing,p.amount,p.utr,p.status,p.reason||'']}));
+  var t=l.map(function(x){return x.map(function(c){return'"'+String(c==null?'':c).replace(/"/g,'""')+'"'}).join(',')}).join('\n');
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='payments-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+};
+try{if(localStorage.getItem('pdAdminTheme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}
+$('themeBtn').onclick=function(){var d=document.documentElement,k=d.getAttribute('data-theme')==='dark';if(k)d.removeAttribute('data-theme');else d.setAttribute('data-theme','dark');
+  try{localStorage.setItem('pdAdminTheme',k?'light':'dark')}catch(e){}if(me)revenue()};
+</script>
+</body>
+</html>
